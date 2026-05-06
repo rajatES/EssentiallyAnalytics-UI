@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { X, Plus, Tag, Users, ChevronDown } from "lucide-react";
+import { X, Plus, Tag, Users, ChevronDown, RefreshCw, Calendar, AlertTriangle, CheckCircle2 } from "lucide-react";
 import {
   ReportSportsMappingRow,
   updateReportSportsMapping,
@@ -63,6 +63,25 @@ export default function SportsMappingsModal({
   const [localSports, setLocalSports] = useState<string[]>([]);
   const [isPending, setIsPending] = useState(false);
 
+  // --- Data Re-Sync state ---
+  const [showResync, setShowResync] = useState(false);
+  const getLocalDateString = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const defaultEnd = new Date();
+  const defaultStart = new Date();
+  defaultStart.setDate(defaultStart.getDate() - 7);
+  const [resyncStart, setResyncStart] = useState(getLocalDateString(defaultStart));
+  const [resyncEnd, setResyncEnd] = useState(getLocalDateString(defaultEnd));
+  const [resyncLoading, setResyncLoading] = useState(false);
+  const [resyncResult, setResyncResult] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
   const allSports = useMemo(() => {
     const fromMappings = mappings
       .map((m) => m.sport)
@@ -112,6 +131,52 @@ export default function SportsMappingsModal({
       console.error("Failed to assign sport", err);
     } finally {
       setIsPending(false);
+    }
+  };
+
+  // --- Data Re-Sync handler ---
+  const handleResync = async () => {
+    if (!resyncStart || !resyncEnd) return;
+
+    const profileIds = mappings.map((m) => m.profileId);
+    if (profileIds.length === 0) {
+      setResyncResult({ type: "error", message: "No pages available to re-sync." });
+      return;
+    }
+
+    setResyncLoading(true);
+    setResyncResult(null);
+
+    try {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
+      const res = await fetch(`${BACKEND_URL}/api/analytics/resync-range`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          profileIds,
+          startDate: resyncStart,
+          endDate: resyncEnd,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResyncResult({ type: "error", message: data.error || "Re-sync failed." });
+      } else {
+        setResyncResult({
+          type: "success",
+          message: data.message || `Re-sync queued for ${data.queued} page(s).`,
+        });
+      }
+    } catch (err: any) {
+      setResyncResult({
+        type: "error",
+        message: err.message || "Network error. Please try again.",
+      });
+    } finally {
+      setResyncLoading(false);
     }
   };
 
@@ -269,6 +334,109 @@ export default function SportsMappingsModal({
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* ═══ Data Re-Sync (Advanced) ═══ */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50/30 dark:border-amber-800/50 dark:bg-amber-900/10 overflow-hidden">
+            <button
+              onClick={() => setShowResync(!showResync)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-50/50 dark:hover:bg-amber-900/20 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <RefreshCw size={15} className="text-amber-600 dark:text-amber-400" />
+                <h3 className="text-sm font-bold text-amber-800 dark:text-amber-300">
+                  Data Re-Sync
+                </h3>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200/60 dark:bg-amber-800/40 text-amber-700 dark:text-amber-400 font-semibold uppercase tracking-wider">
+                  Advanced
+                </span>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`text-amber-500 dark:text-amber-400 transition-transform duration-200 ${showResync ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {showResync && (
+              <div className="px-4 pb-4 pt-1 space-y-3 border-t border-amber-200/50 dark:border-amber-800/30">
+                <p className="text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
+                  Re-fetch data from Meta for a specific date range across <strong>all {mappings.length} connected page(s)</strong>.
+                  This will overwrite existing data for the selected dates with fresh values from Meta&apos;s API.
+                  Use this to fix incorrect or missing data for a specific time period.
+                </p>
+
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">
+                      Start Date
+                    </label>
+                    <div className="relative">
+                      <Calendar
+                        size={14}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-500/60 pointer-events-none"
+                      />
+                      <input
+                        type="date"
+                        value={resyncStart}
+                        onChange={(e) => setResyncStart(e.target.value)}
+                        className="w-full rounded-lg border border-amber-300 bg-white pl-8 pr-3 py-2 text-sm font-medium text-gray-800 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-amber-700 dark:bg-gray-800 dark:text-gray-200"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">
+                      End Date
+                    </label>
+                    <div className="relative">
+                      <Calendar
+                        size={14}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-500/60 pointer-events-none"
+                      />
+                      <input
+                        type="date"
+                        value={resyncEnd}
+                        onChange={(e) => setResyncEnd(e.target.value)}
+                        className="w-full rounded-lg border border-amber-300 bg-white pl-8 pr-3 py-2 text-sm font-medium text-gray-800 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-amber-700 dark:bg-gray-800 dark:text-gray-200"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleResync}
+                    disabled={resyncLoading || !resyncStart || !resyncEnd}
+                    className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    {resyncLoading ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Syncing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={14} />
+                        Re-Sync
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {resyncResult && (
+                  <div
+                    className={`flex items-start gap-2 rounded-lg px-3 py-2.5 text-xs font-medium ${
+                      resyncResult.type === "success"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50"
+                        : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/50"
+                    }`}
+                  >
+                    {resyncResult.type === "success" ? (
+                      <CheckCircle2 size={14} className="flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                    )}
+                    <span>{resyncResult.message}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
