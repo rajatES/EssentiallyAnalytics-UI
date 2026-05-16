@@ -8,18 +8,21 @@ import {
   BarChart2,
   BarChart3,
   DollarSign,
+  Newspaper,
   Settings,
   Sparkles,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useRole, type UserRole } from "@/hooks/useRole";
 
-const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Web Traffic", href: "/traffic", icon: BarChart3 },
-  { name: "Reports", href: "/reports", icon: BarChart2 },
-  { name: "Revenue", href: "/revenue", icon: DollarSign },
-  { name: "Settings", href: "/settings", icon: Settings },
+const navItems: { name: string; href: string; icon: typeof LayoutDashboard; minRole: UserRole }[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, minRole: "user" },
+  { name: "Web Traffic", href: "/traffic", icon: BarChart3, minRole: "user" },
+  { name: "Reports", href: "/reports", icon: BarChart2, minRole: "user" },
+  { name: "Revenue", href: "/revenue", icon: DollarSign, minRole: "user" },
+  { name: "MSN Production", href: "/msn-production", icon: Newspaper, minRole: "user" },
+  { name: "Settings", href: "/settings", icon: Settings, minRole: "user" },
 ];
 
 interface SidebarProps {
@@ -29,6 +32,9 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
+  const { canAccess } = useRole();
+
+  const visibleItems = navItems.filter((item) => canAccess(item.minRole));
 
   return (
     <aside
@@ -43,16 +49,21 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <Sparkles size={18} />
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">
-              SocialMetrics
-            </span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400">
+                Essentially
+              </span>
+              <span className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white">
+                Analytics
+              </span>
+            </div>
           )}
         </div>
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 space-y-1 px-3 py-6 overflow-hidden">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
 

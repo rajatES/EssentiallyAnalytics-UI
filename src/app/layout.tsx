@@ -8,7 +8,7 @@ import Providers from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SocialMetrics | Analytics Dashboard",
+  title: "EssentiallyAnalytics | Analytics Dashboard",
   description: "Cross-channel social media performance",
 };
 

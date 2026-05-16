@@ -25,7 +25,7 @@ export default function TermsOfService() {
           <section className="space-y-3">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using the ES Studio / SocialMetrics dashboard ("Service"), you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access the Service.
+              By accessing or using the EssentiallyAnalytics dashboard ("Service"), you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access the Service.
             </p>
           </section>
 
@@ -74,7 +74,7 @@ export default function TermsOfService() {
           <section className="space-y-3">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">7. Limitation of Liability</h2>
             <p>
-              In no event shall ES Studio, nor its directors, employees, or partners, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
+              In no event shall EssentiallyAnalytics, nor its directors, employees, or partners, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
             </p>
           </section>
 

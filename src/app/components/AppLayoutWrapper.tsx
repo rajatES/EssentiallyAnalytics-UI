@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import GlobalSyncScreen from "./GlobalSyncScreen";
 import { useAuth } from "@/hooks/useAuth";
+import { RoleProvider } from "@/hooks/useRole";
 
 export default function AppLayoutWrapper({
   children,
@@ -17,7 +18,7 @@ export default function AppLayoutWrapper({
   // Public pages render standalone (no sidebar/topbar/auth-gated chrome) so
   // they remain viewable without an authenticated session.
   const isPublicPage = pathname === "/privacy" || pathname === "/terms";
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   useAuth();
 
@@ -30,18 +31,20 @@ export default function AppLayoutWrapper({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f8f9fa] dark:bg-gray-950 transition-colors">
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+    <RoleProvider>
+      <div className="flex h-screen overflow-hidden bg-[#f8f9fa] dark:bg-gray-950 transition-colors">
+        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-      <div
-        className={`flex flex-1 flex-col h-screen min-w-0 transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-56"}`}
-      >
-        <Topbar />
+        <div
+          className={`flex flex-1 flex-col h-screen min-w-0 transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-56"}`}
+        >
+          <Topbar />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-5 xl:p-8">
-          <GlobalSyncScreen>{children}</GlobalSyncScreen>
-        </main>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 pt-0 md:px-5 md:pb-5 xl:px-8 xl:pb-8">
+            <GlobalSyncScreen>{children}</GlobalSyncScreen>
+          </main>
+        </div>
       </div>
-    </div>
+    </RoleProvider>
   );
 }

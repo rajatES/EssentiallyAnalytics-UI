@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRevenueMetrics, RevenueMetricRow, triggerSocialManualSync } from "@/lib/api";
+import { useRole } from "@/hooks/useRole";
 import {
   DollarSign,
   TrendingUp,
@@ -383,6 +384,7 @@ function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
    MAIN PAGE
    ═══════════════════════════════════════════════ */
 export default function RevenuePage() {
+  const { canAccess } = useRole();
   const defaults = getDefaultDates();
   const [startDate, setStartDate] = useState(defaults.startDate);
   const [endDate, setEndDate] = useState(defaults.endDate);
@@ -554,14 +556,16 @@ export default function RevenuePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleSync}
-            disabled={isSyncing}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-          >
-            <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
-            {isSyncing ? "Syncing..." : "Manual Sync"}
-          </button>
+          {canAccess("admin") && (
+            <button
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+            >
+              <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
+              {isSyncing ? "Syncing..." : "Manual Sync"}
+            </button>
+          )}
           <button
             onClick={handleExport}
             disabled={isLoading || teamGroups.length === 0}

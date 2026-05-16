@@ -3,7 +3,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function Topbar() {
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 px-4 lg:px-6 backdrop-blur-md transition-colors">
+    <header className="relative sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 px-4 lg:px-6 backdrop-blur-md transition-colors">
       <div />
       
       <div className="flex items-center gap-6">
@@ -25,6 +25,13 @@ export default function Topbar() {
           </div>
         </div>
       </div>
+
+      {/* Gradient fade extending below the topbar — content scrolling
+          up through this zone fades out before going behind the glass */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 right-0 top-full h-8 bg-gradient-to-b from-[#f8f9fa]/90 to-transparent dark:from-gray-950/90"
+      />
     </header>
   );
 }

@@ -32,7 +32,7 @@ export default function PrivacyPolicy() {
               1. Introduction
             </h2>
             <p>
-              Welcome to ES Studio ("we," "our," or "us"). We are committed to
+              Welcome to EssentiallyAnalytics ("we," "our," or "us"). We are committed to
               protecting your personal information and your right to privacy.
               This Privacy Policy outlines how we collect, use, and safeguard
               your data when you use our analytics dashboard and connect

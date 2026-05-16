@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { logoutUser } from "@/lib/api";
+import { useRole } from "@/hooks/useRole";
 import {
   Facebook,
   Instagram,
@@ -32,6 +33,7 @@ declare global {
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function SettingsPage() {
+  const { canAccess } = useRole();
   const router = useRouter();
 
   const [connected, setConnected] = useState({ meta: false, instagram: false });
@@ -383,7 +385,7 @@ export default function SettingsPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your connected social accounts and workspace preferences.</p>
       </div>
 
-      {syncStatus?.isSyncing && (
+      {canAccess("management") && syncStatus?.isSyncing && (
         <div className="rounded-xl border border-blue-100 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10 p-4 flex items-start gap-4 shadow-sm animate-in fade-in slide-in-from-top-4">
           <div className="mt-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 p-2 text-blue-600 dark:text-blue-400">
             <Clock size={20} className="animate-pulse" />
@@ -404,7 +406,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {errorProfiles.length > 0 && (
+      {canAccess("management") && errorProfiles.length > 0 && (
         <div className="rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 p-4 shadow-sm animate-in fade-in slide-in-from-top-4">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 text-red-600 dark:text-red-400">
@@ -430,7 +432,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div>
+      {canAccess("management") && (<div>
         <h2 className="mb-4 text-base font-bold text-gray-900 dark:text-white">Connected Accounts</h2>
         <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
           <div className="flex flex-col divide-y divide-gray-50 dark:divide-gray-800/50">
@@ -513,8 +515,9 @@ export default function SettingsPage() {
 
           </div>
         </div>
-      </div>
+      </div>)}
 
+      {canAccess("management") && (<>
       {/* Email Reports Section */}
       <div className="pt-4">
         <h2 className="mb-4 text-base font-bold text-gray-900 dark:text-white">Email Reports</h2>
@@ -618,6 +621,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      </>)}
 
       <div className="pt-4">
         <h2 className="mb-4 text-base font-bold text-gray-900 dark:text-white">Session Management</h2>
@@ -625,7 +629,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-gray-900 dark:text-white">Sign Out</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Securely log out of your Social Studio Analytics workspace.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Securely log out of your EssentiallyAnalytics workspace.</p>
             </div>
             <button 
               onClick={handleAppLogout}
@@ -639,7 +643,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {showDisconnectModal && (
+      {canAccess("management") && showDisconnectModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
@@ -691,7 +695,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {showModal && (
+      {canAccess("management") && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">

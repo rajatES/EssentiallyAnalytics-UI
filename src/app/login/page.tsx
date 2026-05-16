@@ -36,7 +36,7 @@ export default function LoginPage() {
             <Lock className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
-          <p className="text-sm text-gray-500 mt-2">Sign in to ES Studio</p>
+          <p className="text-sm text-gray-500 mt-2">Sign in to EssentiallyAnalytics</p>
         </div>
 
         {error && (

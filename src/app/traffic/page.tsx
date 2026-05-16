@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useRole } from "@/hooks/useRole";
 import {
   MousePointer2,
   Users,
@@ -30,7 +31,6 @@ import { cn } from "@/lib/utils";
 import { CountryStats } from "@/components/ui/CountryStats";
 import { TrafficChart } from "@/features/traffic/components/TrafficChart";
 import { TrafficTable } from "@/features/traffic/components/TrafficTable";
-
 import { useTrafficData } from "@/features/traffic/hooks/useTrafficData";
 import {
   fetchPageMappings,
@@ -714,6 +714,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
 // 2. MAIN DASHBOARD COMPONENT (Traffic Overview + Table)
 // =====================================================================
 export default function WebTrafficPage() {
+  const { canAccess } = useRole();
   const [mounted, setMounted] = useState(false);
   const [showMappings, setShowMappings] = useState(false);
 
@@ -860,14 +861,16 @@ export default function WebTrafficPage() {
         </div>
 
         <div className="flex items-center justify-end gap-3 w-full xl:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 border-gray-100 dark:border-gray-800">
-          <button
-            onClick={sync.handleSync}
-            disabled={sync.isSyncing}
-            className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 font-bold rounded-lg text-sm px-4 py-2 transition-all shadow-sm disabled:opacity-50"
-          >
-            <Database className={cn("w-4 h-4", sync.isSyncing && "animate-pulse")} />
-            <span className="whitespace-nowrap">{sync.isSyncing ? "Syncing..." : "Sync BQ"}</span>
-          </button>
+          {canAccess("admin") && (
+            <button
+              onClick={sync.handleSync}
+              disabled={sync.isSyncing}
+              className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 font-bold rounded-lg text-sm px-4 py-2 transition-all shadow-sm disabled:opacity-50"
+            >
+              <Database className={cn("w-4 h-4", sync.isSyncing && "animate-pulse")} />
+              <span className="whitespace-nowrap">{sync.isSyncing ? "Syncing..." : "Sync BQ"}</span>
+            </button>
+          )}
           <button
             onClick={() => refresh()}
             className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-black font-bold rounded-lg text-sm px-5 py-2 transition-all shadow-sm active:scale-95"

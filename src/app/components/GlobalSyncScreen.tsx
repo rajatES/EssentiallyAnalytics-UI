@@ -42,7 +42,7 @@ export default function GlobalSyncScreen({
             // SYNC JUST FINISHED!
             initialJobsRef.current = null;
             setInitialJobs(null);
-            
+
             // Invalidate React Query caches so all charts automatically re-fetch the newly downloaded data!
             queryClient.invalidateQueries({ queryKey: ["meta-aggregate"] });
             queryClient.invalidateQueries({ queryKey: ["meta-demographics"] });

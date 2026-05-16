@@ -15,7 +15,7 @@ export function useAuth() {
     // Check auth by hitting a protected endpoint — the HttpOnly cookie
     // is sent automatically via axios withCredentials: true
     apiClient
-      .get("/api/auth/meta/sync-status")
+      .get("/api/auth/me")
       .catch((err) => {
         if (err.response?.status === 401 || err.response?.status === 403) {
           router.replace("/login");
