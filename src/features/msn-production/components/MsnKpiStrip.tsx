@@ -43,8 +43,8 @@ export default function MsnKpiStrip({ data, isLoading }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
       {CARDS.map((c) => {
-        const value = data[c.key] as number;
-        const delta = data.deltas[c.key] ?? 0;
+        const value = (data[c.key] as number) ?? 0;
+        const delta = data.deltas?.[c.key] ?? 0;
         const isPositive = c.key === "dropOffRate" || c.key === "avgLeadTimeHours" ? delta <= 0 : delta >= 0;
 
         return (

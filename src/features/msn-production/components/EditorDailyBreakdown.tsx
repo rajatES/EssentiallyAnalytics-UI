@@ -211,7 +211,7 @@ export default function EditorDailyBreakdown({ data, isLoading }: Props) {
     );
   }
 
-  const teamAvg = data.teamAverage;
+  const teamAvg = data.teamAverage ?? { avgSlides: 0, avgSlideshows: 0, avgArticles: 0, avgTotal: 0 };
 
   const TABS: { key: Tab; label: string; icon: typeof Calendar }[] = [
     { key: "snapshot", label: "Daily", icon: Calendar },
@@ -359,7 +359,8 @@ export default function EditorDailyBreakdown({ data, isLoading }: Props) {
               </thead>
               <tbody>
                 {gridData.editors.map((editor) => {
-                  const editorDays = gridData.map.get(editor)!;
+                  const editorDays = gridData.map.get(editor);
+                  if (!editorDays) return null;
                   const pAvg = avgMap.get(editor);
                   const avg = pAvg?.avgTotal ?? 0;
                   return (

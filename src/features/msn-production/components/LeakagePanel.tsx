@@ -38,7 +38,7 @@ function LeakageTable({ title, count, items, color }: {
       </button>
 
       {expanded && items.length > 0 && (
-        <div className="border-t px-4 pb-3 pt-2 ${accent.border}">
+        <div className={`border-t px-4 pb-3 pt-2 ${accent.border}`}>
           <table className="w-full text-xs">
             <thead>
               <tr className="text-left text-gray-500 dark:text-gray-400">

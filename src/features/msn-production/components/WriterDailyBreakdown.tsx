@@ -212,7 +212,7 @@ export default function WriterDailyBreakdown({ data, isLoading }: Props) {
     );
   }
 
-  const teamAvg = data.teamAverage;
+  const teamAvg = data.teamAverage ?? { avgSlides: 0, avgSlideshows: 0, avgArticles: 0, avgTotal: 0 };
 
   const TABS: { key: Tab; label: string; icon: typeof Calendar }[] = [
     { key: "snapshot", label: "Daily", icon: Calendar },
@@ -373,7 +373,8 @@ export default function WriterDailyBreakdown({ data, isLoading }: Props) {
               </thead>
               <tbody>
                 {gridData.writers.map((writer) => {
-                  const writerDays = gridData.map.get(writer)!;
+                  const writerDays = gridData.map.get(writer);
+                  if (!writerDays) return null;
                   const pAvg = avgMap.get(writer);
                   const avg = pAvg?.avgTotal ?? 0;
                   return (

@@ -56,8 +56,11 @@ export default function MsnProductionPage() {
   const [endDate, setEndDate] = useState(todayDate);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
+  const [selectedWriters, setSelectedWriters] = useState<string[]>([]);
+  const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
   const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedAllotters, setSelectedAllotters] = useState<string[]>([]);
 
   const [tsGranularity, setTsGranularity] = useState("week");
   const [mixGranularity, setMixGranularity] = useState("week");
@@ -71,10 +74,13 @@ export default function MsnProductionPage() {
       endDate,
       brands: selectedBrands,
       feeds: selectedFeeds,
+      writers: selectedWriters,
+      editors: selectedEditors,
       contentTypes: selectedContentTypes,
       statuses: selectedStatuses,
+      allotters: selectedAllotters,
     }),
-    [startDate, endDate, selectedBrands, selectedFeeds, selectedContentTypes, selectedStatuses],
+    [startDate, endDate, selectedBrands, selectedFeeds, selectedWriters, selectedEditors, selectedContentTypes, selectedStatuses, selectedAllotters],
   );
 
   const syncStatus = useSyncStatus();
@@ -106,8 +112,11 @@ export default function MsnProductionPage() {
   const handleReset = useCallback(() => {
     setSelectedBrands([]);
     setSelectedFeeds([]);
+    setSelectedWriters([]);
+    setSelectedEditors([]);
     setSelectedContentTypes([]);
     setSelectedStatuses([]);
+    setSelectedAllotters([]);
     setStartDate(defaultStartDate());
     setEndDate(todayDate());
   }, []);
@@ -126,20 +135,20 @@ export default function MsnProductionPage() {
         endDate={endDate}
         selectedBrands={selectedBrands}
         selectedFeeds={selectedFeeds}
-        selectedWriters={[]}
-        selectedEditors={[]}
+        selectedWriters={selectedWriters}
+        selectedEditors={selectedEditors}
         selectedContentTypes={selectedContentTypes}
         selectedStatuses={selectedStatuses}
-        selectedAllotters={[]}
+        selectedAllotters={selectedAllotters}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onBrandsChange={setSelectedBrands}
         onFeedsChange={setSelectedFeeds}
-        onWritersChange={() => {}}
-        onEditorsChange={() => {}}
+        onWritersChange={setSelectedWriters}
+        onEditorsChange={setSelectedEditors}
         onContentTypesChange={setSelectedContentTypes}
         onStatusesChange={setSelectedStatuses}
-        onAllottersChange={() => {}}
+        onAllottersChange={setSelectedAllotters}
         onReset={handleReset}
         onSync={handleSync}
         isSyncing={isSyncing}

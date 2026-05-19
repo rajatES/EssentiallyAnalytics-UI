@@ -87,8 +87,11 @@ export default function StatusDistribution({ data, isLoading }: Props) {
     <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
       <h3 className="mb-4 text-sm font-bold text-gray-900 dark:text-white">Status Distribution</h3>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <StatusDonut title="Source Sheet" items={data.source} />
-        <StatusDonut title="Allotment Sheet" items={data.allotment} />
+        {data.source?.length > 0 && <StatusDonut title="Source Sheet" items={data.source} />}
+        {data.allotment?.length > 0 && <StatusDonut title="Allotment Sheet" items={data.allotment} />}
+        {!data.source?.length && !data.allotment?.length && (
+          <div className="col-span-full flex h-48 items-center justify-center text-sm text-gray-400">No data</div>
+        )}
       </div>
     </div>
   );

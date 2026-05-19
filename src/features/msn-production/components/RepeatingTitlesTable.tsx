@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, Fragment } from "react";
 import { ChevronUp, ChevronDown, ChevronRight, Download, Search, Copy } from "lucide-react";
 import type { RepeatingTitlesResult } from "../types";
 
@@ -144,9 +144,8 @@ export default function RepeatingTitlesTable({ data, isLoading }: Props) {
               const uniqueDates = [...new Set(row.assignments.map((a) => a.date))].sort();
 
               return (
-                <>
+                <Fragment key={key}>
                   <tr
-                    key={key}
                     onClick={() => setExpandedTitle(isExpanded ? null : key)}
                     className="cursor-pointer border-b border-gray-50 hover:bg-gray-50/50 dark:border-gray-800 dark:hover:bg-gray-800/30"
                   >
@@ -220,7 +219,7 @@ export default function RepeatingTitlesTable({ data, isLoading }: Props) {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </tbody>
