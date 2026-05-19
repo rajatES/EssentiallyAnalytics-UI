@@ -749,3 +749,8 @@ export async function fetchMsnLeakage(params: Record<string, any>) {
   const res = await apiClient.get(`${MSN_URL}/leakage`, { params: msnParams(params) });
   return res.data;
 }
+
+export async function fetchMsnRepeatingTitles(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/repeating-titles`, { params: msnParams(params) });
+  return res.data;
+}

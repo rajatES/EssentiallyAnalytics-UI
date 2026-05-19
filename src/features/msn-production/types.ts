@@ -159,3 +159,20 @@ export interface DailyBreakdownResult {
     avgTotal: number;
   };
 }
+
+export interface RepeatingTitleEntry {
+  title: string;
+  count: number;
+  assignments: {
+    writer: string;
+    date: string;
+    feed: string;
+    allottedBy: string;
+    status: string;
+  }[];
+}
+
+export interface RepeatingTitlesResult {
+  titles: RepeatingTitleEntry[];
+  totalCount: number;
+}

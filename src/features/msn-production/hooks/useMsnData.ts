@@ -15,6 +15,7 @@ import {
   fetchMsnWriterDaily,
   fetchMsnEditorDaily,
   fetchMsnLeakage,
+  fetchMsnRepeatingTitles,
 } from "@/lib/api";
 import type { MsnFilterParams } from "../types";
 
@@ -151,6 +152,14 @@ export function useLeakage(filters: MsnFilterParams) {
   return useQuery({
     queryKey: ["msn-leakage", filters],
     queryFn: () => fetchMsnLeakage(filterToParams(filters)),
+    staleTime: STALE,
+  });
+}
+
+export function useRepeatingTitles(filters: MsnFilterParams) {
+  return useQuery({
+    queryKey: ["msn-repeating-titles", filters],
+    queryFn: () => fetchMsnRepeatingTitles(filterToParams(filters)),
     staleTime: STALE,
   });
 }

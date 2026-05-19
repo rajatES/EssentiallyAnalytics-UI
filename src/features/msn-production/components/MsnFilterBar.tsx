@@ -183,27 +183,18 @@ export default function MsnFilterBar(props: Props) {
   const hasActiveFilters =
     selectedBrands.length > 0 ||
     selectedFeeds.length > 0 ||
-    selectedWriters.length > 0 ||
-    selectedEditors.length > 0 ||
     selectedContentTypes.length > 0 ||
-    selectedStatuses.length > 0 ||
-    selectedAllotters.length > 0;
+    selectedStatuses.length > 0;
 
   const activeTags: { label: string; onClear: () => void }[] = [];
   if (selectedBrands.length > 0 && selectedBrands.length !== (filterOptions?.brands.length ?? 0))
     activeTags.push({ label: `${selectedBrands.length} Brands`, onClear: () => onBrandsChange([]) });
   if (selectedFeeds.length > 0 && selectedFeeds.length !== (filterOptions?.feeds.length ?? 0))
     activeTags.push({ label: `${selectedFeeds.length} Feeds`, onClear: () => onFeedsChange([]) });
-  if (selectedWriters.length > 0 && selectedWriters.length !== (filterOptions?.writers.length ?? 0))
-    activeTags.push({ label: `${selectedWriters.length} Writers`, onClear: () => onWritersChange([]) });
-  if (selectedEditors.length > 0 && selectedEditors.length !== (filterOptions?.editors.length ?? 0))
-    activeTags.push({ label: `${selectedEditors.length} Editors`, onClear: () => onEditorsChange([]) });
   if (selectedContentTypes.length > 0 && selectedContentTypes.length !== (filterOptions?.contentTypes.length ?? 0))
     activeTags.push({ label: `${selectedContentTypes.length} Types`, onClear: () => onContentTypesChange([]) });
   if (selectedStatuses.length > 0 && selectedStatuses.length !== (filterOptions?.statuses.length ?? 0))
     activeTags.push({ label: `${selectedStatuses.length} Statuses`, onClear: () => onStatusesChange([]) });
-  if (selectedAllotters.length > 0 && selectedAllotters.length !== (filterOptions?.allotters.length ?? 0))
-    activeTags.push({ label: `${selectedAllotters.length} Allotters`, onClear: () => onAllottersChange([]) });
 
   const lastSyncLabel = syncStatus?.lastSyncTime
     ? `Synced ${formatTimeAgo(new Date(syncStatus.lastSyncTime))}`
@@ -240,11 +231,8 @@ export default function MsnFilterBar(props: Props) {
             <>
               <MultiSelectDropdown label="Brands"    options={filterOptions.brands}       selected={selectedBrands}       onChange={onBrandsChange} />
               <MultiSelectDropdown label="Feeds"     options={filterOptions.feeds}        selected={selectedFeeds}        onChange={onFeedsChange} />
-              <MultiSelectDropdown label="Writers"   options={filterOptions.writers}      selected={selectedWriters}      onChange={onWritersChange} />
-              <MultiSelectDropdown label="Editors"   options={filterOptions.editors}      selected={selectedEditors}      onChange={onEditorsChange} />
               <MultiSelectDropdown label="Types"     options={filterOptions.contentTypes} selected={selectedContentTypes} onChange={onContentTypesChange} />
               <MultiSelectDropdown label="Statuses"  options={filterOptions.statuses}     selected={selectedStatuses}     onChange={onStatusesChange} />
-              <MultiSelectDropdown label="Allotters" options={filterOptions.allotters}    selected={selectedAllotters}    onChange={onAllottersChange} />
             </>
           )}
         </div>

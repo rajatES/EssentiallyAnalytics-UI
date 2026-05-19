@@ -19,6 +19,7 @@ import {
   useWriterDaily,
   useEditorDaily,
   useLeakage,
+  useRepeatingTitles,
 } from "@/features/msn-production/hooks/useMsnData";
 
 import MsnFilterBar from "@/features/msn-production/components/MsnFilterBar";
@@ -27,9 +28,7 @@ import ProductionFunnel from "@/features/msn-production/components/ProductionFun
 import ProductionTimeseries from "@/features/msn-production/components/ProductionTimeseries";
 import StatusDistribution from "@/features/msn-production/components/StatusDistribution";
 import FeedLeaderboard from "@/features/msn-production/components/FeedLeaderboard";
-import WriterPerformanceTable from "@/features/msn-production/components/WriterPerformanceTable";
-import EditorLoadTable from "@/features/msn-production/components/EditorLoadTable";
-import AllotterAnalytics from "@/features/msn-production/components/AllotterAnalytics";
+import PerformanceTable from "@/features/msn-production/components/PerformanceTable";
 import ContentTypeMix from "@/features/msn-production/components/ContentTypeMix";
 import ProductionHeatmap from "@/features/msn-production/components/ProductionHeatmap";
 import WriterComparisonChart from "@/features/msn-production/components/WriterComparisonChart";
@@ -38,6 +37,7 @@ import AllotterComparisonChart from "@/features/msn-production/components/Allott
 import WriterDailyBreakdown from "@/features/msn-production/components/WriterDailyBreakdown";
 import EditorDailyBreakdown from "@/features/msn-production/components/EditorDailyBreakdown";
 import LeakagePanel from "@/features/msn-production/components/LeakagePanel";
+import RepeatingTitlesTable from "@/features/msn-production/components/RepeatingTitlesTable";
 import { useRole } from "@/hooks/useRole";
 
 function defaultStartDate(): string {
@@ -56,11 +56,8 @@ export default function MsnProductionPage() {
   const [endDate, setEndDate] = useState(todayDate);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
-  const [selectedWriters, setSelectedWriters] = useState<string[]>([]);
-  const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
   const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [selectedAllotters, setSelectedAllotters] = useState<string[]>([]);
 
   const [tsGranularity, setTsGranularity] = useState("week");
   const [mixGranularity, setMixGranularity] = useState("week");
@@ -74,13 +71,10 @@ export default function MsnProductionPage() {
       endDate,
       brands: selectedBrands,
       feeds: selectedFeeds,
-      writers: selectedWriters,
-      editors: selectedEditors,
       contentTypes: selectedContentTypes,
       statuses: selectedStatuses,
-      allotters: selectedAllotters,
     }),
-    [startDate, endDate, selectedBrands, selectedFeeds, selectedWriters, selectedEditors, selectedContentTypes, selectedStatuses, selectedAllotters],
+    [startDate, endDate, selectedBrands, selectedFeeds, selectedContentTypes, selectedStatuses],
   );
 
   const syncStatus = useSyncStatus();
@@ -98,6 +92,7 @@ export default function MsnProductionPage() {
   const writerDaily = useWriterDaily(filters);
   const editorDaily = useEditorDaily(filters);
   const leakage = useLeakage(filters);
+  const repeatingTitles = useRepeatingTitles(filters);
 
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
@@ -111,11 +106,8 @@ export default function MsnProductionPage() {
   const handleReset = useCallback(() => {
     setSelectedBrands([]);
     setSelectedFeeds([]);
-    setSelectedWriters([]);
-    setSelectedEditors([]);
     setSelectedContentTypes([]);
     setSelectedStatuses([]);
-    setSelectedAllotters([]);
     setStartDate(defaultStartDate());
     setEndDate(todayDate());
   }, []);
@@ -134,20 +126,20 @@ export default function MsnProductionPage() {
         endDate={endDate}
         selectedBrands={selectedBrands}
         selectedFeeds={selectedFeeds}
-        selectedWriters={selectedWriters}
-        selectedEditors={selectedEditors}
+        selectedWriters={[]}
+        selectedEditors={[]}
         selectedContentTypes={selectedContentTypes}
         selectedStatuses={selectedStatuses}
-        selectedAllotters={selectedAllotters}
+        selectedAllotters={[]}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onBrandsChange={setSelectedBrands}
         onFeedsChange={setSelectedFeeds}
-        onWritersChange={setSelectedWriters}
-        onEditorsChange={setSelectedEditors}
+        onWritersChange={() => {}}
+        onEditorsChange={() => {}}
         onContentTypesChange={setSelectedContentTypes}
         onStatusesChange={setSelectedStatuses}
-        onAllottersChange={setSelectedAllotters}
+        onAllottersChange={() => {}}
         onReset={handleReset}
         onSync={handleSync}
         isSyncing={isSyncing}
@@ -177,16 +169,16 @@ export default function MsnProductionPage() {
 
       <FeedLeaderboard data={feedStats.data} isLoading={feedStats.isLoading} />
 
-      <WriterPerformanceTable data={writerStats.data} isLoading={writerStats.isLoading} />
+      <PerformanceTable
+        writerData={writerStats.data}
+        editorData={editorStats.data}
+        allotterData={allotterStats.data}
+        isLoading={writerStats.isLoading || editorStats.isLoading || allotterStats.isLoading}
+      />
 
       <WriterDailyBreakdown data={writerDaily.data} isLoading={writerDaily.isLoading} />
 
       <WriterComparisonChart data={writerStats.data} isLoading={writerStats.isLoading} />
-
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <EditorLoadTable data={editorStats.data} isLoading={editorStats.isLoading} />
-        <AllotterAnalytics data={allotterStats.data} isLoading={allotterStats.isLoading} />
-      </div>
 
       <EditorDailyBreakdown data={editorDaily.data} isLoading={editorDaily.isLoading} />
 
@@ -203,6 +195,8 @@ export default function MsnProductionPage() {
       />
 
       <LeakagePanel data={leakage.data} isLoading={leakage.isLoading} />
+
+      <RepeatingTitlesTable data={repeatingTitles.data} isLoading={repeatingTitles.isLoading} />
     </div>
   );
 }

@@ -12,6 +12,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             staleTime: 1000 * 60 * 10,
             refetchOnWindowFocus: false,
             retry: 1,
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+          },
+          mutations: {
+            retry: 0,
           },
         },
       })
