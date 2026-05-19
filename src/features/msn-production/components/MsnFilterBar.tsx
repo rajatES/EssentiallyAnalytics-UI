@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Search, ChevronDown, X, RotateCcw, RefreshCw, CheckSquare, Square } from "lucide-react";
 import type { FilterOptions, SyncStatus } from "../types";
 
@@ -39,18 +40,56 @@ interface DropdownProps {
 function MultiSelectDropdown({ label, options, selected, onChange }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const updatePos = () => {
+      const rect = buttonRef.current!.getBoundingClientRect();
+      const panelWidth = 256;
+      const viewportW = window.innerWidth;
+      let left = rect.left;
+      if (left + panelWidth > viewportW - 8) left = Math.max(8, viewportW - panelWidth - 8);
+      setPos({ top: rect.bottom + 4, left });
+    };
+    updatePos();
+    window.addEventListener("scroll", updatePos, true);
+    window.addEventListener("resize", updatePos);
+    return () => {
+      window.removeEventListener("scroll", updatePos, true);
+      window.removeEventListener("resize", updatePos);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
+      setSearch("");
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
         setOpen(false);
         setSearch("");
       }
     }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
 
   const filtered = useMemo(() => {
     if (!search) return options;
@@ -60,6 +99,7 @@ function MultiSelectDropdown({ label, options, selected, onChange }: DropdownPro
 
   const allSelected = selected.length === options.length || selected.length === 0;
   const count = allSelected ? options.length : selected.length;
+  const hasOptions = options.length > 0;
 
   const toggle = (item: string) => {
     if (selected.includes(item)) {
@@ -72,11 +112,84 @@ function MultiSelectDropdown({ label, options, selected, onChange }: DropdownPro
   const selectAll = () => onChange([]);
   const selectNone = () => onChange(options.length > 0 ? [options[0]] : []);
 
+  const panel = open && pos && mounted ? createPortal(
+    <div
+      ref={panelRef}
+      style={{ position: "fixed", top: pos.top, left: pos.left, width: 256 }}
+      className="z-[100] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
+    >
+      {options.length > 6 && (
+        <div className="border-b border-gray-100 p-2 dark:border-gray-800">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder={`Search ${label.toLowerCase()}...`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-md border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              autoFocus
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex border-b border-gray-100 dark:border-gray-800">
+        <button
+          onClick={selectAll}
+          className="flex-1 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-gray-800"
+        >
+          All
+        </button>
+        <button
+          onClick={selectNone}
+          className="flex-1 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          None
+        </button>
+      </div>
+
+      <div className="max-h-56 overflow-y-auto p-1.5">
+        {filtered.length === 0 ? (
+          <p className="px-2 py-3 text-center text-xs text-gray-400">
+            {options.length === 0 ? "No options available" : "No matches"}
+          </p>
+        ) : (
+          filtered.map((item) => {
+            const isSelected = allSelected || selected.includes(item);
+            return (
+              <button
+                key={item}
+                onClick={() => toggle(item)}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                  isSelected
+                    ? "bg-indigo-50/50 font-semibold text-gray-900 dark:bg-indigo-900/20 dark:text-white"
+                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                }`}
+              >
+                {isSelected ? (
+                  <CheckSquare size={15} className="flex-shrink-0 text-indigo-600 dark:text-indigo-400" />
+                ) : (
+                  <Square size={15} className="flex-shrink-0 text-gray-300 dark:text-gray-600" />
+                )}
+                <span className="truncate">{item}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>,
+    document.body,
+  ) : null;
+
   return (
-    <div className="relative flex-shrink-0" ref={ref}>
+    <>
       <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 min-w-[100px] justify-between rounded border px-2 py-1 text-[11px] font-medium transition-colors ${
+        ref={buttonRef}
+        type="button"
+        onClick={() => hasOptions && setOpen((o) => !o)}
+        disabled={!hasOptions}
+        className={`flex flex-shrink-0 items-center gap-1.5 min-w-[100px] justify-between rounded border px-2 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
           !allSelected
             ? "border-indigo-300 bg-indigo-50/50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-400"
             : "border-gray-200 bg-white/60 text-gray-700 hover:bg-white/80 dark:border-gray-600 dark:bg-gray-800/60 dark:text-gray-200 dark:hover:bg-gray-700/80"
@@ -90,66 +203,8 @@ function MultiSelectDropdown({ label, options, selected, onChange }: DropdownPro
           className={`flex-shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-
-      {open && (
-        <div className="absolute top-full left-0 z-30 mt-1 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
-          {options.length > 6 && (
-            <div className="border-b border-gray-100 p-2 dark:border-gray-800">
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder={`Search ${label.toLowerCase()}...`}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-md border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                  autoFocus
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex border-b border-gray-100 dark:border-gray-800">
-            <button
-              onClick={selectAll}
-              className="flex-1 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-gray-800"
-            >
-              All
-            </button>
-            <button
-              onClick={selectNone}
-              className="flex-1 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
-            >
-              None
-            </button>
-          </div>
-
-          <div className="max-h-56 overflow-y-auto p-1.5">
-            {filtered.map((item) => {
-              const isSelected = allSelected || selected.includes(item);
-              return (
-                <button
-                  key={item}
-                  onClick={() => toggle(item)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                    isSelected
-                      ? "bg-indigo-50/50 font-semibold text-gray-900 dark:bg-indigo-900/20 dark:text-white"
-                      : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {isSelected ? (
-                    <CheckSquare size={15} className="flex-shrink-0 text-indigo-600 dark:text-indigo-400" />
-                  ) : (
-                    <Square size={15} className="flex-shrink-0 text-gray-300 dark:text-gray-600" />
-                  )}
-                  <span className="truncate">{item}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+      {panel}
+    </>
   );
 }
 
