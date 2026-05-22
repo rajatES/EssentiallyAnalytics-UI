@@ -700,12 +700,16 @@ export default function PostInsightsTab({
                 : "0.0";
             const isVideo =
               post.postType.includes("video") || post.postType === "REELS";
+            const scrollStopRate =
+              !isVideo && post.reach > 0
+                ? ((totalEngagements / post.reach) * 100).toFixed(1)
+                : null;
 
             return (
               <div
                 key={post.postId}
                 className={`flex flex-col bg-white dark:bg-gray-900 rounded-xl transition-all relative ${isSelected ? "border-[2px] border-blue-500 shadow-md ring-2 ring-blue-100 dark:ring-blue-900" : "border border-gray-200 dark:border-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-gray-300 dark:hover:border-gray-700"}`}
-              >
+>
                 <div className="absolute top-3 right-3 z-10 bg-white dark:bg-gray-800 rounded-sm">
                   <button
                     onClick={() => toggleSelectPost(post.postId)}
@@ -838,6 +842,17 @@ export default function PostInsightsTab({
                         {engRate}%
                       </span>
                     </div>
+
+                    {scrollStopRate !== null && (
+                      <div className="flex justify-between items-center py-2 border-b border-dashed border-gray-200 dark:border-gray-700">
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">
+                          Scroll Stop Rate
+                        </span>
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {scrollStopRate}%
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -903,6 +918,7 @@ export default function PostInsightsTab({
                   <th className="px-4 py-3 text-right">Comments</th>
                   <th className="px-4 py-3 text-right">Shares</th>
                   <th className="px-4 py-3 text-right">Eng. Rate</th>
+                  <th className="px-4 py-3 text-right">Scroll Stop</th>
                   <th className="px-4 py-3 text-center">Link</th>
                 </tr>
               </thead>
@@ -918,6 +934,10 @@ export default function PostInsightsTab({
                   const isVideo =
                     post.postType.includes("video") ||
                     post.postType === "REELS";
+                  const scrollStopRate =
+                    !isVideo && post.reach > 0
+                      ? ((totalEngagements / post.reach) * 100).toFixed(1)
+                      : null;
 
                   return (
                     <tr
@@ -1000,6 +1020,9 @@ export default function PostInsightsTab({
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">
                         {engRate}%
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">
+                        {scrollStopRate !== null ? `${scrollStopRate}%` : "-"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <a
