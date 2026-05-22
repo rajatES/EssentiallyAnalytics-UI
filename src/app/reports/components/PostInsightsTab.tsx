@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutGrid,
@@ -16,6 +16,9 @@ import {
   Link2,
   FileText,
   ExternalLink,
+  Search,
+  ChevronDown,
+  X,
 } from "lucide-react";
 import DateRangePicker from "../../components/DateRangePicker";
 import { Profile } from "../types";
@@ -94,7 +97,10 @@ export default function PostInsightsTab({
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [sortMetric, setSortMetric] = useState<SortMetric>("date");
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [sourceSearchQuery, setSourceSearchQuery] = useState("");
+  const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false);
+  const sourceDropdownRef = useRef<HTMLDivElement>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [authorFilter, setAuthorFilter] = useState<string>("all");
@@ -121,13 +127,43 @@ export default function PostInsightsTab({
     viewMode,
   ]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        sourceDropdownRef.current &&
+        !sourceDropdownRef.current.contains(e.target as Node)
+      ) {
+        setSourceDropdownOpen(false);
+        setSourceSearchQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const availableProfiles = profiles.filter((p) =>
+    selectedProfileIds.includes(p.profileId),
+  );
+
+  const filteredDropdownProfiles = availableProfiles.filter((p) =>
+    p.name.toLowerCase().includes(sourceSearchQuery.toLowerCase()),
+  );
+
+  const toggleSourceProfile = (profileId: string) => {
+    setSourceFilter((prev) =>
+      prev.includes(profileId)
+        ? prev.filter((id) => id !== profileId)
+        : [...prev, profileId],
+    );
+  };
+
   const uniqueAuthors = Array.from(
     new Set((posts as PostData[]).map((p) => p.authorName).filter(Boolean)),
   );
   
   const filteredPosts = (posts as PostData[])
     .filter((post) => {
-      if (sourceFilter !== "all" && post.profileId !== sourceFilter)
+      if (sourceFilter.length > 0 && !sourceFilter.includes(post.profileId))
         return false;
 
       if (typeFilter !== "all") {
@@ -210,7 +246,7 @@ export default function PostInsightsTab({
   );
 
   const clearAllFilters = () => {
-    setSourceFilter("all");
+    setSourceFilter([]);
     setTypeFilter("all");
     setStatusFilter("all");
     setAuthorFilter("all");
@@ -329,24 +365,148 @@ export default function PostInsightsTab({
     <div className="space-y-4">
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex flex-wrap items-center gap-6 flex-1">
-          <div className="flex flex-col space-y-1 w-full sm:w-auto min-w-[160px]">
+          <div
+            ref={sourceDropdownRef}
+            className="flex flex-col space-y-1 w-full sm:w-auto min-w-[200px] relative"
+          >
             <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">
               Sources
             </label>
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 outline-none font-semibold shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            <button
+              type="button"
+              onClick={() => setSourceDropdownOpen((prev) => !prev)}
+              className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 outline-none font-semibold shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <option value="all">Viewing all</option>
-              {profiles
-                .filter((p) => selectedProfileIds.includes(p.profileId))
-                .map((p) => (
-                  <option key={p.profileId} value={p.profileId}>
-                    {p.name}
-                  </option>
-                ))}
-            </select>
+              <span className="truncate">
+                {sourceFilter.length === 0
+                  ? "Viewing all"
+                  : sourceFilter.length === 1
+                    ? availableProfiles.find(
+                        (p) => p.profileId === sourceFilter[0],
+                      )?.name || "1 selected"
+                    : `${sourceFilter.length} selected`}
+              </span>
+              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                {sourceFilter.length > 0 && (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSourceFilter([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X size={14} />
+                  </span>
+                )}
+                <ChevronDown
+                  size={14}
+                  className={`text-gray-400 transition-transform ${sourceDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </button>
+
+            {sourceDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 w-full min-w-[240px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                  <div className="relative">
+                    <Search
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+                    <input
+                      type="text"
+                      value={sourceSearchQuery}
+                      onChange={(e) => setSourceSearchQuery(e.target.value)}
+                      placeholder="Search pages..."
+                      className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md outline-none focus:border-blue-500 text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div className="max-h-[220px] overflow-y-auto">
+                  {filteredDropdownProfiles.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-400 text-center">
+                      No pages found
+                    </div>
+                  ) : (
+                    filteredDropdownProfiles.map((p) => {
+                      const isChecked = sourceFilter.includes(p.profileId);
+                      return (
+                        <button
+                          key={p.profileId}
+                          type="button"
+                          onClick={() => toggleSourceProfile(p.profileId)}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <span
+                            className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked ? "bg-blue-500 border-blue-500" : "border-gray-300 dark:border-gray-600"}`}
+                          >
+                            {isChecked && (
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 10 10"
+                                fill="none"
+                              >
+                                <path
+                                  d="M2 5L4 7L8 3"
+                                  stroke="white"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </span>
+                          <span className="flex items-center gap-1.5 truncate">
+                            {p.platform === "facebook" ? (
+                              <Facebook
+                                size={12}
+                                className="text-[#1877F2] fill-[#1877F2] flex-shrink-0"
+                              />
+                            ) : (
+                              <Instagram
+                                size={12}
+                                className="text-[#E1306C] flex-shrink-0"
+                              />
+                            )}
+                            <span className="truncate text-gray-700 dark:text-gray-200 font-medium">
+                              {p.name}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+
+                {availableProfiles.length > 1 && (
+                  <div className="p-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSourceFilter(
+                          availableProfiles.map((p) => p.profileId),
+                        )
+                      }
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                    >
+                      Select all
+                    </button>
+                    {sourceFilter.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSourceFilter([])}
+                        className="text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col space-y-1 w-full sm:w-auto min-w-[160px]">
@@ -400,7 +560,7 @@ export default function PostInsightsTab({
             </select>
           </div>
 
-          {(sourceFilter !== "all" ||
+          {(sourceFilter.length > 0 ||
             typeFilter !== "all" ||
             statusFilter !== "all" ||
             authorFilter !== "all") && (
