@@ -182,7 +182,7 @@ export default function PostInsightsTab({
       if (statusFilter !== "all") {
         if (statusFilter === "published" && !post.isPublished) return false;
         if (statusFilter === "unpublished" && post.isPublished) return false;
-        if (statusFilter === "boosted" && !post.isBoosted) return false;
+        // if (statusFilter === "boosted" && !post.isBoosted) return false;
       }
 
       if (authorFilter !== "all" && post.authorName !== authorFilter)
@@ -334,7 +334,7 @@ export default function PostInsightsTab({
       getProfileName(p.profileId),
       new Date(p.postedAt).toLocaleDateString(),
       getCleanTypeString(p.postType),
-      p.isBoosted ? "Boosted" : p.isPublished ? "Published" : "Unpublished",
+      p.isPublished ? "Published" : "Unpublished",
       p.authorName || "Unknown",
       p.reach,
       p.views,
@@ -538,7 +538,7 @@ export default function PostInsightsTab({
               <option value="all">Viewing all</option>
               <option value="published">Published</option>
               <option value="unpublished">Unpublished</option>
-              <option value="boosted">Boosted</option>
+              {/* <option value="boosted">Boosted</option> */}
             </select>
           </div>
 
@@ -863,11 +863,11 @@ export default function PostInsightsTab({
                         Unpublished
                       </span>
                     )}
-                    {post.isBoosted && (
+                    {/* {post.isBoosted && (
                       <span className="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                         Boosted
                       </span>
-                    )}
+                    )} */}
                   </div>
                   <div className="flex gap-3">
                     <Tag
