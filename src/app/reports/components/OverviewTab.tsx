@@ -15,6 +15,7 @@ import { METRIC_CONFIG, MetricKey, DemographicData } from "../types";
 import DemographicsSection from "./DemographicsSection";
 import PageMetricsTable from "./PageMetricsTable";
 import DateRangePicker from "../../components/DateRangePicker";
+import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
 import {
   Settings2,
   TrendingUp,
@@ -162,6 +163,15 @@ export default function OverviewTab({
   const [startDate, setStartDate] = useState(getLocalDateString(initStart));
   const [endDate, setEndDate] = useState(getLocalDateString(initEnd));
   const [activeMetric, setActiveMetric] = useState<MetricKey>("netFollowers");
+
+  // On-demand backfill: if the selected range has dates missing from the DB,
+  // trigger a resync for them. Charts refill automatically when sync completes.
+  useEnsureCoverage(
+    selectedProfileIds,
+    startDate,
+    endDate,
+    selectedProfileIds.length > 0,
+  );
 
   // --- React Query Implementation ---
   const { data: aggData, isLoading: loading, error } = useQuery({

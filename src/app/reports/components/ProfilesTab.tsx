@@ -21,6 +21,7 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { METRIC_CONFIG, MetricKey, Profile, DemographicData } from "../types";
 import DateRangePicker from "../../components/DateRangePicker";
 import DemographicsSection from "./DemographicsSection";
+import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
 
 const TrendIndicator = ({ change }: { change: number }) => {
   if (isNaN(change) || change === 0)
@@ -139,6 +140,21 @@ export default function ProfilesTab({ profile }: { profile: Profile | null }) {
     actualCompareStart = getUtcDateString(prevStartObj);
     actualCompareEnd = getUtcDateString(prevEndObj);
   }
+
+  // On-demand backfill for any dates missing from the DB — both the current
+  // period and the (often older) comparison period.
+  useEnsureCoverage(
+    profile ? [profile.profileId] : [],
+    startDate,
+    endDate,
+    !!profile,
+  );
+  useEnsureCoverage(
+    profile ? [profile.profileId] : [],
+    actualCompareStart,
+    actualCompareEnd,
+    !!profile && compareMode !== "none",
+  );
 
   // --- React Query: Fetch Current Period ---
   const { data: currentData, isLoading: loadingCurrent } = useQuery({

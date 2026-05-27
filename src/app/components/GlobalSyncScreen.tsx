@@ -44,8 +44,15 @@ export default function GlobalSyncScreen({
             setInitialJobs(null);
 
             // Invalidate React Query caches so all charts automatically re-fetch the newly downloaded data!
-            queryClient.invalidateQueries({ queryKey: ["meta-aggregate"] });
-            queryClient.invalidateQueries({ queryKey: ["meta-demographics"] });
+            queryClient.invalidateQueries({ queryKey: ["aggregate"] });
+            queryClient.invalidateQueries({
+              queryKey: ["demographics-aggregated"],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["demographics-profile"],
+            });
+            queryClient.invalidateQueries({ queryKey: ["per-page-aggregate"] });
+            queryClient.invalidateQueries({ queryKey: ["posts"] });
             queryClient.invalidateQueries({ queryKey: ["smart-analytics"] });
           } else if (!data.isSyncing) {
             initialJobsRef.current = null;

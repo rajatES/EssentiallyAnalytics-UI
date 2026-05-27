@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { METRIC_CONFIG, MetricKey } from "../types";
 import DateRangePicker from "../../components/DateRangePicker";
+import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
 
 const CustomXAxisTick = ({ x, y, payload, index }: any) => {
   const date = new Date(payload.value);
@@ -91,6 +92,14 @@ export default function CompareTab({
     "impressions",
     "engagements",
   ]);
+
+  // On-demand backfill for any dates missing from the DB in this range.
+  useEnsureCoverage(
+    selectedProfileIds,
+    startDate,
+    endDate,
+    selectedProfileIds.length > 0,
+  );
 
   // --- React Query Implementation ---
   const { data: aggData, isLoading: loading } = useQuery({
