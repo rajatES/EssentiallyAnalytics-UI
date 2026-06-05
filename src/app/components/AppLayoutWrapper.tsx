@@ -15,8 +15,7 @@ export default function AppLayoutWrapper({
 }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
-  // Public pages render standalone (no sidebar/topbar/auth-gated chrome) so
-  // they remain viewable without an authenticated session.
+  // Privacy and Terms pages are public — no auth or app chrome required.
   const isPublicPage = pathname === "/privacy" || pathname === "/terms";
   const [isCollapsed, setIsCollapsed] = useState(true);
 

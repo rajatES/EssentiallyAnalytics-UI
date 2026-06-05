@@ -1,24 +1,3 @@
-export interface BackendMetric {
-  event_day: string;
-  utm_source: string;
-  utm_medium: string;
-  utm_campaign: string;
-  recurring_users: number;
-  identified_users: number;
-  sessions: number;
-  pageviews: number;
-  users: number;
-  new_users: number;
-  event_count: number;
-  engagement_rate: string | number;
-  country?: string;
-  city?: string;
-  deviceCategory?: string;
-  user_gender?: string;
-  user_age?: string;
-}
-
-/** Lean response from the aggregated endpoint — grouped by (date, medium) only */
 export interface AggregatedMetric {
   event_day: string;
   utm_medium: string;

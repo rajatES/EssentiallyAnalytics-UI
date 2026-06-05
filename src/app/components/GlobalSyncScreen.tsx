@@ -39,11 +39,9 @@ export default function GlobalSyncScreen({
             initialJobsRef.current = data.jobsRemaining;
             setInitialJobs(data.jobsRemaining);
           } else if (!data.isSyncing && initialJobsRef.current !== null) {
-            // SYNC JUST FINISHED!
             initialJobsRef.current = null;
             setInitialJobs(null);
 
-            // Invalidate React Query caches so all charts automatically re-fetch the newly downloaded data!
             queryClient.invalidateQueries({ queryKey: ["aggregate"] });
             queryClient.invalidateQueries({
               queryKey: ["demographics-aggregated"],

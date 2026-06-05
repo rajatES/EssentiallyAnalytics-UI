@@ -17,7 +17,6 @@ import {
 export function useTrafficData() {
   const queryClient = useQueryClient();
 
-  // 1. Local Filter State
   const [platform, setPlatform] = useState<"Facebook" | "Threads">("Facebook");
   const [startDate, setStartDate] = useState(format(subDays(subDays(new Date(), 1), 6), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(subDays(new Date(), 1), "yyyy-MM-dd"));
@@ -25,22 +24,17 @@ export function useTrafficData() {
 
   const utmSource = platform === "Facebook" ? "fb" : "threads";
 
-  // 2. React Query: Fetch Mappings (Cached globally)
   const { data: mappings = [], isLoading: loadingMappings } = useQuery({
     queryKey: ["mappings"],
     queryFn: fetchPageMappings,
-    staleTime: 1000 * 60 * 60, // Mappings rarely change, cache for an hour
+    staleTime: 1000 * 60 * 60, // mappings rarely change
   });
 
-  // 3. React Query: Fetch Headlines
   const { data: headlines = null, isLoading: loadingHeadlines, isFetching: fetchingHeadlines } = useQuery({
     queryKey: ["headlines", utmSource],
     queryFn: () => fetchHeadlines(utmSource),
   });
 
-  // 4. React Query: Fetch Aggregated Analytics Data (OPTIMIZED)
-  // Uses new endpoint that groups by (date, utmMedium) server-side
-  // Campaign filter is passed to server to avoid fetching unnecessary data
   const {
     data: rawData = [],
     isLoading: loadingData,
@@ -51,22 +45,19 @@ export function useTrafficData() {
     enabled: !!startDate && !!endDate,
   });
 
-  // 4b. React Query: Fetch Country Stats (lightweight, separate from main data)
   const { data: countryStats = [], isFetching: fetchingCountry } = useQuery({
     queryKey: ["countryStats", utmSource, startDate, endDate],
     queryFn: () => fetchCountryStats(startDate, endDate, utmSource),
     enabled: !!startDate && !!endDate,
   });
 
-  // 4c. React Query: Fetch available campaigns (lightweight, separate query)
   const { data: availableCampaigns = [], isFetching: fetchingCampaigns } = useQuery({
     queryKey: ["campaigns", utmSource, startDate, endDate],
     queryFn: () => fetchAvailableCampaigns(startDate, endDate, utmSource),
     enabled: !!startDate && !!endDate,
-    staleTime: 1000 * 60 * 5, // Cache campaign list for 5 min
+    staleTime: 1000 * 60 * 5,
   });
 
-  // 5. React Query: Mutation for Manual Sync
   const syncMutation = useMutation({
     mutationFn: triggerManualSync,
     onSuccess: () => {
@@ -80,14 +71,12 @@ export function useTrafficData() {
     }
   });
 
-  // 6. Derived Data (Only recalculates if rawData or selectedCampaign changes)
   const data = useMemo(() => {
     if (!rawData.length) return [];
     const processed = processAggregatedData(rawData, selectedCampaign, mappings);
     return processed.sort((a, b) => b.totals.sessions - a.totals.sessions);
   }, [rawData, selectedCampaign, mappings]);
 
-  // 7. Filter Handlers
   const applyPreset = (preset: "30days" | "prevWeek" | "thisMonth" | "last7Days") => {
     const yesterday = subDays(startOfToday(), 1);
     let newStart;
@@ -112,7 +101,6 @@ export function useTrafficData() {
     setSelectedCampaign("");
   };
 
-  // 8. Options and Stats
   const dateHeaders = useMemo(() => {
     try {
       const days = eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) });

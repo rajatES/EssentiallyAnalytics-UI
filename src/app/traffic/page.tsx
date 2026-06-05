@@ -47,9 +47,6 @@ interface MappingWithId extends MappingEntry {
   id?: number;
 }
 
-// =====================================================================
-// 1. MAPPINGS & TEAMS DIRECTORY COMPONENT
-// =====================================================================
 export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void, onMappingsChanged?: () => void }) {
   const [mappings, setMappings] = useState<MappingWithId[]>([]);
   const [loading, setLoading] = useState(true);
@@ -710,9 +707,6 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   );
 }
 
-// =====================================================================
-// 2. MAIN DASHBOARD COMPONENT (Traffic Overview + Table)
-// =====================================================================
 export default function WebTrafficPage() {
   const { canAccess } = useRole();
   const [mounted, setMounted] = useState(false);

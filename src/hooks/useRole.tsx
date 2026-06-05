@@ -39,7 +39,6 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
 
-    // Verify with server
     apiClient
       .get("/api/auth/me")
       .then((res) => {

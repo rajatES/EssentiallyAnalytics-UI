@@ -1,23 +1,13 @@
 import { useEffect } from "react";
 
-/**
- * Module-level dedupe set. Persists across component mounts/unmounts for the
- * lifetime of the page session, so the same (profiles + range) request is never
- * fired twice — preventing re-trigger loops when a date genuinely has no data.
- */
+// Module-level set persists for the page session, preventing duplicate
+// ensure-coverage requests for the same (profiles + range) combination.
 const requested = new Set<string>();
 
 /**
- * On-demand backfill hook.
- *
- * When a date range is selected that may have missing dates in the DB, this
- * pings the backend `ensure-coverage` endpoint. The backend detects any dates
- * with no real data and queues a resync for the missing span. The global
- * GlobalSyncScreen poller picks up the queued jobs and invalidates the report
- * queries on completion, so charts refill automatically.
- *
- * Safe to call from multiple tabs — requests are deduped per
- * (profileIds + startDate + endDate).
+ * Pings the backend to detect and queue any missing date ranges in the DB.
+ * The GlobalSyncScreen poller invalidates report queries once those jobs finish.
+ * Deduped per (profileIds + startDate + endDate) across re-renders.
  */
 export function useEnsureCoverage(
   profileIds: string[],

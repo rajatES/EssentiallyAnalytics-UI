@@ -1,6 +1,6 @@
 import axios from "axios";
 import { MappingEntry } from "../data/page-mapping";
-import { AggregatedPageData, AggregatedMetric, BackendMetric, CountryStat, HeadlineData } from "../types";
+import { AggregatedPageData, AggregatedMetric, CountryStat, HeadlineData } from "../types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const API_BASE_URL = `/v1/analytics`;
@@ -153,31 +153,7 @@ export async function fetchCountryStats(
   }
 }
 
-export async function fetchAnalyticsData(
-  startDate: string,
-  endDate: string,
-  source: string,
-): Promise<BackendMetric[]> {
-  try {
-    const response = await apiClient.get(`${API_BASE_URL}/utm/metrics`, {
-      params: {
-        rollup: "daily",
-        startDate,
-        endDate,
-        utmSource: source,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("API Error:", error);
-    return [];
-  }
-}
-
-/**
- * Fetches pre-aggregated metrics from the optimized endpoint.
- * Returns ~100x fewer rows than fetchAnalyticsData for the same date range.
- */
+// Returns pre-aggregated (date × medium) rows — far fewer than the raw endpoint.
 export async function fetchAggregatedData(
   startDate: string,
   endDate: string,
@@ -219,10 +195,9 @@ export async function fetchAvailableCampaigns(
   }
 }
 
-export function processDataForDashboard(
-  rawData: BackendMetric[],
-  platform: "Facebook" | "Threads",
-  selectedCampaign: string,
+export function processAggregatedData(
+  rawData: AggregatedMetric[],
+  _selectedCampaign: string,
   mappingData: MappingEntry[],
 ): AggregatedPageData[] {
   const mappingLookup: Record<string, PageInfo> = {};
@@ -257,158 +232,6 @@ export function processDataForDashboard(
 
   for (let i = 0; i < rawData.length; i++) {
     const row = rawData[i];
-
-    if (selectedCampaign && row.utm_campaign !== selectedCampaign) continue;
-
-    const rawMedium = (row.utm_medium || "").trim().toLowerCase();
-    const mappedInfo = mappingLookup[rawMedium];
-    
-    let pageName = mappedInfo ? mappedInfo.pageName : (row.utm_medium || "").trim();
-    if (!pageName) pageName = "Unknown";
-    
-    const category = mappedInfo ? mappedInfo.category : "Other";
-    const team = pageNameToTeam[pageName.toLowerCase()] || undefined;
-
-    if (!grouped[pageName]) {
-      grouped[pageName] = {
-        pageName,
-        category,
-        team,
-        totals: {
-          sessions: 0,
-          pageviews: 0,
-          users: 0,
-          new_users: 0,
-          recurring_users: 0,
-          identified_users: 0,
-          event_count: 0,
-          engagement_rate_avg: 0,
-        },
-        dailyTrend: [],
-        _dailyMap: {},
-      };
-    } else if (team && !grouped[pageName].team) {
-      grouped[pageName].team = team;
-    }
-
-    const pageEntry = grouped[pageName];
-    const dailyMap = pageEntry._dailyMap!;
-
-    const sessions = Number(row.sessions) || 0;
-    const pageviews = Number(row.pageviews) || 0;
-    const users = Number(row.users) || 0;
-    const new_users = Number(row.new_users) || 0;
-    const recurring_users = Number(row.recurring_users) || 0;
-    const identified_users = Number(row.identified_users) || 0;
-    const event_count = Number(row.event_count) || 0;
-    const parsedEngagement = parseFloat(String(row.engagement_rate)) || 0;
-
-    const totals = pageEntry.totals;
-    totals.sessions += sessions;
-    totals.pageviews += pageviews;
-    totals.users += users;
-    totals.new_users += new_users;
-    totals.recurring_users += recurring_users;
-    totals.identified_users += identified_users;
-    totals.event_count += event_count;
-
-    let existingDay = dailyMap[row.event_day];
-
-    if (existingDay) {
-      existingDay.sessions += sessions;
-      existingDay.pageviews += pageviews;
-      existingDay.users += users;
-      existingDay.new_users += new_users;
-      existingDay.recurring_users += recurring_users;
-      existingDay.identified_users += identified_users;
-      existingDay.event_count += event_count;
-
-      existingDay.engagement_rate =
-        (existingDay.engagement_rate + parsedEngagement) / 2;
-    } else {
-      existingDay = {
-        date: row.event_day,
-        sessions,
-        pageviews,
-        users,
-        new_users,
-        recurring_users,
-        identified_users,
-        event_count,
-        engagement_rate: parsedEngagement,
-      };
-
-      dailyMap[row.event_day] = existingDay;
-
-      pageEntry.dailyTrend.push(existingDay);
-    }
-  }
-
-  const results = Object.values(grouped);
-  for (let i = 0; i < results.length; i++) {
-    const page = results[i];
-
-    let totalEngRates = 0;
-    for (let j = 0; j < page.dailyTrend.length; j++) {
-      totalEngRates += page.dailyTrend[j].engagement_rate;
-    }
-
-    page.totals.engagement_rate_avg = page.dailyTrend.length
-      ? totalEngRates / page.dailyTrend.length
-      : 0;
-
-    delete page._dailyMap;
-  }
-
-  return results;
-}
-
-/**
- * Lightweight processor for the pre-aggregated endpoint.
- * Data is already grouped by (date, medium) server-side,
- * so this just maps mediums to page names and builds the daily trend.
- */
-export function processAggregatedData(
-  rawData: AggregatedMetric[],
-  selectedCampaign: string,
-  mappingData: MappingEntry[],
-): AggregatedPageData[] {
-  // Campaign filtering is done server-side for aggregated data,
-  // but we still filter here as a safety measure if needed.
-  const filteredData = selectedCampaign ? rawData : rawData;
-
-  const mappingLookup: Record<string, PageInfo> = {};
-  const pageNameToTeam: Record<string, string | undefined> = {};
-  
-  for (let i = 0; i < mappingData.length; i++) {
-    const entry = mappingData[i];
-    const cleanPageName = (entry.pageName || "").trim();
-    if (!cleanPageName) continue;
-    
-    if (entry.team?.trim()) {
-      pageNameToTeam[cleanPageName.toLowerCase()] = entry.team.trim();
-    }
-    
-    if (Array.isArray(entry.utmMediums)) {
-      for (let j = 0; j < entry.utmMediums.length; j++) {
-        const med = (entry.utmMediums[j] || "").trim().toLowerCase();
-        if (med) {
-          mappingLookup[med] = {
-            pageName: cleanPageName,
-            category: (entry.category || "").trim() || "Other",
-          };
-        }
-      }
-    }
-  }
-
-  const grouped: Record<
-    string,
-    AggregatedPageData & { _dailyMap?: Record<string, any> }
-  > = {};
-
-  for (let i = 0; i < filteredData.length; i++) {
-    const row = filteredData[i];
     const rawMedium = (row.utm_medium || "").trim().toLowerCase();
     
     const mappedInfo = mappingLookup[rawMedium];
