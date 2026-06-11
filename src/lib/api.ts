@@ -518,21 +518,6 @@ export async function fetchMsnTimeseries(params: Record<string, any>) {
   return res.data;
 }
 
-export async function fetchMsnFunnel(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/funnel`, { params: msnParams(params) });
-  return res.data;
-}
-
-export async function fetchMsnStatusMix(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/status-mix`, { params: msnParams(params) });
-  return res.data;
-}
-
-export async function fetchMsnFeeds(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/feeds`, { params: msnParams(params) });
-  return res.data;
-}
-
 export async function fetchMsnWriters(params: Record<string, any>) {
   const res = await apiClient.get(`${MSN_URL}/writers`, { params: msnParams(params) });
   return res.data;
@@ -543,37 +528,42 @@ export async function fetchMsnEditors(params: Record<string, any>) {
   return res.data;
 }
 
-export async function fetchMsnAllotters(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/allotters`, { params: msnParams(params) });
+export async function fetchMsnProduction(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/production`, { params: msnParams(params) });
   return res.data;
 }
 
-export async function fetchMsnContentMix(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/content-mix`, { params: msnParams(params) });
+export async function fetchMsnStageDurations(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/stage-durations`, { params: msnParams(params) });
   return res.data;
 }
 
-export async function fetchMsnHeatmap(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/heatmap`, { params: msnParams(params) });
+export async function fetchMsnStageBoard(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/stage-board`, { params: msnParams(params) });
   return res.data;
 }
 
-export async function fetchMsnWriterDaily(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/writer-daily`, { params: msnParams(params) });
+export async function fetchMsnPeopleAvailability() {
+  const res = await apiClient.get(`${MSN_URL}/people-availability`);
   return res.data;
 }
 
-export async function fetchMsnEditorDaily(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/editor-daily`, { params: msnParams(params) });
+export async function fetchMsnCategorySplit(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/category-split`, { params: msnParams(params) });
   return res.data;
 }
 
-export async function fetchMsnLeakage(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/leakage`, { params: msnParams(params) });
+export async function fetchMsnInsights(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/insights`, { params: msnParams(params) });
   return res.data;
 }
 
-export async function fetchMsnRepeatingTitles(params: Record<string, any>) {
-  const res = await apiClient.get(`${MSN_URL}/repeating-titles`, { params: msnParams(params) });
+export async function fetchMsnModeration(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/moderation`, { params: msnParams(params) });
+  return res.data;
+}
+
+export async function fetchMsnDuplicates(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/duplicates`, { params: msnParams(params) });
   return res.data;
 }

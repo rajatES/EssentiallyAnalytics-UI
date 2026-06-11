@@ -545,17 +545,8 @@ export default function RevenuePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Revenue Dashboard
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Content Monetization — Team & Page Breakdown
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      {/* Actions */}
+      <div className="flex items-center gap-3 justify-end">
           {canAccess("admin") && (
             <button
               onClick={handleSync}
@@ -582,7 +573,6 @@ export default function RevenuePage() {
             Page Mappings
           </Link>
         </div>
-      </div>
 
       {/* Date Pickers + Page Filter + Summary Cards */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -1,19 +1,51 @@
-import { Search, Bell } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+
+const PAGE_TITLES: { match: string; title: string; subtitle?: string }[] = [
+  { match: '/revenue/mappings', title: 'Revenue Page Mappings',  subtitle: 'Manage teams and page assignments' },
+  { match: '/revenue',          title: 'Revenue Dashboard',       subtitle: 'Content Monetization — Team & Page Breakdown' },
+  { match: '/traffic/mappings', title: 'UTM Settings & Mappings' },
+  { match: '/traffic',          title: 'Web Traffic Analytics',   subtitle: 'Real-time cross-channel traffic and engagement metrics' },
+  { match: '/reports',          title: 'Reports',                 subtitle: 'Cross-channel social media performance' },
+  { match: '/msn-production',   title: 'MSN Production',          subtitle: 'Editorial pipeline and team performance' },
+  { match: '/schedule',         title: 'Schedule' },
+  { match: '/smart-box',        title: 'Smart Box' },
+  { match: '/settings',         title: 'Settings' },
+  { match: '/debug',            title: 'Debug' },
+  { match: '/dashboard',        title: 'Dashboard Overview',      subtitle: 'Real-time performance across connected platforms' },
+];
 
 export default function Topbar() {
-  return (
-    <header className="relative sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 px-4 lg:px-6 backdrop-blur-md transition-colors">
-      <div />
-      
-      <div className="flex items-center gap-6">
-        <ThemeToggle />
+  const pathname = usePathname();
+  const page = PAGE_TITLES.find(p => pathname.startsWith(p.match));
 
+  return (
+    <div className="flex items-center justify-between gap-6 pb-6">
+      {/* Left: page title */}
+      {page ? (
+        <div className="flex items-center gap-3 min-w-0">
+          <div aria-hidden className="h-8 w-0.5 shrink-0 rounded-full bg-indigo-500" />
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+              {page.title}
+            </h1>
+            {page.subtitle && (
+              <p className="mt-px hidden truncate text-sm leading-tight text-gray-400 dark:text-gray-500 sm:block">
+                {page.subtitle}
+              </p>
+            )}
+          </div>
+        </div>
+      ) : <div />}
+
+      {/* Right: theme toggle + user chip */}
+      <div className="flex shrink-0 items-center gap-6">
+        <ThemeToggle />
         <div className="flex items-center gap-3 border-l border-gray-200 dark:border-gray-700 pl-4 transition-colors">
           <div className="text-right">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              User
-            </p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">User</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">ADMIN</p>
           </div>
           <div className="h-9 w-9 overflow-hidden rounded-full bg-orange-100 dark:bg-orange-900/30">
@@ -25,13 +57,6 @@ export default function Topbar() {
           </div>
         </div>
       </div>
-
-      {/* Gradient fade extending below the topbar — content scrolling
-          up through this zone fades out before going behind the glass */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 right-0 top-full h-8 bg-gradient-to-b from-[#f8f9fa]/90 to-transparent dark:from-gray-950/90"
-      />
-    </header>
+    </div>
   );
 }

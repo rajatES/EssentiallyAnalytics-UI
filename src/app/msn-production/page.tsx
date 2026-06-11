@@ -8,204 +8,344 @@ import {
   useFilterOptions,
   useOverview,
   useTimeseries,
-  useFunnel,
-  useStatusMix,
-  useFeedStats,
   useWriterStats,
   useEditorStats,
-  useAllotterStats,
-  useContentMix,
-  useHeatmap,
-  useWriterDaily,
-  useEditorDaily,
-  useLeakage,
-  useRepeatingTitles,
+  useProduction,
+  useStageDurations,
+  useStageBoard,
+  usePeopleAvailability,
+  useCategorySplit,
+  useInsights,
+  useModeration,
+  useDuplicates,
 } from "@/features/msn-production/hooks/useMsnData";
 
-import MsnFilterBar from "@/features/msn-production/components/MsnFilterBar";
-import MsnKpiStrip from "@/features/msn-production/components/MsnKpiStrip";
-import ProductionFunnel from "@/features/msn-production/components/ProductionFunnel";
-import ProductionTimeseries from "@/features/msn-production/components/ProductionTimeseries";
-import StatusDistribution from "@/features/msn-production/components/StatusDistribution";
-import FeedLeaderboard from "@/features/msn-production/components/FeedLeaderboard";
-import PerformanceTable from "@/features/msn-production/components/PerformanceTable";
-import ContentTypeMix from "@/features/msn-production/components/ContentTypeMix";
-import ProductionHeatmap from "@/features/msn-production/components/ProductionHeatmap";
-import WriterComparisonChart from "@/features/msn-production/components/WriterComparisonChart";
-import EditorComparisonChart from "@/features/msn-production/components/EditorComparisonChart";
-import AllotterComparisonChart from "@/features/msn-production/components/AllotterComparisonChart";
-import WriterDailyBreakdown from "@/features/msn-production/components/WriterDailyBreakdown";
-import EditorDailyBreakdown from "@/features/msn-production/components/EditorDailyBreakdown";
-import LeakagePanel from "@/features/msn-production/components/LeakagePanel";
-import RepeatingTitlesTable from "@/features/msn-production/components/RepeatingTitlesTable";
+import MsnHeader, {
+  type MsnTab,
+  type RangeKey,
+} from "@/features/msn-production/components/MsnHeader";
+import KpiHero from "@/features/msn-production/components/KpiHero";
+import ProductionSummary from "@/features/msn-production/components/ProductionSummary";
+import AllotmentTable from "@/features/msn-production/components/AllotmentTable";
+import DraftDeltaTable from "@/features/msn-production/components/DraftDeltaTable";
+import EditedTable from "@/features/msn-production/components/EditedTable";
+import StageBoard from "@/features/msn-production/components/StageBoard";
+import ThroughputChart from "@/features/msn-production/components/ThroughputChart";
+import CategorySplit from "@/features/msn-production/components/CategorySplit";
+import StageDurationCards from "@/features/msn-production/components/StageDurationCards";
+import SlowestPieces from "@/features/msn-production/components/SlowestPieces";
+import FeedDurations from "@/features/msn-production/components/FeedDurations";
+import DivisionBandwidth from "@/features/msn-production/components/DivisionBandwidth";
+import AvailabilityBoard from "@/features/msn-production/components/AvailabilityBoard";
+import WorkloadTable from "@/features/msn-production/components/WorkloadTable";
+import WritersTable from "@/features/msn-production/components/WritersTable";
+import EditorsTable from "@/features/msn-production/components/EditorsTable";
+import ContentTypeCards from "@/features/msn-production/components/ContentTypeCards";
+import WeekdayRhythm from "@/features/msn-production/components/WeekdayRhythm";
+import PublishHeatmap from "@/features/msn-production/components/PublishHeatmap";
+import DropAnalysisCard from "@/features/msn-production/components/DropAnalysisCard";
+import WriterQuadrant from "@/features/msn-production/components/WriterQuadrant";
+import PairMatrix from "@/features/msn-production/components/PairMatrix";
+import MomentumBoard from "@/features/msn-production/components/MomentumBoard";
+import DivisionLoad from "@/features/msn-production/components/DivisionLoad";
+import ModerationSummary from "@/features/msn-production/components/ModerationSummary";
+import UnmoderatedTable from "@/features/msn-production/components/UnmoderatedTable";
+import ModerationTimeline from "@/features/msn-production/components/ModerationTimeline";
+import ModeratorActivity from "@/features/msn-production/components/ModeratorActivity";
+import RecheckedTitles from "@/features/msn-production/components/RecheckedTitles";
+import FailDimensions from "@/features/msn-production/components/FailDimensions";
+import ModerationOverviewCard from "@/features/msn-production/components/ModerationOverviewCard";
+import DuplicatesOverviewCard from "@/features/msn-production/components/DuplicatesOverviewCard";
+import DuplicateTitlesTable from "@/features/msn-production/components/DuplicateTitlesTable";
 import { useRole } from "@/hooks/useRole";
 
-function defaultStartDate(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 30);
-  return d.toISOString().slice(0, 10);
-}
-
-function todayDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+const RANGE_DAYS: Record<Exclude<RangeKey, "custom">, number | null> = {
+  "7d": 7,
+  "14d": 14,
+  "30d": 30,
+  "90d": 90,
+  all: null,
+};
 
 export default function MsnProductionPage() {
   const { canAccess } = useRole();
-  const [startDate, setStartDate] = useState(defaultStartDate);
-  const [endDate, setEndDate] = useState(todayDate);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
-  const [selectedWriters, setSelectedWriters] = useState<string[]>([]);
-  const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
-  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [selectedAllotters, setSelectedAllotters] = useState<string[]>([]);
 
-  const [tsGranularity, setTsGranularity] = useState("week");
-  const [mixGranularity, setMixGranularity] = useState("week");
-  const [heatmapType, setHeatmapType] = useState("feed-writer");
-
+  const [tab, setTab] = useState<MsnTab>("overview");
+  const [range, setRange] = useState<RangeKey>("30d");
+  const [customStart, setCustomStart] = useState<string>("");
+  const [customEnd, setCustomEnd] = useState<string>("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [tsGranularity, setTsGranularity] = useState("day");
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const filters: MsnFilterParams = useMemo(
-    () => ({
-      startDate,
-      endDate,
-      brands: selectedBrands,
-      feeds: selectedFeeds,
-      writers: selectedWriters,
-      editors: selectedEditors,
-      contentTypes: selectedContentTypes,
-      statuses: selectedStatuses,
-      allotters: selectedAllotters,
-    }),
-    [startDate, endDate, selectedBrands, selectedFeeds, selectedWriters, selectedEditors, selectedContentTypes, selectedStatuses, selectedAllotters],
-  );
+  const filters: MsnFilterParams = useMemo(() => {
+    if (range === "custom") {
+      if (customStart && customEnd) {
+        return { startDate: customStart, endDate: customEnd, categories: selectedCategories };
+      }
+      return { categories: selectedCategories };
+    }
+    const days = RANGE_DAYS[range];
+    if (days === null) {
+      return { categories: selectedCategories };
+    }
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    return {
+      startDate: start.toISOString().slice(0, 10),
+      endDate: end.toISOString().slice(0, 10),
+      categories: selectedCategories,
+    };
+  }, [range, selectedCategories, customStart, customEnd]);
 
   const syncStatus = useSyncStatus();
   const filterOptions = useFilterOptions();
+
+  // Overview
   const overview = useOverview(filters);
+  const stageBoard = useStageBoard(selectedCategories);
   const timeseries = useTimeseries(filters, tsGranularity);
-  const funnel = useFunnel(filters);
-  const statusMix = useStatusMix(filters);
-  const feedStats = useFeedStats(filters);
+  const categorySplit = useCategorySplit(filters);
+
+  // Production
+  const production = useProduction(filters);
+
+  // Stages
+  const stageDurations = useStageDurations(filters);
+
+  // People
   const writerStats = useWriterStats(filters);
   const editorStats = useEditorStats(filters);
-  const allotterStats = useAllotterStats(filters);
-  const contentMix = useContentMix(filters, mixGranularity);
-  const heatmap = useHeatmap(filters, heatmapType);
-  const writerDaily = useWriterDaily(filters);
-  const editorDaily = useEditorDaily(filters);
-  const leakage = useLeakage(filters);
-  const repeatingTitles = useRepeatingTitles(filters);
+  const availability = usePeopleAvailability();
+
+  // Insights
+  const insights = useInsights(filters);
+
+  // Moderation
+  const moderation = useModeration(filters);
+
+  // Duplicate allotments
+  const duplicates = useDuplicates(filters);
 
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
       await triggerMsnSync();
+      await Promise.all([syncStatus.refetch()]);
     } finally {
       setIsSyncing(false);
     }
+  }, [syncStatus]);
+
+  const toggleCategory = useCallback((c: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+    );
   }, []);
 
-  const handleReset = useCallback(() => {
-    setSelectedBrands([]);
-    setSelectedFeeds([]);
-    setSelectedWriters([]);
-    setSelectedEditors([]);
-    setSelectedContentTypes([]);
-    setSelectedStatuses([]);
-    setSelectedAllotters([]);
-    setStartDate(defaultStartDate());
-    setEndDate(todayDate());
+  const clearCategories = useCallback(() => {
+    setSelectedCategories([]);
+  }, []);
+
+  const handleCustomRange = useCallback((start: string, end: string) => {
+    setCustomStart(start);
+    setCustomEnd(end);
   }, []);
 
   return (
-    <div className="min-h-screen space-y-3 px-4 pb-4 pt-2 lg:px-6 lg:pb-6">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-lg font-bold text-gray-900 dark:text-white">MSN Production</h1>
-        <p className="text-xs text-gray-400 dark:text-gray-500">Content production analytics</p>
-      </div>
-
-      <MsnFilterBar
-        filterOptions={filterOptions.data}
+    <div className="min-h-screen space-y-4 px-4 pb-6 pt-4 lg:px-6">
+      <MsnHeader
+        tab={tab}
+        onTab={setTab}
+        range={range}
+        onRange={setRange}
+        customStart={customStart}
+        customEnd={customEnd}
+        onCustomRange={handleCustomRange}
+        categories={filterOptions.data?.categories ?? []}
+        selectedCategories={selectedCategories}
+        onToggleCategory={toggleCategory}
+        onClearCategories={clearCategories}
         syncStatus={syncStatus.data}
-        startDate={startDate}
-        endDate={endDate}
-        selectedBrands={selectedBrands}
-        selectedFeeds={selectedFeeds}
-        selectedWriters={selectedWriters}
-        selectedEditors={selectedEditors}
-        selectedContentTypes={selectedContentTypes}
-        selectedStatuses={selectedStatuses}
-        selectedAllotters={selectedAllotters}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onBrandsChange={setSelectedBrands}
-        onFeedsChange={setSelectedFeeds}
-        onWritersChange={setSelectedWriters}
-        onEditorsChange={setSelectedEditors}
-        onContentTypesChange={setSelectedContentTypes}
-        onStatusesChange={setSelectedStatuses}
-        onAllottersChange={setSelectedAllotters}
-        onReset={handleReset}
         onSync={handleSync}
         isSyncing={isSyncing}
         showSync={canAccess("admin")}
       />
 
-      <MsnKpiStrip data={overview.data} isLoading={overview.isLoading} />
+      {/* ── Overview: the whole operation at a glance ── */}
+      {tab === "overview" && (
+        <div className="space-y-4">
+          <KpiHero
+            overview={overview.data}
+            board={stageBoard.data}
+            isLoading={overview.isLoading}
+          />
+          <StageBoard data={stageBoard.data} isLoading={stageBoard.isLoading} />
+          <ModerationOverviewCard
+            data={moderation.data}
+            isLoading={moderation.isLoading}
+            onViewAll={() => setTab("moderation")}
+          />
+          <DuplicatesOverviewCard
+            data={duplicates.data}
+            isLoading={duplicates.isLoading}
+          />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+            <div className="xl:col-span-3">
+              <ThroughputChart
+                data={timeseries.data}
+                isLoading={timeseries.isLoading}
+                granularity={tsGranularity}
+                onGranularityChange={setTsGranularity}
+              />
+            </div>
+            <div className="xl:col-span-2">
+              <CategorySplit
+                data={categorySplit.data}
+                isLoading={categorySplit.isLoading}
+              />
+            </div>
+          </div>
+          <DuplicateTitlesTable
+            data={duplicates.data}
+            isLoading={duplicates.isLoading}
+          />
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <ProductionFunnel data={funnel.data} isLoading={funnel.isLoading} />
-        <StatusDistribution data={statusMix.data} isLoading={statusMix.isLoading} />
-      </div>
+      {/* ── Production: allotted vs drafted vs edited scoreboard ── */}
+      {tab === "production" && (
+        <div className="space-y-4">
+          <ProductionSummary
+            data={production.data}
+            isLoading={production.isLoading}
+          />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <AllotmentTable
+              data={production.data}
+              isLoading={production.isLoading}
+            />
+            <EditedTable
+              data={production.data}
+              isLoading={production.isLoading}
+            />
+          </div>
+          <DraftDeltaTable
+            data={production.data}
+            isLoading={production.isLoading}
+          />
+        </div>
+      )}
 
-      <ProductionTimeseries
-        data={timeseries.data}
-        isLoading={timeseries.isLoading}
-        granularity={tsGranularity}
-        onGranularityChange={setTsGranularity}
-      />
+      {/* ── Stages: how fast work moves through the pipeline ── */}
+      {tab === "stages" && (
+        <div className="space-y-4">
+          <StageDurationCards
+            data={stageDurations.data}
+            isLoading={stageDurations.isLoading}
+          />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <SlowestPieces
+              data={stageBoard.data}
+              isLoading={stageBoard.isLoading}
+            />
+            <FeedDurations
+              data={stageDurations.data}
+              isLoading={stageDurations.isLoading}
+            />
+          </div>
+        </div>
+      )}
 
-      <ContentTypeMix
-        data={contentMix.data}
-        isLoading={contentMix.isLoading}
-        granularity={mixGranularity}
-        onGranularityChange={setMixGranularity}
-      />
+      {/* ── People: performance + availability ── */}
+      {tab === "people" && (
+        <div className="space-y-4">
+          <DivisionBandwidth
+            data={availability.data}
+            isLoading={availability.isLoading}
+          />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <AvailabilityBoard
+              data={availability.data}
+              isLoading={availability.isLoading}
+            />
+            <WorkloadTable
+              data={availability.data}
+              isLoading={availability.isLoading}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <WritersTable
+              writers={writerStats.data}
+              durations={stageDurations.data}
+              isLoading={writerStats.isLoading}
+            />
+            <EditorsTable
+              editors={editorStats.data}
+              isLoading={editorStats.isLoading}
+            />
+          </div>
+        </div>
+      )}
 
-      <FeedLeaderboard data={feedStats.data} isLoading={feedStats.isLoading} />
+      {/* ── Insights: decision support for content + personnel ── */}
+      {tab === "insights" && (
+        <div className="space-y-4">
+          <ContentTypeCards data={insights.data} isLoading={insights.isLoading} />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <WeekdayRhythm data={insights.data} isLoading={insights.isLoading} />
+            <PublishHeatmap data={insights.data} isLoading={insights.isLoading} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <DropAnalysisCard data={insights.data} isLoading={insights.isLoading} />
+            <DivisionLoad data={insights.data} isLoading={insights.isLoading} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+            <div className="xl:col-span-3">
+              <WriterQuadrant data={insights.data} isLoading={insights.isLoading} />
+            </div>
+            <div className="xl:col-span-2">
+              <MomentumBoard data={insights.data} isLoading={insights.isLoading} />
+            </div>
+          </div>
+          <PairMatrix data={insights.data} isLoading={insights.isLoading} />
+        </div>
+      )}
 
-      <PerformanceTable
-        writerData={writerStats.data}
-        editorData={editorStats.data}
-        allotterData={allotterStats.data}
-        isLoading={writerStats.isLoading || editorStats.isLoading || allotterStats.isLoading}
-      />
-
-      <WriterDailyBreakdown data={writerDaily.data} isLoading={writerDaily.isLoading} />
-
-      <WriterComparisonChart data={writerStats.data} isLoading={writerStats.isLoading} />
-
-      <EditorDailyBreakdown data={editorDaily.data} isLoading={editorDaily.isLoading} />
-
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <EditorComparisonChart data={editorStats.data} isLoading={editorStats.isLoading} />
-        <AllotterComparisonChart data={allotterStats.data} isLoading={allotterStats.isLoading} />
-      </div>
-
-      <ProductionHeatmap
-        data={heatmap.data}
-        isLoading={heatmap.isLoading}
-        type={heatmapType}
-        onTypeChange={setHeatmapType}
-      />
-
-      <LeakagePanel data={leakage.data} isLoading={leakage.isLoading} />
-
-      <RepeatingTitlesTable data={repeatingTitles.data} isLoading={repeatingTitles.isLoading} />
+      {/* ── Moderation: coverage of the external moderation tool ── */}
+      {tab === "moderation" && (
+        <div className="space-y-4">
+          <ModerationSummary
+            data={moderation.data}
+            isLoading={moderation.isLoading}
+          />
+          <UnmoderatedTable
+            data={moderation.data}
+            isLoading={moderation.isLoading}
+          />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <ModerationTimeline
+              data={moderation.data}
+              isLoading={moderation.isLoading}
+            />
+            <ModeratorActivity
+              data={moderation.data}
+              isLoading={moderation.isLoading}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <RecheckedTitles
+              data={moderation.data}
+              isLoading={moderation.isLoading}
+            />
+            <FailDimensions
+              data={moderation.data}
+              isLoading={moderation.isLoading}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

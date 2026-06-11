@@ -217,7 +217,6 @@ export default function PageMappingsSettings() {
           >
             <ArrowLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-3xl font-bold">UTM Settings & Mappings</h1>
         </div>
 
         {/* Bulk Uploads Section */}

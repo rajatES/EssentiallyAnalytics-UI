@@ -167,24 +167,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-10">
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dashboard Overview
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Real-time performance across your connected platforms.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Calendar size={16} className="text-gray-400" />
             Last 30 days
             <ChevronDown size={16} className="text-gray-400" />
           </button>
         </div>
-      </div>
 
       {loading ? (
         <div className="flex h-64 flex-col gap-3 items-center justify-center bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">

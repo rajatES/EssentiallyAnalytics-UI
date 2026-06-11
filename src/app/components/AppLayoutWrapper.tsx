@@ -37,9 +37,8 @@ export default function AppLayoutWrapper({
         <div
           className={`flex flex-1 flex-col h-screen min-w-0 transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-56"}`}
         >
-          <Topbar />
-
-          <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 pt-0 md:px-5 md:pb-5 xl:px-8 xl:pb-8">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 pt-5 md:px-5 md:pb-5 xl:px-8 xl:pb-8">
+            <Topbar />
             <GlobalSyncScreen>{children}</GlobalSyncScreen>
           </main>
         </div>

@@ -91,14 +91,6 @@ export default function RevenueMappingsPage() {
         >
           <ArrowLeft size={18} className="text-gray-500 dark:text-gray-400" />
         </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            Revenue Page Mappings
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Manage teams and assign Facebook pages for revenue grouping
-          </p>
-        </div>
       </div>
 
       {/* Stats */}

@@ -133,14 +133,6 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Reports
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Analyze your cross-channel social media performance
-          </p>
-        </div>
         <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1">
           <button
             onClick={() => setActiveTab("page")}

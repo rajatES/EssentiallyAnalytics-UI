@@ -749,17 +749,7 @@ export default function WebTrafficPage() {
   return (
     <div className="space-y-6 pb-4 animate-in fade-in duration-300">
 
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Web Traffic Analytics
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Real-time cross-channel traffic and engagement metrics
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1 shrink-0">
             <button
               onClick={() => filters.setPlatform("Facebook")}
@@ -789,7 +779,6 @@ export default function WebTrafficPage() {
             <span className="hidden sm:inline">Mappings</span>
           </button>
         </div>
-      </div>
 
       <div className="bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
         <div className="flex flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
