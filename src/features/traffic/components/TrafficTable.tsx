@@ -424,7 +424,7 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col h-full max-h-[900px] max-w-[85vw] overflow-scroll">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col h-full max-h-[900px] w-full overflow-hidden">
       {/* Header */}
       <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm z-20 rounded-t-2xl">
         <div className="flex items-center gap-2">
