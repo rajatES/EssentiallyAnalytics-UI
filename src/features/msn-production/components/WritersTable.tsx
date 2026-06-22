@@ -30,7 +30,7 @@ export default function WritersTable({ writers, durations, isLoading }: Props) {
           Writers
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Output and speed in the selected period
+          Output and speed in the selected period · by pick date
         </p>
       </div>
 

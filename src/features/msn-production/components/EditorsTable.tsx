@@ -22,7 +22,7 @@ export default function EditorsTable({ editors, isLoading }: Props) {
           Editors
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Review volume and turnaround in the selected period
+          Review volume and turnaround in the selected period · by review date
         </p>
       </div>
 

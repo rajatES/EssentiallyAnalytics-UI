@@ -24,7 +24,7 @@ export default function DraftDeltaTable({ data, isLoading }: Props) {
           Writers — allotted vs drafted
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Delta is what was handed out but not yet submitted
+          By pick date · delta is picked but not yet submitted
         </p>
       </div>
 

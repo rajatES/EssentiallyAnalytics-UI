@@ -73,7 +73,9 @@ export default function KpiHero({ overview, board, isLoading }: Props) {
     );
   }
 
-  const outTheDoor = overview.published + overview.scheduled;
+  // Backend "published" already counts scheduled work (it's locked to go live);
+  // surface the live-vs-scheduled split beneath the headline.
+  const live = Math.max(overview.published - overview.scheduled, 0);
 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -85,9 +87,9 @@ export default function KpiHero({ overview, board, isLoading }: Props) {
       />
       <Cell
         label="Out the Door"
-        value={String(outTheDoor)}
+        value={String(overview.published)}
         delta={overview.deltas.published}
-        sub={`${overview.published} published · ${overview.scheduled} scheduled`}
+        sub={`${live} live · ${overview.scheduled} scheduled`}
       />
       <Cell
         label="Publish Rate"

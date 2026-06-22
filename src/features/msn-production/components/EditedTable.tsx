@@ -24,7 +24,7 @@ export default function EditedTable({ data, isLoading }: Props) {
           Editing
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Pieces that cleared review per editor in the selected period
+          Pieces that cleared review per editor · by review date
         </p>
       </div>
 
