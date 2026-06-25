@@ -65,7 +65,7 @@ export default function ProductionSummary({ data, isLoading }: Props) {
     {
       label: "Efficiency",
       value: fmtPct(s.draftRate),
-      sub: `drafted of allotted · write ${fmtHours(s.medianWriteHours)} · edit ${fmtHours(s.medianEditHours)}`,
+      sub: `${fmtPct(s.pickRate)} picked → ${fmtPct(s.draftRate)} drafted (of allotted) · write ${fmtHours(s.medianWriteHours)} · edit ${fmtHours(s.medianEditHours)}`,
       icon: Gauge,
       tone:
         s.draftRate >= 80

@@ -24,7 +24,8 @@ export default function DraftDeltaTable({ data, isLoading }: Props) {
           Writers — allotted vs drafted
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          By pick date · delta is picked but not yet submitted
+          By allotment date · shortfall split into not&nbsp;picked (never started)
+          and picked&nbsp;·&nbsp;not&nbsp;drafted (started, not yet submitted)
         </p>
       </div>
 
@@ -37,8 +38,10 @@ export default function DraftDeltaTable({ data, isLoading }: Props) {
               <tr>
                 <th className="px-3 py-2 font-medium">Writer</th>
                 <th className="px-3 py-2 text-right font-medium">Allotted</th>
+                <th className="px-3 py-2 text-right font-medium">Picked</th>
                 <th className="px-3 py-2 text-right font-medium">Drafted</th>
-                <th className="px-3 py-2 text-right font-medium">Delta</th>
+                <th className="px-3 py-2 text-right font-medium">Not picked</th>
+                <th className="px-3 py-2 text-right font-medium">Picked·not drafted</th>
                 <th className="px-3 py-2 text-right font-medium">Drafted %</th>
                 <th className="px-3 py-2 text-right font-medium">Articles</th>
                 <th className="px-3 py-2 text-right font-medium">SS</th>
@@ -55,17 +58,33 @@ export default function DraftDeltaTable({ data, isLoading }: Props) {
                   <td className="px-3 py-2 text-right tabular-nums text-gray-500 dark:text-gray-400">
                     {w.allotted.pieces}
                   </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-gray-500 dark:text-gray-400">
+                    {w.picked.pieces}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums font-medium text-gray-700 dark:text-gray-300">
                     {w.drafted.pieces}
                   </td>
                   <td
                     className={`px-3 py-2 text-right tabular-nums ${
-                      w.deltaPieces > 0
-                        ? "font-medium text-amber-600 dark:text-amber-400"
-                        : "text-gray-400 dark:text-gray-500"
+                      w.notPickedPieces > 0
+                        ? "font-medium text-rose-600 dark:text-rose-400"
+                        : "text-gray-300 dark:text-gray-600"
                     }`}
+                    title="Allotted but never picked up"
                   >
-                    {w.deltaPieces > 0 ? `−${w.deltaPieces}` : "✓"}
+                    {w.notPickedPieces > 0 ? `−${w.notPickedPieces}` : "✓"}
+                  </td>
+                  <td
+                    className={`px-3 py-2 text-right tabular-nums ${
+                      w.pickedNotDraftedPieces > 0
+                        ? "font-medium text-amber-600 dark:text-amber-400"
+                        : "text-gray-300 dark:text-gray-600"
+                    }`}
+                    title="Picked up but not yet submitted"
+                  >
+                    {w.pickedNotDraftedPieces > 0
+                      ? `−${w.pickedNotDraftedPieces}`
+                      : "✓"}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-gray-500 dark:text-gray-400">
                     {fmtPct(w.draftRate)}
