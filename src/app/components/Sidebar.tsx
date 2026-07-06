@@ -8,6 +8,7 @@ import {
   BarChart3,
   DollarSign,
   Newspaper,
+  FileBarChart,
   Settings,
   Sparkles,
   ChevronLeft,
@@ -21,6 +22,7 @@ const navItems: { name: string; href: string; icon: typeof LayoutDashboard; minR
   { name: "Reports", href: "/reports", icon: BarChart2, minRole: "user" },
   { name: "Revenue", href: "/revenue", icon: DollarSign, minRole: "user" },
   { name: "MSN Production", href: "/msn-production", icon: Newspaper, minRole: "user" },
+  { name: "MSN Reports", href: "/msn-reports", icon: FileBarChart, minRole: "user" },
   { name: "Settings", href: "/settings", icon: Settings, minRole: "user" },
 ];
 
