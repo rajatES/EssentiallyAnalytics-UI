@@ -9,6 +9,7 @@ const PAGE_TITLES: { match: string; title: string; subtitle?: string }[] = [
   { match: '/traffic/mappings', title: 'UTM Settings & Mappings' },
   { match: '/traffic',          title: 'Web Traffic Analytics',   subtitle: 'Real-time cross-channel traffic and engagement metrics' },
   { match: '/reports',          title: 'Reports',                 subtitle: 'Cross-channel social media performance' },
+  { match: '/msn-reports',      title: 'MSN Reports',             subtitle: 'Syndication numbers from the MSN Partner Hub — EOD, EOW and MTD' },
   { match: '/msn-production',   title: 'MSN Production',          subtitle: 'Editorial pipeline and team performance' },
   { match: '/schedule',         title: 'Schedule' },
   { match: '/smart-box',        title: 'Smart Box' },
