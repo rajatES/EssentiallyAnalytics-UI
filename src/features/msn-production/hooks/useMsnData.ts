@@ -14,6 +14,11 @@ import {
   fetchMsnInsights,
   fetchMsnModeration,
   fetchMsnDuplicates,
+  fetchMsnReportPeriods,
+  fetchMsnReportEod,
+  fetchMsnReportEow,
+  fetchMsnReportMtd,
+  fetchMsnReportsConfig,
 } from "@/lib/api";
 import type {
   MsnFilterParams,
@@ -31,6 +36,11 @@ import type {
   InsightsResult,
   ModerationResult,
   DuplicatesResult,
+  ReportPeriods,
+  EodReportResult,
+  EowReportResult,
+  MtdReportResult,
+  ReportsConfig,
 } from "../types";
 
 function filterToParams(f: MsnFilterParams, extra?: Record<string, string>) {
@@ -155,5 +165,50 @@ export function useDuplicates(filters: MsnFilterParams) {
     queryKey: ["msn-duplicates", filters],
     queryFn: () => fetchMsnDuplicates(filterToParams(filters)),
     staleTime: STALE,
+  });
+}
+
+// ── Syndication reports (EOD / EOW / MTD) ──
+
+export function useReportPeriods() {
+  return useQuery<ReportPeriods>({
+    queryKey: ["msn-report-periods"],
+    queryFn: fetchMsnReportPeriods,
+    staleTime: STALE,
+  });
+}
+
+export function useReportEod(date?: string) {
+  return useQuery<EodReportResult>({
+    queryKey: ["msn-report-eod", date ?? "latest"],
+    queryFn: () => fetchMsnReportEod(date),
+    staleTime: STALE,
+    retry: false,
+  });
+}
+
+export function useReportEow(weekStart?: string) {
+  return useQuery<EowReportResult>({
+    queryKey: ["msn-report-eow", weekStart ?? "latest"],
+    queryFn: () => fetchMsnReportEow(weekStart),
+    staleTime: STALE,
+    retry: false,
+  });
+}
+
+export function useReportMtd(month?: string) {
+  return useQuery<MtdReportResult>({
+    queryKey: ["msn-report-mtd", month ?? "latest"],
+    queryFn: () => fetchMsnReportMtd(month),
+    staleTime: STALE,
+    retry: false,
+  });
+}
+
+export function useReportsConfig() {
+  return useQuery<ReportsConfig>({
+    queryKey: ["msn-reports-config"],
+    queryFn: fetchMsnReportsConfig,
+    staleTime: Infinity,
   });
 }

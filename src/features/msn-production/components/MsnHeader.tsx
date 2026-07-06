@@ -8,6 +8,7 @@ import {
   Users,
   Sparkles,
   ShieldCheck,
+  FileBarChart,
   RefreshCw,
   ChevronDown,
   Calendar,
@@ -21,7 +22,8 @@ export type MsnTab =
   | "stages"
   | "people"
   | "insights"
-  | "moderation";
+  | "moderation"
+  | "reports";
 export type RangeKey = "7d" | "14d" | "30d" | "90d" | "all" | "custom";
 
 const TABS = [
@@ -31,6 +33,7 @@ const TABS = [
   { key: "people" as MsnTab, label: "People", icon: Users },
   { key: "insights" as MsnTab, label: "Insights", icon: Sparkles },
   { key: "moderation" as MsnTab, label: "Moderation", icon: ShieldCheck },
+  { key: "reports" as MsnTab, label: "Reports", icon: FileBarChart },
 ];
 
 const RANGE_PRESETS: { key: RangeKey; label: string }[] = [
@@ -329,7 +332,9 @@ export default function MsnHeader({
         </div>
       </div>
 
-      {/* Row 2 — date range + category dropdown */}
+      {/* Row 2 — date range + category dropdown (the Reports tab has its own
+          period selector, so the production filters are hidden there) */}
+      {tab !== "reports" && (
       <div className="flex flex-wrap items-center gap-2">
         {/* Preset range pills + custom */}
         <div className="flex rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">
@@ -385,6 +390,7 @@ export default function MsnHeader({
           onClear={onClearCategories}
         />
       </div>
+      )}
     </div>
   );
 }

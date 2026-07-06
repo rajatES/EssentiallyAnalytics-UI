@@ -25,3 +25,27 @@ export function fmtPct(v: number | null | undefined): string {
   if (v == null || isNaN(v)) return "—";
   return `${Math.round(v * 10) / 10}%`;
 }
+
+/** Integer with thousands separators; em-dash for missing. */
+export function fmtInt(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) return "—";
+  return Math.round(v).toLocaleString("en-US");
+}
+
+/** Decimal with thousands separators (e.g. consumed hours); em-dash for missing. */
+export function fmtDec(v: number | null | undefined, digits = 1): string {
+  if (v == null || isNaN(v)) return "—";
+  return v.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  });
+}
+
+/** Compact number for axes/labels: 25k, 1.2M; em-dash for missing. */
+export function fmtCompact(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) return "—";
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(v);
+}

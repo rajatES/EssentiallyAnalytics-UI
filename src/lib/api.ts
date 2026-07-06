@@ -567,3 +567,46 @@ export async function fetchMsnDuplicates(params: Record<string, any>) {
   const res = await apiClient.get(`${MSN_URL}/duplicates`, { params: msnParams(params) });
   return res.data;
 }
+
+// ── MSN syndication reports (EOD / EOW / MTD) ──
+
+export async function fetchMsnReportPeriods() {
+  const res = await apiClient.get(`${MSN_URL}/reports/periods`);
+  return res.data;
+}
+
+export async function fetchMsnReportEod(date?: string) {
+  const res = await apiClient.get(`${MSN_URL}/reports/eod`, {
+    params: date ? { date } : {},
+  });
+  return res.data;
+}
+
+export async function fetchMsnReportEow(weekStart?: string) {
+  const res = await apiClient.get(`${MSN_URL}/reports/eow`, {
+    params: weekStart ? { weekStart } : {},
+  });
+  return res.data;
+}
+
+export async function fetchMsnReportMtd(month?: string) {
+  const res = await apiClient.get(`${MSN_URL}/reports/mtd`, {
+    params: month ? { month } : {},
+  });
+  return res.data;
+}
+
+export async function fetchMsnReportsConfig() {
+  const res = await apiClient.get(`${MSN_URL}/reports/config`);
+  return res.data;
+}
+
+export async function fetchMsnReportTargets() {
+  const res = await apiClient.get(`${MSN_URL}/reports/targets`);
+  return res.data;
+}
+
+export async function updateMsnReportTargets(targets: unknown[]) {
+  const res = await apiClient.put(`${MSN_URL}/reports/targets`, { targets });
+  return res.data;
+}

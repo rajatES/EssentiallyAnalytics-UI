@@ -464,3 +464,97 @@ export interface DuplicatesResult {
   topAllotters: DuplicateGroupAgg[];
   titles: DuplicateTitleEntry[];
 }
+
+// ── Syndication reports (EOD / EOW / MTD) ──
+
+export interface ReportPeriods {
+  eod: string[];
+  eow: Array<{ weekStart: string; weekEnd: string }>;
+  mtd: Array<{ month: string; asOf: string | null }>;
+}
+
+export interface EodFeedRow {
+  region: string;
+  type: string;
+  reliability: string;
+  publishRate: string;
+}
+
+export interface EodReportRow {
+  date: string;
+  publication: string;
+  followers: number | null;
+  feedHealthRate: number | null;
+  publishRate: number | null;
+  publishedVideo: number | null;
+  publishedGallery: number | null;
+  publishedArticle: number | null;
+  publishedTotal: number | null;
+  /** { Article|Gallery|Video: { USA|UK|...: views } } */
+  views: Record<string, Record<string, number>>;
+  feedList: EodFeedRow[];
+  updatedAt: string;
+}
+
+export interface EodReportResult {
+  date: string;
+  rows: EodReportRow[];
+}
+
+export interface EowReportRow {
+  weekStart: string;
+  weekEnd: string;
+  publication: string;
+  articlePublished: number | null;
+  articleViews: number | null;
+  slideshowPublished: number | null;
+  slideshowViews: number | null;
+  videoPublished: number | null;
+  videoViews: number | null;
+  videoConsumedHours: number | null;
+  updatedAt: string;
+}
+
+export interface EowReportResult {
+  weekStart: string;
+  weekEnd: string | null;
+  rows: EowReportRow[];
+}
+
+export interface MtdReportRow {
+  month: string;
+  publication: string;
+  asOf: string | null;
+  articleViews: number | null;
+  slideshowViews: number | null;
+  videoViews: number | null;
+  videoConsumedHours: number | null;
+  updatedAt: string;
+}
+
+export interface MtdReportResult {
+  month: string;
+  asOf: string | null;
+  rows: MtdReportRow[];
+}
+
+export interface ReportsConfig {
+  regionTiers: Record<string, string[]>;
+  publications: Record<
+    string,
+    {
+      shortName: string;
+      tier: string;
+      targets: { article: number; slideshow: number; video: number };
+    }
+  >;
+}
+
+export interface ReportTarget {
+  publication: string;
+  shortName: string;
+  tier: string;
+  articleTarget: number;
+  slideshowTarget: number;
+  videoTarget: number;
+}

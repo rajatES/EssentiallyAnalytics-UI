@@ -57,6 +57,7 @@ import FailDimensions from "@/features/msn-production/components/FailDimensions"
 import ModerationOverviewCard from "@/features/msn-production/components/ModerationOverviewCard";
 import DuplicatesOverviewCard from "@/features/msn-production/components/DuplicatesOverviewCard";
 import DuplicateTitlesTable from "@/features/msn-production/components/DuplicateTitlesTable";
+import ReportsView from "@/features/msn-production/components/reports/ReportsView";
 import { useRole } from "@/hooks/useRole";
 
 const RANGE_DAYS: Record<Exclude<RangeKey, "custom">, number | null> = {
@@ -346,6 +347,9 @@ export default function MsnProductionPage() {
           </div>
         </div>
       )}
+
+      {/* ── Reports: syndication numbers from the MSN Partner Hub scraper ── */}
+      {tab === "reports" && <ReportsView />}
     </div>
   );
 }
