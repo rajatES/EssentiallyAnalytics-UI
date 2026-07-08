@@ -10,15 +10,21 @@ import { CONTENT_TYPES, TYPE_LABEL, regionsFor, shortName, typeTotal } from "./h
 interface Props {
   rows: EodReportRow[];
   config?: ReportsConfig;
+  /** Region-tier filter for the summary view columns; null = all regions. */
+  regions?: string[] | null;
 }
 
-export default function FeedDetailTable({ rows, config }: Props) {
+export default function FeedDetailTable({ rows, config, regions }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
     <ReportCard
       title="Feed detail"
-      subtitle="Per-feed summary · click a row for the full region and per-feed-health breakdown"
+      subtitle={
+        regions
+          ? "Per-feed summary · view columns show the selected region tier; expand a row for the full per-region breakdown"
+          : "Per-feed summary · click a row for the full region and per-feed-health breakdown"
+      }
     >
       <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
         <table className="w-full text-left text-xs">
@@ -68,9 +74,9 @@ export default function FeedDetailTable({ rows, config }: Props) {
                       {fmtInt(row.publishedArticle)} / {fmtInt(row.publishedGallery)} /{" "}
                       {fmtInt(row.publishedVideo)}
                     </td>
-                    <td className={TD_NUM}>{fmtInt(typeTotal(row, "Article"))}</td>
-                    <td className={TD_NUM}>{fmtInt(typeTotal(row, "Gallery"))}</td>
-                    <td className={TD_NUM}>{fmtInt(typeTotal(row, "Video"))}</td>
+                    <td className={TD_NUM}>{fmtInt(typeTotal(row, "Article", regions))}</td>
+                    <td className={TD_NUM}>{fmtInt(typeTotal(row, "Gallery", regions))}</td>
+                    <td className={TD_NUM}>{fmtInt(typeTotal(row, "Video", regions))}</td>
                   </tr>
 
                   {isOpen && (

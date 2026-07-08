@@ -15,6 +15,7 @@ import EodReport from "./EodReport";
 import EowReport from "./EowReport";
 import MtdReport from "./MtdReport";
 import ReportFilters, { type FeedOption } from "./ReportFilters";
+import { DEFAULT_REGION_TIERS } from "./eod/helpers";
 import TargetsModal from "./TargetsModal";
 import {
   exportEod,
@@ -68,6 +69,7 @@ export default function ReportsView() {
 
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
   const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
+  const [regionTier, setRegionTier] = useState<string | null>(null);
   const [targetsOpen, setTargetsOpen] = useState(false);
 
   const periods = useReportPeriods();
@@ -96,6 +98,30 @@ export default function ReportsView() {
     const tiers = new Set(feedOptions.map((f) => f.tier).filter((t) => t !== "—"));
     return ["T1", "T2", "T3"].filter((t) => tiers.has(t));
   }, [feedOptions]);
+
+  const regionTiersMap = config.data?.regionTiers ?? DEFAULT_REGION_TIERS;
+
+  // Human summary of the feed scope (tier groups + individual feeds).
+  const feedScopeLabel = useMemo(() => {
+    const parts: string[] = [];
+    if (selectedTiers.length) {
+      parts.push(
+        [...selectedTiers]
+          .sort()
+          .map((t) => {
+            const n = t.replace(/^T/i, "");
+            return /^\d+$/.test(n) ? `Tier ${n} feeds` : `${t} feeds`;
+          })
+          .join(" + "),
+      );
+    }
+    if (selectedFeeds.length) {
+      parts.push(
+        `${selectedFeeds.length} feed${selectedFeeds.length > 1 ? "s" : ""}`,
+      );
+    }
+    return parts.length ? parts.join(" · ") : "All feeds";
+  }, [selectedTiers, selectedFeeds]);
 
   const matchRow = useMemo(() => {
     const feedSet = new Set(selectedFeeds);
@@ -228,14 +254,19 @@ export default function ReportsView() {
       {feedOptions.length > 0 && (
         <ReportFilters
           feeds={feedOptions}
-          tiers={availableTiers}
+          feedTiers={availableTiers}
           selectedFeeds={selectedFeeds}
           selectedTiers={selectedTiers}
           onToggleFeed={(name) => setSelectedFeeds((p) => toggle(p, name))}
           onToggleTier={(t) => setSelectedTiers((p) => toggle(p, t))}
+          regionTiersMap={regionTiersMap}
+          regionTier={regionTier}
+          onSelectRegionTier={setRegionTier}
+          showRegionTier={subTab === "eod"}
           onClear={() => {
             setSelectedFeeds([]);
             setSelectedTiers([]);
+            setRegionTier(null);
           }}
         />
       )}
@@ -246,6 +277,8 @@ export default function ReportsView() {
           isLoading={eod.isLoading}
           isError={eod.isError}
           config={config.data}
+          regionTier={regionTier}
+          feedScopeLabel={feedScopeLabel}
         />
       )}
       {subTab === "eow" && (

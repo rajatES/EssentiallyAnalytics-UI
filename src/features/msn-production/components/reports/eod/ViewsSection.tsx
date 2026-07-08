@@ -26,6 +26,8 @@ import {
 interface Props {
   rows: EodReportRow[];
   config?: ReportsConfig;
+  /** Selected region tier (views-only filter), or null for all regions. */
+  regionTier?: string | null;
 }
 
 const TOP_OPTIONS = [10, 20, 0]; // 0 = all
@@ -49,34 +51,42 @@ function Legend() {
   );
 }
 
-export default function ViewsSection({ rows, config }: Props) {
+export default function ViewsSection({ rows, config, regionTier }: Props) {
   const [topN, setTopN] = useState(10);
 
-  // Grand totals per content type + overall.
+  const regionTiers = config?.regionTiers ?? DEFAULT_REGION_TIERS;
+  // Views-only region filter; null = every region.
+  const regions = regionTier ? (regionTiers[regionTier] ?? null) : null;
+
+  // Grand totals per content type + overall (respect the region tier).
   const totals = useMemo(() => {
     const t = { Article: 0, Gallery: 0, Video: 0 };
     for (const r of rows) {
-      t.Article += typeTotal(r, "Article");
-      t.Gallery += typeTotal(r, "Gallery");
-      t.Video += typeTotal(r, "Video");
+      t.Article += typeTotal(r, "Article", regions);
+      t.Gallery += typeTotal(r, "Gallery", regions);
+      t.Video += typeTotal(r, "Video", regions);
     }
     return { ...t, all: t.Article + t.Gallery + t.Video };
-  }, [rows]);
+  }, [rows, regions]);
 
-  // Chart data: feeds ranked by total views.
+  // Chart data: feeds ranked by total views (respect the region tier).
   const chartData = useMemo(() => {
-    const mapped = rows.map((r) => ({
-      name: shortName(config, r.publication),
-      full: r.publication,
-      Article: typeTotal(r, "Article"),
-      Gallery: typeTotal(r, "Gallery"),
-      Video: typeTotal(r, "Video"),
-      total:
-        typeTotal(r, "Article") + typeTotal(r, "Gallery") + typeTotal(r, "Video"),
-    }));
+    const mapped = rows.map((r) => {
+      const a = typeTotal(r, "Article", regions);
+      const g = typeTotal(r, "Gallery", regions);
+      const v = typeTotal(r, "Video", regions);
+      return {
+        name: shortName(config, r.publication),
+        full: r.publication,
+        Article: a,
+        Gallery: g,
+        Video: v,
+        total: a + g + v,
+      };
+    });
     mapped.sort((a, b) => b.total - a.total);
     return topN > 0 ? mapped.slice(0, topN) : mapped;
-  }, [rows, config, topN]);
+  }, [rows, config, topN, regions]);
 
   // Region-tier breakdown per content type.
   const tierData = useMemo(() => {
@@ -247,11 +257,17 @@ export default function ViewsSection({ rows, config }: Props) {
               </div>
             ))}
             <div className="flex items-center gap-3 pt-1">
-              {Object.keys(config?.regionTiers ?? DEFAULT_REGION_TIERS).map(
-                (tk, i) => (
+              {Object.keys(regionTiers).map((tk, i) => {
+                const isActive = regionTier === tk;
+                return (
                   <span
                     key={tk}
-                    className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500"
+                    className={`flex items-center gap-1 text-[11px] ${
+                      isActive
+                        ? "font-semibold text-indigo-600 dark:text-indigo-400"
+                        : "text-gray-400 dark:text-gray-500"
+                    }`}
+                    title={isActive ? "Active region filter" : undefined}
                   >
                     <span
                       className="h-2 w-2 rounded-sm bg-gray-500"
@@ -259,8 +275,8 @@ export default function ViewsSection({ rows, config }: Props) {
                     />
                     {tk}
                   </span>
-                ),
-              )}
+                );
+              })}
             </div>
           </div>
         </ReportCard>

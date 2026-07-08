@@ -34,12 +34,41 @@ export const DEFAULT_REGION_TIERS: Record<string, string[]> = {
   T3: ["IN"],
 };
 
-/** Sum one content type's views across all regions for a publication. */
-export function typeTotal(row: EodReportRow, type: string): number {
-  return Object.values(row.views?.[type] ?? {}).reduce(
-    (a, b) => a + (b || 0),
-    0,
-  );
+/** Short display code per region, for tooltips/labels (e.g. SGPR → SG). */
+const REGION_SHORT: Record<string, string> = {
+  USA: "US",
+  UK: "UK",
+  CAN: "CA",
+  AUS: "AU",
+  NZ: "NZ",
+  MY: "MY",
+  PH: "PH",
+  SGPR: "SG",
+  IN: "IN",
+};
+
+/** Human hint for a region tier's countries, e.g. "US/UK/CA/AU/NZ". */
+export function regionTierHint(regions: string[]): string {
+  return regions.map((r) => REGION_SHORT[r] ?? r).join("/");
+}
+
+/**
+ * Sum one content type's views for a publication.
+ * When `regions` is provided, only those regions are summed (region-tier
+ * filter); when null/omitted, every region present is summed.
+ */
+export function typeTotal(
+  row: EodReportRow,
+  type: string,
+  regions?: string[] | null,
+): number {
+  const byRegion = row.views?.[type] ?? {};
+  if (!regions) {
+    return Object.values(byRegion).reduce((a, b) => a + (b || 0), 0);
+  }
+  let sum = 0;
+  for (const r of regions) sum += byRegion[r] || 0;
+  return sum;
 }
 
 /** Sum a content type's views over the given regions; null if none present. */
