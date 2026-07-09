@@ -2,6 +2,7 @@
 
 import type { StageBoardResult } from "../types";
 import { fmtHours, ageTone, AGE_TONE_CLASS } from "../format";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   data?: StageBoardResult;
@@ -21,6 +22,26 @@ const STAGE_BADGE: Record<string, string> = {
 };
 
 export default function SlowestPieces({ data, isLoading }: Props) {
+  const { sorted, sortKey, sortDir, handleSort } = useTableSort(
+    data?.stuck ?? [],
+    (p, key) => {
+      switch (key) {
+        case "title":
+          return p.title || "Untitled";
+        case "stage":
+          return p.stage;
+        case "writer":
+          return p.writer;
+        case "feed":
+          return p.feed;
+        case "ageHours":
+          return p.ageHours;
+        default:
+          return null;
+      }
+    },
+  );
+
   if (isLoading || !data) {
     return (
       <div className="h-72 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
@@ -47,15 +68,15 @@ export default function SlowestPieces({ data, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Title</th>
-                <th className="px-3 py-2 font-medium">Stage</th>
-                <th className="px-3 py-2 font-medium">Writer</th>
-                <th className="px-3 py-2 font-medium">Feed</th>
-                <th className="px-3 py-2 text-right font-medium">Stuck for</th>
+                <SortableTh label="Title" colKey="title" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Stage" colKey="stage" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Writer" colKey="writer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Feed" colKey="feed" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Stuck for" colKey="ageHours" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {data.stuck.map((p) => (
+              {sorted.map((p) => (
                 <tr key={p.id}>
                   <td className="max-w-[280px] truncate px-3 py-2 text-gray-700 dark:text-gray-300">
                     {p.title || "Untitled"}

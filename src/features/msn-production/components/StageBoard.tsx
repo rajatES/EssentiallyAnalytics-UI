@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { StageBoardResult } from "../types";
 import { fmtHours, ageTone, AGE_TONE_CLASS } from "../format";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   data?: StageBoardResult;
@@ -13,13 +14,30 @@ interface Props {
 export default function StageBoard({ data, isLoading }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
 
+  const selectedStage = data?.stages.find((s) => s.key === selected);
+  const { sorted: selectedPieces, sortKey, sortDir, handleSort } = useTableSort(
+    selectedStage?.pieces ?? [],
+    (p, key) => {
+      switch (key) {
+        case "title":
+          return p.title || "Untitled";
+        case "writer":
+          return p.writer;
+        case "feed":
+          return p.feed;
+        case "ageHours":
+          return p.ageHours;
+        default:
+          return null;
+      }
+    },
+  );
+
   if (isLoading || !data) {
     return (
       <div className="h-44 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
     );
   }
-
-  const selectedStage = data.stages.find((s) => s.key === selected);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -90,14 +108,14 @@ export default function StageBoard({ data, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800/60 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Title</th>
-                <th className="px-3 py-2 font-medium">Writer</th>
-                <th className="px-3 py-2 font-medium">Feed</th>
-                <th className="px-3 py-2 text-right font-medium">In stage</th>
+                <SortableTh label="Title" colKey="title" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Writer" colKey="writer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Feed" colKey="feed" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="In stage" colKey="ageHours" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {selectedStage.pieces.map((p) => (
+              {selectedPieces.map((p) => (
                 <tr key={p.id}>
                   <td className="max-w-[300px] truncate px-3 py-2 text-gray-700 dark:text-gray-300">
                     {p.title || "Untitled"}

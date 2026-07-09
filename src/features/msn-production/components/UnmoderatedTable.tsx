@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import type { ModerationBucket, ModerationResult } from "../types";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   data?: ModerationResult;
@@ -44,6 +45,35 @@ export default function UnmoderatedTable({ data, isLoading }: Props) {
     }
     return list;
   }, [data, bucket, publishedOnly, search]);
+
+  const BUCKET_RANK: Record<ModerationBucket, number> = {
+    never: 2,
+    "over-month": 1,
+    "over-2w": 0,
+  };
+
+  const { sorted, sortKey, sortDir, handleSort } = useTableSort(rows, (p, key) => {
+    switch (key) {
+      case "title":
+        return p.title;
+      case "writer":
+        return p.writer !== "Unknown" ? p.writer : null;
+      case "allottedBy":
+        return p.allottedBy !== "Unknown" ? p.allottedBy : null;
+      case "feed":
+        return p.feed !== "Unknown" ? p.feed : null;
+      case "category":
+        return p.category !== "Unknown" ? p.category : null;
+      case "status":
+        return p.publishingStatus !== "Unknown" ? p.publishingStatus : null;
+      case "daysSinceCheck":
+        return p.daysSinceCheck;
+      case "bucket":
+        return BUCKET_RANK[p.bucket];
+      default:
+        return null;
+    }
+  });
 
   if (isLoading || !data) {
     return (
@@ -123,18 +153,18 @@ export default function UnmoderatedTable({ data, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 z-10 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Title</th>
-                <th className="px-3 py-2 font-medium">Writer</th>
-                <th className="px-3 py-2 font-medium">Assigner</th>
-                <th className="px-3 py-2 font-medium">Feed</th>
-                <th className="px-3 py-2 font-medium">Division</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 text-right font-medium">Last check</th>
-                <th className="px-3 py-2 text-right font-medium">Moderation</th>
+                <SortableTh label="Title" colKey="title" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Writer" colKey="writer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Assigner" colKey="allottedBy" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Feed" colKey="feed" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Division" colKey="category" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Status" colKey="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Last check" colKey="daysSinceCheck" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Moderation" colKey="bucket" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {rows.map((p) => (
+              {sorted.map((p) => (
                 <tr key={p.id}>
                   <td className="max-w-[280px] px-3 py-2">
                     <span className="block truncate font-medium text-gray-700 dark:text-gray-300" title={p.title}>

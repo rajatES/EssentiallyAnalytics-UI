@@ -14,6 +14,7 @@ import {
   useStageDurations,
   useStageBoard,
   usePeopleAvailability,
+  useWorkGaps,
   useCategorySplit,
   useInsights,
   useModeration,
@@ -38,12 +39,14 @@ import FeedDurations from "@/features/msn-production/components/FeedDurations";
 import DivisionBandwidth from "@/features/msn-production/components/DivisionBandwidth";
 import AvailabilityBoard from "@/features/msn-production/components/AvailabilityBoard";
 import WorkloadTable from "@/features/msn-production/components/WorkloadTable";
+import WorkGapsTable from "@/features/msn-production/components/WorkGapsTable";
 import WritersTable from "@/features/msn-production/components/WritersTable";
 import EditorsTable from "@/features/msn-production/components/EditorsTable";
 import ContentTypeCards from "@/features/msn-production/components/ContentTypeCards";
 import WeekdayRhythm from "@/features/msn-production/components/WeekdayRhythm";
 import PublishHeatmap from "@/features/msn-production/components/PublishHeatmap";
 import DropAnalysisCard from "@/features/msn-production/components/DropAnalysisCard";
+import DyingTitlesTable from "@/features/msn-production/components/DyingTitlesTable";
 import WriterQuadrant from "@/features/msn-production/components/WriterQuadrant";
 import PairMatrix from "@/features/msn-production/components/PairMatrix";
 import MomentumBoard from "@/features/msn-production/components/MomentumBoard";
@@ -118,6 +121,7 @@ export default function MsnProductionPage() {
   const writerStats = useWriterStats(filters);
   const editorStats = useEditorStats(filters);
   const availability = usePeopleAvailability();
+  const workGaps = useWorkGaps(filters);
 
   // Insights
   const insights = useInsights(filters);
@@ -286,6 +290,7 @@ export default function MsnProductionPage() {
               isLoading={editorStats.isLoading}
             />
           </div>
+          <WorkGapsTable data={workGaps.data} isLoading={workGaps.isLoading} />
         </div>
       )}
 
@@ -301,6 +306,7 @@ export default function MsnProductionPage() {
             <DropAnalysisCard data={insights.data} isLoading={insights.isLoading} />
             <DivisionLoad data={insights.data} isLoading={insights.isLoading} />
           </div>
+          <DyingTitlesTable data={insights.data} isLoading={insights.isLoading} />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
             <div className="xl:col-span-3">
               <WriterQuadrant data={insights.data} isLoading={insights.isLoading} />

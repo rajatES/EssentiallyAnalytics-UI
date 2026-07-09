@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { WriterStats, StageDurationResult } from "../types";
 import { fmtHours, fmtPct } from "../format";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   writers?: WriterStats[];
@@ -16,6 +17,28 @@ export default function WritersTable({ writers, durations, isLoading }: Props) {
     for (const w of durations?.byWriter ?? []) map.set(w.name, w.writingHours);
     return map;
   }, [durations]);
+
+  const { sorted, sortKey, sortDir, handleSort } = useTableSort(
+    writers ?? [],
+    (w, key) => {
+      switch (key) {
+        case "writer":
+          return w.writer;
+        case "total":
+          return w.total;
+        case "published":
+          return w.published;
+        case "publishRate":
+          return w.publishRate;
+        case "writeTime":
+          return writeTimes.get(w.writer);
+        case "sentBackRate":
+          return w.sentBackRate;
+        default:
+          return null;
+      }
+    },
+  );
 
   if (isLoading || !writers) {
     return (
@@ -41,16 +64,16 @@ export default function WritersTable({ writers, durations, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Writer</th>
-                <th className="px-3 py-2 text-right font-medium">Pieces</th>
-                <th className="px-3 py-2 text-right font-medium">Published</th>
-                <th className="px-3 py-2 text-right font-medium">Rate</th>
-                <th className="px-3 py-2 text-right font-medium">Write time</th>
-                <th className="px-3 py-2 text-right font-medium">Sent back</th>
+                <SortableTh label="Writer" colKey="writer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Pieces" colKey="total" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Published" colKey="published" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Rate" colKey="publishRate" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Write time" colKey="writeTime" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Sent back" colKey="sentBackRate" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {writers.map((w) => (
+              {sorted.map((w) => (
                 <tr key={w.writer}>
                   <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-700 dark:text-gray-300">
                     {w.writer}

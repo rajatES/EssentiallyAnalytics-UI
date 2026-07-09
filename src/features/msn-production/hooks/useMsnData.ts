@@ -10,6 +10,7 @@ import {
   fetchMsnStageDurations,
   fetchMsnStageBoard,
   fetchMsnPeopleAvailability,
+  fetchMsnWorkGaps,
   fetchMsnCategorySplit,
   fetchMsnInsights,
   fetchMsnModeration,
@@ -32,6 +33,7 @@ import type {
   StageDurationResult,
   StageBoardResult,
   AvailabilityResult,
+  WorkGapsResult,
   CategorySplitEntry,
   InsightsResult,
   ModerationResult,
@@ -133,6 +135,14 @@ export function usePeopleAvailability() {
     queryKey: ["msn-people-availability"],
     queryFn: fetchMsnPeopleAvailability,
     refetchInterval: 60000,
+  });
+}
+
+export function useWorkGaps(filters: MsnFilterParams) {
+  return useQuery<WorkGapsResult>({
+    queryKey: ["msn-work-gaps", filters],
+    queryFn: () => fetchMsnWorkGaps(filterToParams(filters)),
+    staleTime: STALE,
   });
 }
 

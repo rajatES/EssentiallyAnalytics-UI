@@ -235,6 +235,27 @@ export interface AvailabilityResult {
   unmatchedActive: PersonAvailability[];
 }
 
+export interface WorkGapPerson {
+  name: string;
+  role: "allotter" | "writer" | "editor";
+  weekoff: string;
+  periodWorkingDays: number;
+  daysWorked: number;
+  daysNotWorked: number;
+  notWorkedDates: string[];
+  firstActive: string | null;
+  lastActive: string | null;
+}
+
+export interface WorkGapsResult {
+  asOf: string;
+  start: string;
+  end: string;
+  allotters: WorkGapPerson[];
+  writers: WorkGapPerson[];
+  editors: WorkGapPerson[];
+}
+
 // ── Category split ──
 
 export interface CategorySplitEntry {
@@ -285,12 +306,30 @@ export interface DropByGroup {
   dropRate: number;
 }
 
+export interface DeadTitleEntry {
+  title: string;
+  writer: string;
+  allottedBy: string;
+  editor: string;
+  feed: string;
+  category: string;
+  stage: string;
+  type: "killed" | "abandoned";
+  status: string;
+  date: string | null;
+  ageDays: number | null;
+}
+
 export interface DropAnalysis {
   totalDropped: number;
   dropRate: number;
+  killed: number;
+  abandoned: number;
+  sentBack: number;
   byStage: DropStageEntry[];
   byCategory: DropByGroup[];
   byFeed: DropByGroup[];
+  titles: DeadTitleEntry[];
 }
 
 export interface WriterQuadrantEntry {
@@ -315,6 +354,7 @@ export interface MomentumEntry {
   total: number;
   trendPct: number;
   direction: "up" | "down" | "flat";
+  isNew: boolean;
 }
 
 export interface DivisionLoadEntry {

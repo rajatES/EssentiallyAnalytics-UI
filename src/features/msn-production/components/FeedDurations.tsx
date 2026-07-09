@@ -2,6 +2,7 @@
 
 import type { StageDurationResult } from "../types";
 import { fmtHours } from "../format";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   data?: StageDurationResult;
@@ -9,13 +10,35 @@ interface Props {
 }
 
 export default function FeedDurations({ data, isLoading }: Props) {
+  const { sorted: feeds, sortKey, sortDir, handleSort } = useTableSort(
+    (data?.byFeed ?? []).slice(0, 12),
+    (f, key) => {
+      switch (key) {
+        case "name":
+          return f.name;
+        case "count":
+          return f.count;
+        case "pick":
+          return f.pickLatencyHours;
+        case "write":
+          return f.writingHours;
+        case "review":
+          return f.editingHours;
+        case "publish":
+          return f.publishHours;
+        case "total":
+          return f.totalHours;
+        default:
+          return null;
+      }
+    },
+  );
+
   if (isLoading || !data) {
     return (
       <div className="h-72 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
     );
   }
-
-  const feeds = data.byFeed.slice(0, 12);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -35,13 +58,13 @@ export default function FeedDurations({ data, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800/60 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Feed</th>
-                <th className="px-3 py-2 text-right font-medium">Pieces</th>
-                <th className="px-3 py-2 text-right font-medium">Pick</th>
-                <th className="px-3 py-2 text-right font-medium">Write</th>
-                <th className="px-3 py-2 text-right font-medium">Review</th>
-                <th className="px-3 py-2 text-right font-medium">Publish</th>
-                <th className="px-3 py-2 text-right font-medium">Total</th>
+                <SortableTh label="Feed" colKey="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Pieces" colKey="count" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Pick" colKey="pick" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Write" colKey="write" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Review" colKey="review" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Publish" colKey="publish" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Total" colKey="total" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">

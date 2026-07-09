@@ -81,7 +81,7 @@ export default function MomentumBoard({ data, isLoading }: Props) {
           Momentum
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Published output, last 6 weeks — latest week vs prior average
+          Published output — latest week vs prior weeks&apos; average (writers with too little history to judge are left out)
         </p>
       </div>
 

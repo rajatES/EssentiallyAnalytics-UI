@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { DuplicatesResult, DuplicateAllotment } from "../types";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   data?: DuplicatesResult;
@@ -27,6 +28,32 @@ const STATUS_CLASS = (status: string): string => {
 
 export default function DuplicateTitlesTable({ data, isLoading }: Props) {
   const [open, setOpen] = useState<Set<string>>(new Set());
+
+  const { sorted: titles, sortKey, sortDir, handleSort } = useTableSort(
+    data?.titles ?? [],
+    (t, key) => {
+      switch (key) {
+        case "title":
+          return t.title;
+        case "category":
+          return t.category;
+        case "feed":
+          return t.first.feed;
+        case "writer":
+          return t.first.writer;
+        case "allottedBy":
+          return t.first.allottedBy;
+        case "firstAllotted":
+          return t.first.allottedAt
+            ? new Date(t.first.allottedAt).getTime()
+            : null;
+        case "count":
+          return t.count;
+        default:
+          return null;
+      }
+    },
+  );
 
   if (isLoading || !data) {
     return (
@@ -66,17 +93,17 @@ export default function DuplicateTitlesTable({ data, isLoading }: Props) {
             <thead className="sticky top-0 z-10 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
               <tr>
                 <th className="w-6 px-2 py-2" />
-                <th className="px-3 py-2 font-medium">Title</th>
-                <th className="px-3 py-2 font-medium">Division</th>
-                <th className="px-3 py-2 font-medium">Feed</th>
-                <th className="px-3 py-2 font-medium">Writer</th>
-                <th className="px-3 py-2 font-medium">Allotter</th>
-                <th className="px-3 py-2 font-medium">First allotted</th>
-                <th className="px-3 py-2 font-medium">Repeats</th>
+                <SortableTh label="Title" colKey="title" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Division" colKey="category" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Feed" colKey="feed" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Writer" colKey="writer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Allotter" colKey="allottedBy" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="First allotted" colKey="firstAllotted" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Repeats" colKey="count" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {data.titles.map((t) => {
+              {titles.map((t) => {
                 const expanded = open.has(t.title);
                 const allFeeds = new Set([t.first.feed, ...t.repeats.map((r) => r.feed)]);
                 const allWriters = new Set(

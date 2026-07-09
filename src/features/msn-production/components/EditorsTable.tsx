@@ -2,6 +2,7 @@
 
 import type { EditorStats } from "../types";
 import { fmtHours, fmtPct } from "../format";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   editors?: EditorStats[];
@@ -9,6 +10,24 @@ interface Props {
 }
 
 export default function EditorsTable({ editors, isLoading }: Props) {
+  const { sorted, sortKey, sortDir, handleSort } = useTableSort(
+    editors ?? [],
+    (e, key) => {
+      switch (key) {
+        case "editor":
+          return e.editor;
+        case "articlesEdited":
+          return e.articlesEdited;
+        case "avgTurnaroundHours":
+          return e.avgTurnaroundHours;
+        case "sentBackRate":
+          return e.sentBackRate;
+        default:
+          return null;
+      }
+    },
+  );
+
   if (isLoading || !editors) {
     return (
       <div className="h-96 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
@@ -33,14 +52,14 @@ export default function EditorsTable({ editors, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Editor</th>
-                <th className="px-3 py-2 text-right font-medium">Reviewed</th>
-                <th className="px-3 py-2 text-right font-medium">Turnaround</th>
-                <th className="px-3 py-2 text-right font-medium">Sent back</th>
+                <SortableTh label="Editor" colKey="editor" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Reviewed" colKey="articlesEdited" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Turnaround" colKey="avgTurnaroundHours" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Sent back" colKey="sentBackRate" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {editors.map((e) => (
+              {sorted.map((e) => (
                 <tr key={e.editor}>
                   <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-700 dark:text-gray-300">
                     {e.editor}

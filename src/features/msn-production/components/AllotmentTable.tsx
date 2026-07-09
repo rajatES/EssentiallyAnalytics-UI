@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductionResult } from "../types";
+import { useTableSort, SortableTh } from "./SortableHeader";
 
 interface Props {
   data?: ProductionResult;
@@ -8,13 +9,33 @@ interface Props {
 }
 
 export default function AllotmentTable({ data, isLoading }: Props) {
+  const { sorted: rows, sortKey, sortDir, handleSort } = useTableSort(
+    data?.allotters ?? [],
+    (a, key) => {
+      switch (key) {
+        case "name":
+          return a.name;
+        case "pieces":
+          return a.pieces;
+        case "articles":
+          return a.articles;
+        case "slideshows":
+          return a.slideshows;
+        case "slides":
+          return a.slides;
+        case "perDay":
+          return a.perDay;
+        default:
+          return null;
+      }
+    },
+  );
+
   if (isLoading || !data) {
     return (
       <div className="h-96 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
     );
   }
-
-  const rows = data.allotters;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -34,12 +55,12 @@ export default function AllotmentTable({ data, isLoading }: Props) {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
               <tr>
-                <th className="px-3 py-2 font-medium">SGH</th>
-                <th className="px-3 py-2 text-right font-medium">Pieces</th>
-                <th className="px-3 py-2 text-right font-medium">Articles</th>
-                <th className="px-3 py-2 text-right font-medium">SS</th>
-                <th className="px-3 py-2 text-right font-medium">Slides</th>
-                <th className="px-3 py-2 text-right font-medium">Per day</th>
+                <SortableTh label="SGH" colKey="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Pieces" colKey="pieces" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Articles" colKey="articles" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="SS" colKey="slideshows" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Slides" colKey="slides" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortableTh label="Per day" colKey="perDay" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">

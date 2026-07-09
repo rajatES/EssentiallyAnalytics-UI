@@ -548,6 +548,11 @@ export async function fetchMsnPeopleAvailability() {
   return res.data;
 }
 
+export async function fetchMsnWorkGaps(params: Record<string, any>) {
+  const res = await apiClient.get(`${MSN_URL}/work-gaps`, { params: msnParams(params) });
+  return res.data;
+}
+
 export async function fetchMsnCategorySplit(params: Record<string, any>) {
   const res = await apiClient.get(`${MSN_URL}/category-split`, { params: msnParams(params) });
   return res.data;
