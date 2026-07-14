@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { CalendarOff, ChevronRight, Search } from "lucide-react";
 import type { WorkGapsResult, WorkGapPerson } from "../types";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: WorkGapsResult;
@@ -131,6 +132,7 @@ export default function WorkGapsTable({ data, isLoading }: Props) {
               className="w-40 rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-2 text-xs text-gray-700 placeholder:text-gray-300 focus:border-indigo-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder:text-gray-600"
             />
           </div>
+          <TableCsvButton filename="msn_work_gaps" />
         </div>
       </div>
 

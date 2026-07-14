@@ -13,7 +13,6 @@ import {
   TH_BASE,
   sumBy,
 } from "./shared";
-
 interface Props {
   data?: EowReportResult;
   isLoading: boolean;

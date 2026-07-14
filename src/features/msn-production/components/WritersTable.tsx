@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { WriterStats, StageDurationResult } from "../types";
 import { fmtHours, fmtPct } from "../format";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   writers?: WriterStats[];
@@ -48,13 +49,16 @@ export default function WritersTable({ writers, durations, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Writers
-        </h2>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Output and speed in the selected period · by pick date
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Writers
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Output and speed in the selected period · by pick date
+          </p>
+        </div>
+        <TableCsvButton filename="msn_writers" />
       </div>
 
       {writers.length === 0 ? (

@@ -7,6 +7,7 @@ import { useRole } from "@/hooks/useRole";
 import {
   DollarSign,
   TrendingUp,
+  TrendingDown,
   ChevronDown,
   ChevronRight,
   Settings2,
@@ -39,6 +40,16 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import {
+  parseISO,
+  format as formatDate,
+  subDays,
+  subMonths,
+  differenceInCalendarDays,
+  startOfMonth,
+  lastDayOfMonth,
+  isSameDay,
+} from "date-fns";
 
 /* ─── Formatting helper ─── */
 function fmt(v: string | number): string {
@@ -264,12 +275,109 @@ function getDefaultDates() {
   };
 }
 
+/* Derive the comparison window for the "Change" column from the selected range:
+ *  - single day                              → the previous day
+ *  - full calendar month (1st → month-end)  → the previous full month
+ *  - month-to-date (1st → mid-month)         → same day span in the previous month
+ *  - anything else (a week, arbitrary span)  → the same-length window right before it
+ */
+function getPreviousPeriod(startStr: string, endStr: string) {
+  const start = parseISO(startStr);
+  const end = parseISO(endStr);
+
+  // A single selected day always compares to the day before (this must come
+  // before the month rule, else the 1st of a month would compare to the 1st
+  // of the previous month instead of the previous day).
+  if (isSameDay(start, end)) {
+    const prev = formatDate(subDays(start, 1), "yyyy-MM-dd");
+    return { prevStart: prev, prevEnd: prev };
+  }
+
+  const startsOnFirst = start.getDate() === 1;
+  const sameMonth =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth();
+
+  if (startsOnFirst && sameMonth) {
+    const prevMonthStart = startOfMonth(subMonths(start, 1));
+    const endsOnMonthEnd = isSameDay(end, lastDayOfMonth(end));
+    let prevEnd: Date;
+    if (endsOnMonthEnd) {
+      prevEnd = lastDayOfMonth(prevMonthStart);
+    } else {
+      const lastDay = lastDayOfMonth(prevMonthStart).getDate();
+      prevEnd = new Date(
+        prevMonthStart.getFullYear(),
+        prevMonthStart.getMonth(),
+        Math.min(end.getDate(), lastDay),
+      );
+    }
+    return {
+      prevStart: formatDate(prevMonthStart, "yyyy-MM-dd"),
+      prevEnd: formatDate(prevEnd, "yyyy-MM-dd"),
+    };
+  }
+
+  const days = differenceInCalendarDays(end, start) + 1;
+  const prevEnd = subDays(start, 1);
+  const prevStart = subDays(prevEnd, days - 1);
+  return {
+    prevStart: formatDate(prevStart, "yyyy-MM-dd"),
+    prevEnd: formatDate(prevEnd, "yyyy-MM-dd"),
+  };
+}
+
+/* ─── Change vs previous period cell ─── */
+function ChangeCell({
+  current,
+  previous,
+  loading,
+}: {
+  current: number;
+  previous: number;
+  loading: boolean;
+}) {
+  if (loading) {
+    return <span className="text-gray-300 dark:text-gray-600">…</span>;
+  }
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.005) {
+    return <span className="text-gray-400 dark:text-gray-500">—</span>;
+  }
+  const up = diff > 0;
+  const color = up
+    ? "text-green-600 dark:text-green-400"
+    : "text-red-600 dark:text-red-400";
+  const pct = previous > 0 ? (Math.abs(diff) / previous) * 100 : null;
+  return (
+    <span className={color}>
+      <span className="inline-flex items-center justify-end gap-0.5 font-medium">
+        {up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        {up ? "+" : "−"}
+        {fmt(Math.abs(diff))}
+      </span>
+      <span className="block text-[10px] opacity-70">
+        {previous > 0
+          ? `${up ? "+" : "−"}${pct!.toFixed(1)}%`
+          : "new"}
+      </span>
+    </span>
+  );
+}
+
 /* ─── CSV Export (pivot form — exactly as shown in the table) ─── */
-function exportTableAsCSV(teamGroups: TeamGroup[], grandTotal: SourceTotals, startDate: string, endDate: string) {
+function exportTableAsCSV(
+  teamGroups: TeamGroup[],
+  grandTotal: SourceTotals,
+  startDate: string,
+  endDate: string,
+  prevTotals: { byTeam: Map<string, number>; byPage: Map<string, number>; grand: number },
+) {
   const rows: string[][] = [];
+  const signed = (v: number) => `${v >= 0 ? "+" : "-"}${Math.abs(v).toFixed(2)}`;
 
   // Header
-  rows.push(["Team / Page", "Bonus", "Photo", "Reel", "Story", "Text", "Total"]);
+  rows.push(["Team / Page", "Bonus", "Photo", "Reel", "Story", "Text", "Total", "Change"]);
 
   for (const group of teamGroups) {
     // Team row
@@ -281,6 +389,7 @@ function exportTableAsCSV(teamGroups: TeamGroup[], grandTotal: SourceTotals, sta
       group.totals.story.toFixed(2),
       group.totals.text.toFixed(2),
       group.totals.total.toFixed(2),
+      signed(group.totals.total - (prevTotals.byTeam.get(group.team) || 0)),
     ]);
 
     // Page rows (indented)
@@ -293,6 +402,7 @@ function exportTableAsCSV(teamGroups: TeamGroup[], grandTotal: SourceTotals, sta
         page.story.toFixed(2),
         page.text.toFixed(2),
         page.total.toFixed(2),
+        signed(page.total - (prevTotals.byPage.get(page.pageName) || 0)),
       ]);
     }
   }
@@ -306,6 +416,7 @@ function exportTableAsCSV(teamGroups: TeamGroup[], grandTotal: SourceTotals, sta
     grandTotal.story.toFixed(2),
     grandTotal.text.toFixed(2),
     grandTotal.total.toFixed(2),
+    signed(grandTotal.total - prevTotals.grand),
   ]);
 
   const csvContent = rows
@@ -402,6 +513,17 @@ export default function RevenuePage() {
     staleTime: 1000 * 60 * 5,
   });
 
+  const { prevStart, prevEnd } = useMemo(
+    () => getPreviousPeriod(startDate, endDate),
+    [startDate, endDate],
+  );
+
+  const { data: prevRawRows = [], isLoading: prevLoading } = useQuery({
+    queryKey: ["revenue-metrics", prevStart, prevEnd],
+    queryFn: () => fetchRevenueMetrics(prevStart, prevEnd),
+    staleTime: 1000 * 60 * 5,
+  });
+
   /* Derive all unique page names from the data, EXCLUDING pages whose total
    * revenue across the range is zero — those pages should not appear anywhere
    * in the revenue view (table, page filter, charts). */
@@ -459,6 +581,27 @@ export default function RevenuePage() {
     return t;
   }, [teamGroups]);
 
+  /* Previous-period totals for the Change column, filtered to the same pages
+   * as the current view so the comparison is like-for-like. */
+  const prevTotals = useMemo(() => {
+    const useAll =
+      selectedPages.size === 0 || selectedPages.size === allPageNames.length;
+    const rows = useAll
+      ? prevRawRows
+      : prevRawRows.filter((r) => selectedPages.has(r.pageName));
+    const byTeam = new Map<string, number>();
+    const byPage = new Map<string, number>();
+    let grand = 0;
+    for (const r of rows) {
+      const t = Number(r.total) || 0;
+      const team = r.team || "Unassigned";
+      byTeam.set(team, (byTeam.get(team) || 0) + t);
+      byPage.set(r.pageName, (byPage.get(r.pageName) || 0) + t);
+      grand += t;
+    }
+    return { byTeam, byPage, grand };
+  }, [prevRawRows, selectedPages, allPageNames.length]);
+
   /* Pie chart data — overall source breakdown */
   const pieData = useMemo(() => {
     const sources = ["bonus", "photo", "reel", "story", "text"] as const;
@@ -501,8 +644,8 @@ export default function RevenuePage() {
   const collapseAll = () => setExpandedTeams(new Set());
 
   const handleExport = useCallback(() => {
-    exportTableAsCSV(teamGroups, grandTotal, startDate, endDate);
-  }, [teamGroups, grandTotal, startDate, endDate]);
+    exportTableAsCSV(teamGroups, grandTotal, startDate, endDate, prevTotals);
+  }, [teamGroups, grandTotal, startDate, endDate, prevTotals]);
 
   /* Page filter helpers */
   const filteredPageNames = useMemo(() => {
@@ -1097,12 +1240,21 @@ export default function RevenuePage() {
                 <th className="px-3 py-3 text-right font-medium text-green-600 dark:text-green-400">
                   Total
                 </th>
+                <th
+                  className="px-3 py-3 text-right font-medium text-gray-500 dark:text-gray-400"
+                  title={`Compared to previous period (${prevStart} → ${prevEnd})`}
+                >
+                  Change
+                  <div className="text-[10px] font-normal normal-case opacity-70">
+                    vs {prevStart} – {prevEnd}
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                     <div className="flex items-center justify-center gap-2">
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
                       Loading revenue data...
@@ -1111,7 +1263,7 @@ export default function RevenuePage() {
                 </tr>
               ) : teamGroups.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                     No revenue data found for the selected date range.
                   </td>
                 </tr>
@@ -1125,6 +1277,9 @@ export default function RevenuePage() {
                         group={group}
                         isExpanded={isExpanded}
                         onToggle={() => toggleTeam(group.team)}
+                        prevTeamTotal={prevTotals.byTeam.get(group.team) || 0}
+                        prevPageTotals={prevTotals.byPage}
+                        changeLoading={prevLoading}
                       />
                     );
                   })}
@@ -1151,6 +1306,13 @@ export default function RevenuePage() {
                     <td className="px-3 py-3 text-right text-green-600 dark:text-green-400">
                       {fmt(grandTotal.total)}
                     </td>
+                    <td className="px-3 py-3 text-right">
+                      <ChangeCell
+                        current={grandTotal.total}
+                        previous={prevTotals.grand}
+                        loading={prevLoading}
+                      />
+                    </td>
                   </tr>
                 </>
               )}
@@ -1167,10 +1329,16 @@ function TeamSection({
   group,
   isExpanded,
   onToggle,
+  prevTeamTotal,
+  prevPageTotals,
+  changeLoading,
 }: {
   group: TeamGroup;
   isExpanded: boolean;
   onToggle: () => void;
+  prevTeamTotal: number;
+  prevPageTotals: Map<string, number>;
+  changeLoading: boolean;
 }) {
   return (
     <>
@@ -1206,6 +1374,13 @@ function TeamSection({
         <td className="px-3 py-3 text-right font-bold text-green-600 dark:text-green-400">
           {fmt(group.totals.total)}
         </td>
+        <td className="px-3 py-3 text-right">
+          <ChangeCell
+            current={group.totals.total}
+            previous={prevTeamTotal}
+            loading={changeLoading}
+          />
+        </td>
       </tr>
 
       {/* Individual page rows */}
@@ -1235,6 +1410,13 @@ function TeamSection({
             </td>
             <td className="px-3 py-2.5 text-right font-medium text-green-600 dark:text-green-400">
               {fmt(page.total)}
+            </td>
+            <td className="px-3 py-2.5 text-right">
+              <ChangeCell
+                current={page.total}
+                previous={prevPageTotals.get(page.pageName) || 0}
+                loading={changeLoading}
+              />
             </td>
           </tr>
         ))}

@@ -20,7 +20,6 @@ import {
   ReportSportsMappingRow,
 } from "@/lib/api";
 import SportsMappingsModal from "./SportsMappingsModal";
-
 interface PageMetric {
   profileId: string;
   pageName: string;

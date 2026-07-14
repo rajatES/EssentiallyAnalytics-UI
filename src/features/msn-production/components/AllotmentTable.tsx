@@ -2,6 +2,7 @@
 
 import type { ProductionResult } from "../types";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: ProductionResult;
@@ -39,13 +40,16 @@ export default function AllotmentTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Allotment
-        </h2>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Pieces handed out per allotter (SGH) in the selected period
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Allotment
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Pieces handed out per allotter (SGH) in the selected period
+          </p>
+        </div>
+        <TableCsvButton filename="msn_allotment" />
       </div>
 
       {rows.length === 0 ? (

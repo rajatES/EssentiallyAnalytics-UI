@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { DuplicatesResult, DuplicateAllotment } from "../types";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: DuplicatesResult;
@@ -71,16 +72,19 @@ export default function DuplicateTitlesTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Duplicate Allotments
-          <span className="ml-2 rounded-full bg-fuchsia-50 px-2 py-0.5 text-[11px] font-semibold text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-400">
-            {data.duplicateTitles} titles
-          </span>
-        </h2>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Same title handed out more than once — click a row for every allotment
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Duplicate Allotments
+            <span className="ml-2 rounded-full bg-fuchsia-50 px-2 py-0.5 text-[11px] font-semibold text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-400">
+              {data.duplicateTitles} titles
+            </span>
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Same title handed out more than once — click a row for every allotment
+          </p>
+        </div>
+        <TableCsvButton filename="msn_duplicate_titles" />
       </div>
 
       {data.titles.length === 0 ? (

@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import type { InsightsResult } from "../types";
 import { fmtHours } from "../format";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: InsightsResult;
@@ -27,13 +28,16 @@ export default function PairMatrix({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Writer × Editor Pairings
-        </h2>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Most frequent combos — slow review times and sent-backs flag friction
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Writer × Editor Pairings
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Most frequent combos — slow review times and sent-backs flag friction
+          </p>
+        </div>
+        <TableCsvButton filename="msn_pair_matrix" />
       </div>
 
       {pairs.length === 0 ? (

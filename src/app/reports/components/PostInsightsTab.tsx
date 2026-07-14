@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import DateRangePicker from "../../components/DateRangePicker";
 import { Profile } from "../types";
-
 interface PostData {
   postId: string;
   profileId: string;

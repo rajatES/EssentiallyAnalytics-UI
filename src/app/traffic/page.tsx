@@ -18,6 +18,8 @@ import {
   Settings,
   ArrowLeft,
   Trash2,
+  Pencil,
+  Check,
   Plus,
   UploadCloud,
   Loader2,
@@ -51,6 +53,17 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   const [mappings, setMappings] = useState<MappingWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"mappings" | "teams">("mappings");
+
+  // Inline row editing, keyed by pageName (a "row" is all UTM-medium mappings
+  // sharing that page). Edits cascade to every underlying id so the page's
+  // category/team/platform/name stay consistent.
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    category: "",
+    team: "",
+    platform: "Facebook",
+    pageName: "",
+  });
 
   // New Mapping State
   const [newCategory, setNewCategory] = useState("");
@@ -254,20 +267,42 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
     }
   };
 
-  const handleUpdateTeamMulti = async (
-    ids: number[],
-    currentTeam: string | null | undefined,
-  ) => {
-    if (ids.length === 0) return;
-    const updatedTeam = prompt('Enter new team name:', currentTeam || '');
-    if (updatedTeam === null) return;
+  const startEdit = (m: {
+    pageName: string;
+    category: string;
+    team: string | null | undefined;
+    platform: string;
+  }) => {
+    setEditingKey(m.pageName);
+    setEditForm({
+      category: m.category || "",
+      team: m.team || "",
+      platform: m.platform || "Facebook",
+      pageName: m.pageName || "",
+    });
+  };
+
+  const cancelEdit = () => setEditingKey(null);
+
+  const handleSaveEdit = async (ids: number[]) => {
+    const payload = {
+      category: editForm.category.trim() || "Uncategorized",
+      team: editForm.team.trim() || null,
+      platform: editForm.platform,
+      pageName: editForm.pageName.trim(),
+    };
+    if (!payload.pageName) {
+      alert("Page name cannot be empty");
+      return;
+    }
     try {
-      const updated = await batchUpdatePageMappingTeam(ids, updatedTeam.trim() || null);
-      setMappings(updated);
+      await Promise.all(ids.map((id) => updatePageMapping(id, payload)));
+      setEditingKey(null);
+      loadMappings();
       onMappingsChanged?.();
     } catch (err) {
-      console.error('Failed to update team', err);
-      alert('Failed to update team');
+      console.error("Failed to update mapping", err);
+      alert("Failed to update mapping");
     }
   };
 
@@ -487,6 +522,11 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <datalist id="edit-team-options">
+              {activeTeams.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left whitespace-nowrap">
                 <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs border-b border-gray-200 dark:border-gray-700">
@@ -520,58 +560,142 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                       </td>
                     </tr>
                   ) : (
-                    dedupedMappings.map((m) => (
-                      <tr
-                        key={m.pageName}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-800 dark:text-gray-200 transition-colors"
-                      >
-                        <td className="px-6 py-3 font-bold">{m.category}</td>
-                        <td className="px-6 py-3">
-                          {m.team ? (
-                            <span className="font-semibold text-violet-600 dark:text-violet-400">
-                              {m.team}
-                            </span>
+                    dedupedMappings.map((m) => {
+                      const isEditing = editingKey === m.pageName;
+                      const inputClass =
+                        "w-full p-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none";
+                      return (
+                        <tr
+                          key={m.pageName}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-800 dark:text-gray-200 transition-colors"
+                        >
+                          {isEditing ? (
+                            <>
+                              <td className="px-6 py-3">
+                                <input
+                                  className={inputClass}
+                                  value={editForm.category}
+                                  onChange={(e) =>
+                                    setEditForm((f) => ({ ...f, category: e.target.value }))
+                                  }
+                                  placeholder="Category"
+                                />
+                              </td>
+                              <td className="px-6 py-3">
+                                <input
+                                  className={inputClass}
+                                  value={editForm.team}
+                                  onChange={(e) =>
+                                    setEditForm((f) => ({ ...f, team: e.target.value }))
+                                  }
+                                  list="edit-team-options"
+                                  placeholder="Unassigned"
+                                />
+                              </td>
+                              <td className="px-6 py-3">
+                                <select
+                                  className={inputClass}
+                                  value={editForm.platform}
+                                  onChange={(e) =>
+                                    setEditForm((f) => ({ ...f, platform: e.target.value }))
+                                  }
+                                >
+                                  <option value="Facebook">Facebook</option>
+                                  <option value="Threads">Threads</option>
+                                </select>
+                              </td>
+                              <td className="px-6 py-3">
+                                <input
+                                  className={inputClass}
+                                  value={editForm.pageName}
+                                  onChange={(e) =>
+                                    setEditForm((f) => ({ ...f, pageName: e.target.value }))
+                                  }
+                                  placeholder="Page Name"
+                                />
+                              </td>
+                              <td className="px-6 py-3">
+                                <div className="flex flex-wrap gap-1.5 max-w-md">
+                                  {m.utmMediums.map((med) => (
+                                    <span
+                                      key={med}
+                                      title={med}
+                                      className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md text-[11px] font-medium border border-gray-200 dark:border-gray-700 max-w-[220px] truncate inline-block align-middle opacity-60"
+                                    >
+                                      {med}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-6 py-3 text-right space-x-2">
+                                <button
+                                  onClick={() => handleSaveEdit(m.ids)}
+                                  className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 p-2 rounded-lg transition-colors"
+                                  title="Save"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </>
                           ) : (
-                            <span className="text-gray-400 italic">
-                              Unassigned
-                            </span>
+                            <>
+                              <td className="px-6 py-3 font-bold">{m.category}</td>
+                              <td className="px-6 py-3">
+                                {m.team ? (
+                                  <span className="font-semibold text-violet-600 dark:text-violet-400">
+                                    {m.team}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 italic">
+                                    Unassigned
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-6 py-3">{m.platform}</td>
+                              <td className="px-6 py-3 font-bold text-blue-600 dark:text-blue-400">
+                                {m.pageName}
+                              </td>
+                              <td className="px-6 py-3">
+                                <div className="flex flex-wrap gap-1.5 max-w-md">
+                                  {m.utmMediums.map((med) => (
+                                    <span
+                                      key={med}
+                                      title={med}
+                                      className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md text-[11px] font-medium border border-gray-200 dark:border-gray-700 max-w-[220px] truncate inline-block align-middle"
+                                    >
+                                      {med}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-6 py-3 text-right space-x-2">
+                                <button
+                                  onClick={() => startEdit(m)}
+                                  className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-lg transition-colors"
+                                  title="Edit Mapping"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePage(m.ids)}
+                                  className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
+                                  title="Delete Mapping"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </>
                           )}
-                        </td>
-                        <td className="px-6 py-3">{m.platform}</td>
-                        <td className="px-6 py-3 font-bold text-blue-600 dark:text-blue-400">
-                          {m.pageName}
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex flex-wrap gap-1.5 max-w-md">
-                            {m.utmMediums.map((med) => (
-                              <span
-                                key={med}
-                                title={med}
-                                className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md text-[11px] font-medium border border-gray-200 dark:border-gray-700 max-w-[220px] truncate inline-block align-middle"
-                              >
-                                {med}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 text-right space-x-2">
-                          <button
-                            onClick={() => handleUpdateTeamMulti(m.ids, m.team)}
-                            className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-lg transition-colors"
-                            title="Edit Team"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeletePage(m.ids)}
-                            className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
-                            title="Delete Mapping"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -897,6 +1021,7 @@ export default function WebTrafficPage() {
           <TrafficTable
             data={data}
             dateHeaders={options.dateHeaders}
+            platform={filters.platform}
             onOpenMappings={() => setShowMappings(true)}
           />
         </div>

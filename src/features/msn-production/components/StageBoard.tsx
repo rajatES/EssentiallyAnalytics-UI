@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 import type { StageBoardResult } from "../types";
 import { fmtHours, ageTone, AGE_TONE_CLASS } from "../format";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: StageBoardResult;
@@ -50,9 +51,12 @@ export default function StageBoard({ data, isLoading }: Props) {
             {data.totalWip} pieces in progress · click a stage to see its queue
           </p>
         </div>
-        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-          {data.doneLast24h} finished in last 24h
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+            {data.doneLast24h} finished in last 24h
+          </span>
+          <TableCsvButton filename="msn_stage_board" />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">

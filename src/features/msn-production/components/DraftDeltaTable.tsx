@@ -3,6 +3,7 @@
 import type { ProductionResult } from "../types";
 import { fmtHours, fmtPct } from "../format";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: ProductionResult;
@@ -50,14 +51,17 @@ export default function DraftDeltaTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Writers — allotted vs drafted
-        </h2>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          By allotment date · shortfall split into not&nbsp;picked (never started)
-          and picked&nbsp;·&nbsp;not&nbsp;drafted (started, not yet submitted)
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Writers — allotted vs drafted
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            By allotment date · shortfall split into not&nbsp;picked (never started)
+            and picked&nbsp;·&nbsp;not&nbsp;drafted (started, not yet submitted)
+          </p>
+        </div>
+        <TableCsvButton filename="msn_draft_delta" />
       </div>
 
       {rows.length === 0 ? (

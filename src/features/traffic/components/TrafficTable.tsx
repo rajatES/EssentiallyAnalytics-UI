@@ -1,13 +1,24 @@
 import { useState, useMemo } from "react";
 import { AggregatedPageData } from "@/types";
 import { format, parseISO } from "date-fns";
-import { BarChart3, Settings, Download, LayoutGrid, Users2 } from "lucide-react";
+import {
+  BarChart3,
+  Settings,
+  Download,
+  LayoutGrid,
+  Users2,
+  ChevronDown,
+  ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 interface TrafficTableProps {
   data: AggregatedPageData[];
   dateHeaders: string[];
+  platform?: string;
   onOpenMappings?: () => void;
 }
 
@@ -36,9 +47,10 @@ const TEAM_ROW_GRADIENTS = [
   "bg-gradient-to-r from-pink-50/80 to-rose-50/60 dark:from-pink-900/20 dark:to-rose-900/10",
 ];
 
-export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTableProps) {
+export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: TrafficTableProps) {
   const [gridMetric, setGridMetric] = useState<MetricType>("sessions");
   const [viewMode, setViewMode] = useState<ViewMode>("category");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   // ---------- Category grouping ----------
   const categoryGroupedData = useMemo(() => {
@@ -161,6 +173,25 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
 
   const groupedData = viewMode === "category" ? categoryGroupedData : teamGroupedData;
 
+  const allCollapsed =
+    groupedData.length > 0 &&
+    groupedData.every(([name]) => collapsedGroups.has(name));
+
+  const toggleAllGroups = () => {
+    setCollapsedGroups(
+      allCollapsed ? new Set() : new Set(groupedData.map(([name]) => name)),
+    );
+  };
+
+  const toggleGroup = (name: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
   const teamColorIndex = useMemo(() => {
     const map: Record<string, number> = {};
     teamGroupedData.forEach(([name], idx) => {
@@ -192,74 +223,80 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
   };
 
   // ---------- CSV Export ----------
+  // Quote a field only when it contains a comma, quote or newline — keeps plain
+  // labels/numbers unquoted so the output matches the reference report layout.
+  const csvField = (value: string | number) => {
+    const s = String(value);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const buildDateLabel = () => {
+    if (!dateHeaders.length) return format(new Date(), "d MMMM");
+    const first = parseISO(dateHeaders[0]);
+    const last = parseISO(dateHeaders[dateHeaders.length - 1]);
+    return dateHeaders.length === 1
+      ? format(first, "d MMMM")
+      : `${format(first, "d MMMM")} - ${format(last, "d MMMM")}`;
+  };
+
   const handleExportCSV = () => {
     if (!groupedData.length) return;
 
-    const isTeamView = viewMode === "team";
-    const firstColumnHeader = isTeamView ? "Team / Page Name" : "Category / Page Name";
+    const firstColumnHeader =
+      viewMode === "team" ? "Team / Page Name" : "Category / Page Name";
+    const platformLabel = platform === "Threads" ? "Threads" : "FB";
+    const title = `${platformLabel} - Traffic Report - ${buildDateLabel()}`;
 
-    const headers = [
-      firstColumnHeader,
-      "Total Sessions",
-      "Total Users",
-      "Total Pageviews",
-      "Avg Engagement Rate",
-      ...dateHeaders.map((d) => `${d} (${gridMetric})`),
+    const csvRows = [
+      csvField(title),
+      [
+        firstColumnHeader,
+        "Total Sessions",
+        "Total Users",
+        "Total Pageviews",
+        "Avg Engagement Rate",
+      ].join(","),
     ];
 
-    const csvRows = [headers.join(",")];
+    let totalSessions = 0;
+    let totalUsers = 0;
+    let totalPageviews = 0;
+    let engagementBySessions = 0;
 
     groupedData.forEach(([groupName, groupData]) => {
-      const { rows, totals, dailyTotals } = groupData;
+      const { totals } = groupData;
+      const avgEngagement = totals.engagement_sum / (totals.count || 1);
 
-      // 1. Group Header Row (Mirrors the colored total row in the UI)
-      const groupRowData = [
-        `"[${groupName.toUpperCase()}]"`,
-        totals.sessions,
-        totals.users,
-        totals.pageviews,
-        `"${((totals.engagement_sum / (totals.count || 1)) * 100).toFixed(1)}%"`,
-      ];
+      csvRows.push(
+        [
+          csvField(groupName),
+          totals.sessions,
+          totals.users,
+          totals.pageviews,
+          avgEngagement,
+        ].join(","),
+      );
 
-      dateHeaders.forEach((date) => {
-        const val = getGroupMetricForDate(dailyTotals, date);
-        if (gridMetric === "engagement_rate") {
-          groupRowData.push(`"${val}"`);
-        } else {
-          groupRowData.push(String(val || 0));
-        }
-      });
-      csvRows.push(groupRowData.join(","));
-
-      // 2. Individual Page Rows
-      rows.forEach((row) => {
-        let pageNameDisplay = row.pageName;
-        if (isTeamView && row.category) {
-          pageNameDisplay += ` [${row.category}]`;
-        } else if (!isTeamView && row.team) {
-          pageNameDisplay += ` [${row.team}]`;
-        }
-
-        const rowData = [
-          `"   ${pageNameDisplay}"`, // Indented visually to show hierarchy
-          row.totals.sessions,
-          row.totals.users,
-          row.totals.pageviews,
-          `"${(row.totals.engagement_rate_avg * 100).toFixed(1)}%"`,
-        ];
-
-        dateHeaders.forEach((date) => {
-          const val = getMetricForDate(row, date);
-          if (gridMetric === "engagement_rate") {
-            rowData.push(`"${val}"`);
-          } else {
-            rowData.push(String(val || 0));
-          }
-        });
-
-        csvRows.push(rowData.join(","));
-      });
+      totalSessions += totals.sessions;
+      totalUsers += totals.users;
+      totalPageviews += totals.pageviews;
+      engagementBySessions += avgEngagement * totals.sessions;
     });
+
+    // Session-weighted average so the grand total reflects high-traffic groups.
+    const totalEngagement = totalSessions
+      ? engagementBySessions / totalSessions
+      : 0;
+
+    csvRows.push(
+      [
+        csvField("Total"),
+        totalSessions,
+        totalUsers,
+        totalPageviews,
+        totalEngagement,
+      ].join(","),
+    );
 
     const blob = new Blob([csvRows.join("\n")], {
       type: "text/csv;charset=utf-8;",
@@ -269,7 +306,7 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `traffic_${viewMode}_export_${format(new Date(), "yyyy-MM-dd")}.csv`,
+      `traffic_report_${format(new Date(), "yyyy-MM-dd")}.csv`,
     );
     document.body.appendChild(link);
     link.click();
@@ -284,6 +321,7 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
   ) => {
     const { rows, totals, dailyTotals } = groupData;
     const isTeamView = viewMode === "team";
+    const isCollapsed = collapsedGroups.has(groupName);
     const badgeClass = isTeamView
       ? TEAM_BADGE_COLORS[colorIdx % TEAM_BADGE_COLORS.length]
       : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300";
@@ -301,7 +339,11 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
     return (
       <React.Fragment key={groupName}>
         {/* Group Header Row */}
-        <tr className={headerRowClass}>
+        <tr
+          className={cn(headerRowClass, "cursor-pointer select-none")}
+          onClick={() => toggleGroup(groupName)}
+          title={isCollapsed ? "Expand" : "Collapse"}
+        >
           <td
             className={cn(
               "px-6 py-4 sticky left-0 z-20 border-r border-gray-200/60 dark:border-gray-700 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] dark:shadow-none",
@@ -309,6 +351,11 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
             )}
           >
             <div className="flex items-center gap-2">
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" />
+              )}
               <span className="font-extrabold text-gray-800 dark:text-gray-200 text-base uppercase tracking-wide">
                 {groupName}
               </span>
@@ -359,7 +406,7 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
         </tr>
 
         {/* Page Rows */}
-        {rows.map((row) => (
+        {!isCollapsed && rows.map((row) => (
           <tr
             key={row.pageName}
             className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
@@ -477,6 +524,21 @@ export function TrafficTable({ data, dateHeaders, onOpenMappings }: TrafficTable
         </div>
 
         <div className="flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 gap-2">
+          <button
+            onClick={toggleAllGroups}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+            title={allCollapsed ? "Expand all groups" : "Collapse all groups"}
+          >
+            {allCollapsed ? (
+              <ChevronsUpDown className="w-4 h-4" />
+            ) : (
+              <ChevronsDownUp className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">
+              {allCollapsed ? "Expand all" : "Collapse all"}
+            </span>
+          </button>
+
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"

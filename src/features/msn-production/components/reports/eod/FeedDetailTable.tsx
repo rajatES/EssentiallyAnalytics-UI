@@ -6,7 +6,6 @@ import type { EodReportRow, ReportsConfig } from "../../../types";
 import { fmtInt, fmtPct } from "../../../format";
 import { ReportCard, TD_NUM, TH_BASE, rateTone } from "../shared";
 import { CONTENT_TYPES, TYPE_LABEL, regionsFor, shortName, typeTotal } from "./helpers";
-
 interface Props {
   rows: EodReportRow[];
   config?: ReportsConfig;

@@ -14,6 +14,7 @@ import {
 import { METRIC_CONFIG, MetricKey } from "../types";
 import DateRangePicker from "../../components/DateRangePicker";
 import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 const CustomXAxisTick = ({ x, y, payload, index }: any) => {
   const date = new Date(payload.value);
@@ -306,6 +307,7 @@ export default function CompareTab({
             </div>
 
             <div className="border-t border-gray-100 dark:border-gray-800 p-6 bg-gray-50/30 dark:bg-gray-800/30">
+              <div className="mb-2 flex justify-end"><TableCsvButton filename="reports_compare" /></div>
               <div className="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 shadow-sm">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">

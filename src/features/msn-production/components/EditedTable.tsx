@@ -3,6 +3,7 @@
 import type { ProductionResult } from "../types";
 import { fmtHours } from "../format";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: ProductionResult;
@@ -42,13 +43,16 @@ export default function EditedTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Editing
-        </h2>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Pieces that cleared review per editor · by review date
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Editing
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Pieces that cleared review per editor · by review date
+          </p>
+        </div>
+        <TableCsvButton filename="msn_edited" />
       </div>
 
       {rows.length === 0 ? (

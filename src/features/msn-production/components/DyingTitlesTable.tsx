@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Skull, Search } from "lucide-react";
 import type { InsightsResult, DeadTitleEntry } from "../types";
 import { useTableSort, SortableTh } from "./SortableHeader";
+import { TableCsvButton } from "@/components/ui/TableCsvButton";
 
 interface Props {
   data?: InsightsResult;
@@ -140,6 +141,7 @@ export default function DyingTitlesTable({ data, isLoading }: Props) {
               className="w-44 rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-2 text-xs text-gray-700 placeholder:text-gray-300 focus:border-indigo-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder:text-gray-600"
             />
           </div>
+          <TableCsvButton filename="msn_dying_titles" />
         </div>
       </div>
 

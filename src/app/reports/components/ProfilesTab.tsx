@@ -22,7 +22,6 @@ import { METRIC_CONFIG, MetricKey, Profile, DemographicData } from "../types";
 import DateRangePicker from "../../components/DateRangePicker";
 import DemographicsSection from "./DemographicsSection";
 import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
-
 const TrendIndicator = ({ change }: { change: number }) => {
   if (isNaN(change) || change === 0)
     return (

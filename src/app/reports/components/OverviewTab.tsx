@@ -15,8 +15,7 @@ import { METRIC_CONFIG, MetricKey, DemographicData } from "../types";
 import DemographicsSection from "./DemographicsSection";
 import PageMetricsTable from "./PageMetricsTable";
 import DateRangePicker from "../../components/DateRangePicker";
-import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
-import {
+import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";import {
   Settings2,
   TrendingUp,
   TrendingDown,

@@ -6,7 +6,6 @@ import type { EodReportRow, ReportsConfig } from "../../../types";
 import { fmtPct } from "../../../format";
 import { ReportCard } from "../shared";
 import { shortName, tierOf } from "./helpers";
-
 interface Props {
   rows: EodReportRow[];
   config?: ReportsConfig;
@@ -61,38 +60,38 @@ export default function FeedHealthWatch({ rows, config }: Props) {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-              <tr>
-                <th className="px-3 py-2 font-medium">Feed</th>
-                <th className="px-3 py-2 text-right font-medium">Feed health</th>
-                <th className="px-3 py-2 text-right font-medium">Publish rate</th>
-                <th className="px-3 py-2 text-center font-medium">Tier</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {needsAttention.map((r) => (
-                <tr key={r.pub} className="hover:bg-gray-50 dark:hover:bg-gray-800/60">
-                  <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">
-                    <span className="flex items-center gap-1.5" title={r.pub}>
-                      <AlertTriangle size={12} className="shrink-0 text-amber-500" />
-                      {shortName(config, r.pub)}
-                    </span>
-                  </td>
-                  <td className={`px-3 py-2 text-right font-medium tabular-nums ${tone(r.health)}`}>
-                    {fmtPct(r.health)}
-                  </td>
-                  <td className={`px-3 py-2 text-right font-medium tabular-nums ${tone(r.publish)}`}>
-                    {fmtPct(r.publish)}
-                  </td>
-                  <td className="px-3 py-2 text-center text-[10px] font-semibold text-gray-400 dark:text-gray-500">
-                    {tierOf(config, r.pub) ?? "—"}
-                  </td>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Feed</th>
+                  <th className="px-3 py-2 text-right font-medium">Feed health</th>
+                  <th className="px-3 py-2 text-right font-medium">Publish rate</th>
+                  <th className="px-3 py-2 text-center font-medium">Tier</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                {needsAttention.map((r) => (
+                  <tr key={r.pub} className="hover:bg-gray-50 dark:hover:bg-gray-800/60">
+                    <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">
+                      <span className="flex items-center gap-1.5" title={r.pub}>
+                        <AlertTriangle size={12} className="shrink-0 text-amber-500" />
+                        {shortName(config, r.pub)}
+                      </span>
+                    </td>
+                    <td className={`px-3 py-2 text-right font-medium tabular-nums ${tone(r.health)}`}>
+                      {fmtPct(r.health)}
+                    </td>
+                    <td className={`px-3 py-2 text-right font-medium tabular-nums ${tone(r.publish)}`}>
+                      {fmtPct(r.publish)}
+                    </td>
+                    <td className="px-3 py-2 text-center text-[10px] font-semibold text-gray-400 dark:text-gray-500">
+                      {tierOf(config, r.pub) ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
       )}
     </ReportCard>
   );
