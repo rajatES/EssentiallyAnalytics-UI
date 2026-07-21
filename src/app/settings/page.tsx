@@ -227,8 +227,18 @@ export default function SettingsPage() {
         }
       },
       {
+        // Read-only scopes only — every one maps to a call we actually make, so
+        // each can be demonstrated in App Review. Do not add write permissions
+        // (pages_manage_*, instagram_content_publish) until the feature exists:
+        //   pages_show_list          -> GET /me/accounts
+        //   pages_read_engagement    -> GET /{page}, /{page}/feed
+        //   pages_read_user_content  -> GET /{post}/comments (comment-links)
+        //   read_insights            -> GET /{page|post}/insights, monetization
+        //   instagram_basic          -> GET /{page}?fields=instagram_business_account, /{ig}/media
+        //   instagram_manage_insights-> GET /{ig}/insights, follower_demographics
+        //   instagram_manage_comments-> GET /{ig-media}/comments
         scope:
-          "public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,pages_manage_metadata,read_insights,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,business_management",
+          "public_profile,pages_show_list,pages_read_engagement,pages_read_user_content,read_insights,instagram_basic,instagram_manage_insights,instagram_manage_comments",
       },
     );
   };
@@ -792,6 +802,10 @@ export default function SettingsPage() {
         <span className="text-gray-300 dark:text-gray-700">•</span>
         <a href="/terms" className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
           Terms of Service
+        </a>
+        <span className="text-gray-300 dark:text-gray-700">•</span>
+        <a href="/data-deletion" className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          Data Deletion
         </a>
       </div>
     </div>

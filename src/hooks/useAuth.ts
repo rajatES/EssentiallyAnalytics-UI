@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { apiClient } from "@/lib/api";
+import { isPublicRoute } from "@/lib/public-routes";
 
 export function useAuth() {
   const router = useRouter();
@@ -10,7 +11,7 @@ export function useAuth() {
 
   useEffect(() => {
     // Public pages: skip auth check so they remain accessible without login.
-    if (pathname === "/login" || pathname === "/privacy" || pathname === "/terms") return;
+    if (isPublicRoute(pathname)) return;
 
     // Check auth by hitting a protected endpoint — the HttpOnly cookie
     // is sent automatically via axios withCredentials: true

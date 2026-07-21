@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { triggerMsnSync } from "@/lib/api";
 import type { MsnFilterParams } from "@/features/msn-production/types";
 import {
@@ -25,6 +25,7 @@ import MsnHeader, {
   type MsnTab,
   type RangeKey,
 } from "@/features/msn-production/components/MsnHeader";
+import MsnSkeleton from "@/features/msn-production/components/MsnSkeleton";
 import KpiHero from "@/features/msn-production/components/KpiHero";
 import ProductionSummary from "@/features/msn-production/components/ProductionSummary";
 import AllotmentTable from "@/features/msn-production/components/AllotmentTable";
@@ -132,6 +133,13 @@ export default function MsnProductionPage() {
   // Duplicate allotments
   const duplicates = useDuplicates(filters);
 
+  // Show the full-page skeleton only on the very first load — not on later
+  // filter/range changes (those keep the page and use per-card skeletons).
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  useEffect(() => {
+    if (!hasLoadedOnce && overview.data !== undefined) setHasLoadedOnce(true);
+  }, [hasLoadedOnce, overview.data]);
+
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -156,6 +164,12 @@ export default function MsnProductionPage() {
     setCustomStart(start);
     setCustomEnd(end);
   }, []);
+
+  // First paint (or a hard refresh) while the initial data is in flight — show
+  // the full skeleton so the page is never blank while loading.
+  if (!hasLoadedOnce && overview.isLoading) {
+    return <MsnSkeleton />;
+  }
 
   return (
     <div className="min-h-screen space-y-4 px-4 pb-6 pt-4 lg:px-6">

@@ -7,6 +7,7 @@ import Topbar from "./Topbar";
 import GlobalSyncScreen from "./GlobalSyncScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { RoleProvider } from "@/hooks/useRole";
+import { isPublicRoute } from "@/lib/public-routes";
 
 export default function AppLayoutWrapper({
   children,
@@ -14,14 +15,13 @@ export default function AppLayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === "/login";
-  // Privacy and Terms pages are public — no auth or app chrome required.
-  const isPublicPage = pathname === "/privacy" || pathname === "/terms";
+  // Legal/compliance pages and login are public — no auth or app chrome.
+  const isPublicPage = isPublicRoute(pathname);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   useAuth();
 
-  if (isLoginPage || isPublicPage) {
+  if (isPublicPage) {
     return (
       <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
         {children}

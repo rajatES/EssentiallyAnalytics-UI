@@ -108,7 +108,10 @@ export default function PrivacyPolicy() {
             </p>
           </section>
 
-          <section className="space-y-3 bg-gray-50 dark:bg-gray-800/50  rounded-xl border border-gray-100 dark:border-gray-800">
+          <section
+            id="data-deletion"
+            className="space-y-3 bg-gray-50 dark:bg-gray-800/50  rounded-xl border border-gray-100 dark:border-gray-800"
+          >
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               5. Data Retention and Deletion (Your Rights)
             </h2>
@@ -135,6 +138,16 @@ export default function PrivacyPolicy() {
                 account and all associated data.
               </li>
             </ul>
+            <p className="text-sm md:text-base pt-1">
+              Step-by-step instructions are on our{" "}
+              <Link
+                href="/data-deletion"
+                className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+              >
+                User Data Deletion
+              </Link>{" "}
+              page.
+            </p>
           </section>
 
           <section className="space-y-3">
