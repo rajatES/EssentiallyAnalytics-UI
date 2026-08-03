@@ -8,7 +8,7 @@ import {
   batchUpdateRevenueMappingTeam,
   RevenueMappingRow,
 } from "@/lib/api";
-import { ArrowLeft, Plus, X, Tag, Users, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, X, Tag, Users, ChevronDown, Search } from "lucide-react";
 import Link from "next/link";
 
 export default function RevenueMappingsPage() {
@@ -34,6 +34,18 @@ export default function RevenueMappingsPage() {
   const [newTeamInput, setNewTeamInput] = useState("");
   // Extra teams that user added locally but haven't been assigned yet
   const [localTeams, setLocalTeams] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Rows matching the search box — matches page name, page ID and team.
+  const filteredMappings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return mappings;
+    return mappings.filter((m) =>
+      [m.pageName, m.pageId, m.team]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [mappings, searchQuery]);
 
   // Derive the full team list from existing mappings + locally-added teams
   const allTeams = useMemo(() => {
@@ -181,9 +193,24 @@ export default function RevenueMappingsPage() {
 
       {/* ═══ Page Assignments Table ═══ */}
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-          <Users size={15} className="text-gray-400" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">Page Assignments</h2>
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Users size={15} className="text-gray-400" />
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Page Assignments</h2>
+          </div>
+          <div className="relative w-full max-w-[240px]">
+            <Search
+              size={14}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search pages or teams..."
+              className="w-full rounded-lg border border-gray-300 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white placeholder:text-gray-400"
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -217,8 +244,14 @@ export default function RevenueMappingsPage() {
                     No page mappings found. Revenue data will appear once pages are synced.
                   </td>
                 </tr>
+              ) : filteredMappings.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-10 text-center text-gray-400">
+                    No pages match &quot;{searchQuery}&quot;.
+                  </td>
+                </tr>
               ) : (
-                mappings.map((row) => (
+                filteredMappings.map((row) => (
                   <tr
                     key={row.id}
                     className="border-b border-gray-50 hover:bg-gray-50/50 dark:border-gray-800/50 dark:hover:bg-gray-800/20 transition-colors"

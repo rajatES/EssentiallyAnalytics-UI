@@ -11,7 +11,7 @@ import {
   importLegacyDataCSV,
 } from "@/lib/api";
 import { MappingEntry } from "@/data/page-mapping";
-import { Trash2, Plus, ArrowLeft, UploadCloud, Loader2, X, Users } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, UploadCloud, Loader2, X, Users, Search } from "lucide-react";
 import Link from "next/link";
 
 interface MappingWithId extends MappingEntry {
@@ -21,6 +21,7 @@ interface MappingWithId extends MappingEntry {
 export default function PageMappingsSettings() {
   const [mappings, setMappings] = useState<MappingWithId[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Single Entry States
   const [newCategory, setNewCategory] = useState("");
@@ -46,6 +47,18 @@ export default function PageMappingsSettings() {
   const existingTeams = Array.from(
     new Set(mappings.map((m) => m.team).filter(Boolean) as string[])
   ).sort();
+
+  // Rows matching the search box — matches across category, team, platform,
+  // page name and any of the UTM mediums.
+  const filteredMappings = (() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return mappings;
+    return mappings.filter((m) =>
+      [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  })();
 
   // Pages not assigned to any team — deduped by pageName so each page
   // appears once (matching the aggregated traffic table). Keeps all
@@ -478,6 +491,19 @@ export default function PageMappingsSettings() {
 
         {/* List */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+            <h2 className="text-lg font-semibold">Page Mappings</h2>
+            <div className="relative w-full max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search category, team, page, UTM..."
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+            </div>
+          </div>
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs">
               <tr>
@@ -503,8 +529,14 @@ export default function PageMappingsSettings() {
                     No mappings found. Add one above or upload a CSV.
                   </td>
                 </tr>
+              ) : filteredMappings.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    No mappings match &quot;{searchQuery}&quot;.
+                  </td>
+                </tr>
               ) : (
-                mappings.map((m) => (
+                filteredMappings.map((m) => (
                   <tr
                     key={m.id || m.pageName}
                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50"

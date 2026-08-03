@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { X, Plus, Tag, Users, ChevronDown, RefreshCw, Calendar, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { X, Plus, Tag, Users, ChevronDown, RefreshCw, Calendar, AlertTriangle, CheckCircle2, Search } from "lucide-react";
 import {
   ReportSportsMappingRow,
   updateReportSportsMapping,
@@ -62,6 +62,7 @@ export default function SportsMappingsModal({
   const [newSportInput, setNewSportInput] = useState("");
   const [localSports, setLocalSports] = useState<string[]>([]);
   const [isPending, setIsPending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // --- Data Re-Sync state ---
   const [showResync, setShowResync] = useState(false);
@@ -81,6 +82,16 @@ export default function SportsMappingsModal({
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const filteredMappings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return mappings;
+    return mappings.filter(
+      (m) =>
+        m.pageName?.toLowerCase().includes(q) ||
+        m.sport?.toLowerCase().includes(q),
+    );
+  }, [mappings, searchQuery]);
 
   const allSports = useMemo(() => {
     const fromMappings = mappings
@@ -282,11 +293,26 @@ export default function SportsMappingsModal({
 
           {/* ═══ Page Assignments ═══ */}
           <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-              <Users size={15} className="text-gray-400" />
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                Page Assignments
-              </h3>
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Users size={15} className="text-gray-400" />
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Page Assignments
+                </h3>
+              </div>
+              <div className="relative w-full max-w-[220px]">
+                <Search
+                  size={14}
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search pages..."
+                  className="w-full rounded-lg border border-gray-300 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white placeholder:text-gray-400"
+                />
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -311,8 +337,17 @@ export default function SportsMappingsModal({
                         synced.
                       </td>
                     </tr>
+                  ) : filteredMappings.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={2}
+                        className="px-4 py-10 text-center text-gray-400"
+                      >
+                        No pages match &quot;{searchQuery}&quot;.
+                      </td>
+                    </tr>
                   ) : (
-                    mappings.map((row) => (
+                    filteredMappings.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-gray-50 hover:bg-gray-50/50 dark:border-gray-800/50 dark:hover:bg-gray-800/20 transition-colors"
