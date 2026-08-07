@@ -17,8 +17,9 @@ export function serializeTableToCsv(table: HTMLTableElement): string {
   return lines.join("\n");
 }
 
-export function downloadTableCsv(table: HTMLTableElement, filename: string) {
-  const csv = serializeTableToCsv(table);
+/** Trigger a browser download for a ready-made CSV string. Appends the current
+ *  date to the filename so repeated exports don't clobber each other. */
+export function triggerCsvDownload(csv: string, filename: string) {
   if (!csv) return;
 
   const stamp = new Date().toISOString().slice(0, 10);
@@ -32,4 +33,23 @@ export function downloadTableCsv(table: HTMLTableElement, filename: string) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function downloadTableCsv(table: HTMLTableElement, filename: string) {
+  triggerCsvDownload(serializeTableToCsv(table), filename);
+}
+
+type CsvCell = string | number | null | undefined;
+
+/** Build a CSV from a header row + data rows and download it. Each cell is
+ *  escaped, so values containing commas (e.g. a UTM-mediums list) are quoted. */
+export function downloadRowsCsv(
+  headers: string[],
+  rows: CsvCell[][],
+  filename: string,
+) {
+  const toLine = (cells: CsvCell[]) =>
+    cells.map((c) => csvField(c == null ? "" : String(c))).join(",");
+  const csv = [toLine(headers), ...rows.map(toLine)].join("\n");
+  triggerCsvDownload(csv, filename);
 }

@@ -8,8 +8,9 @@ import {
   batchUpdateRevenueMappingTeam,
   RevenueMappingRow,
 } from "@/lib/api";
-import { ArrowLeft, Plus, X, Tag, Users, ChevronDown, Search } from "lucide-react";
+import { ArrowLeft, Plus, X, Tag, Users, ChevronDown, Search, Download } from "lucide-react";
 import Link from "next/link";
+import { downloadRowsCsv } from "@/lib/tableCsv";
 
 export default function RevenueMappingsPage() {
   const queryClient = useQueryClient();
@@ -91,6 +92,14 @@ export default function RevenueMappingsPage() {
   /* ─── Page team assignment ─── */
   const assignTeam = (mappingId: number, team: string | null) => {
     mutation.mutate({ id: mappingId, team });
+  };
+
+  const handleDownloadCsv = () => {
+    downloadRowsCsv(
+      ["pageId", "pageName", "team"],
+      filteredMappings.map((m) => [m.pageId, m.pageName, m.team ?? ""]),
+      "revenue-page-mappings",
+    );
   };
 
   return (
@@ -198,18 +207,29 @@ export default function RevenueMappingsPage() {
             <Users size={15} className="text-gray-400" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">Page Assignments</h2>
           </div>
-          <div className="relative w-full max-w-[240px]">
-            <Search
-              size={14}
-              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search pages or teams..."
-              className="w-full rounded-lg border border-gray-300 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white placeholder:text-gray-400"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative w-full max-w-[240px]">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search pages or teams..."
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white placeholder:text-gray-400"
+              />
+            </div>
+            <button
+              onClick={handleDownloadCsv}
+              disabled={filteredMappings.length === 0}
+              title="Download as CSV"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Download size={14} />
+              CSV
+            </button>
           </div>
         </div>
 

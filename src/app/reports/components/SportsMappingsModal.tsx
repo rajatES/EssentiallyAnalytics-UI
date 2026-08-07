@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { X, Plus, Tag, Users, ChevronDown, RefreshCw, Calendar, AlertTriangle, CheckCircle2, Search } from "lucide-react";
+import { X, Plus, Tag, Users, ChevronDown, RefreshCw, Calendar, AlertTriangle, CheckCircle2, Search, Download } from "lucide-react";
 import {
   ReportSportsMappingRow,
   updateReportSportsMapping,
   batchUpdateReportSportsMappingSport,
 } from "@/lib/api";
+import { downloadRowsCsv } from "@/lib/tableCsv";
 
 /* ─── Sport Dropdown ─── */
 function SportDropdown({
@@ -131,6 +132,14 @@ export default function SportsMappingsModal({
       }
     }
     setLocalSports((prev) => prev.filter((s) => s !== sportName));
+  };
+
+  const handleDownloadCsv = () => {
+    downloadRowsCsv(
+      ["pageName", "sport"],
+      filteredMappings.map((m) => [m.pageName, m.sport ?? ""]),
+      "reports-sports-mappings",
+    );
   };
 
   const assignSport = async (mappingId: number, sport: string | null) => {
@@ -300,18 +309,29 @@ export default function SportsMappingsModal({
                   Page Assignments
                 </h3>
               </div>
-              <div className="relative w-full max-w-[220px]">
-                <Search
-                  size={14}
-                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search pages..."
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white placeholder:text-gray-400"
-                />
+              <div className="flex items-center gap-2">
+                <div className="relative w-full max-w-[220px]">
+                  <Search
+                    size={14}
+                    className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search pages..."
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white placeholder:text-gray-400"
+                  />
+                </div>
+                <button
+                  onClick={handleDownloadCsv}
+                  disabled={filteredMappings.length === 0}
+                  title="Download as CSV"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Download size={14} />
+                  CSV
+                </button>
               </div>
             </div>
             <div className="overflow-x-auto">

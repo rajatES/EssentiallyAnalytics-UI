@@ -25,7 +25,8 @@ import {
   Loader2,
   LayoutList,
   Briefcase,
-  Search
+  Search,
+  Download
 } from "lucide-react";
 
 import { StatCard } from "@/components/ui/StatCard";
@@ -45,6 +46,7 @@ import {
   importLegacyDataCSV,
 } from "@/lib/api";
 import { MappingEntry } from "@/data/page-mapping";
+import { downloadRowsCsv } from "@/lib/tableCsv";
 
 interface MappingWithId extends MappingEntry {
   id?: number;
@@ -265,6 +267,33 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
         .some((v) => String(v).toLowerCase().includes(q))
     );
   }, [dedupedMappings, searchQuery]);
+
+  // Export the raw mapping rows (not the deduped view) in the importer's column
+  // order so a downloaded file round-trips back through "Upload Page Mappings".
+  // Respects the current search box.
+  const handleDownloadCsv = () => {
+    const q = searchQuery.trim().toLowerCase();
+    const rows = mappings.filter(
+      (m) =>
+        !q ||
+        [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q)),
+    );
+    downloadRowsCsv(
+      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums"],
+      rows.map((m) => [
+        m.id ?? "",
+        m.category,
+        m.team ?? "",
+        m.platform,
+        m.pageName,
+        m.utmSource,
+        (m.utmMediums || []).join(", "),
+      ]),
+      "traffic-page-mappings",
+    );
+  };
 
   const handleDeletePage = async (ids: number[]) => {
     if (ids.length === 0) return;
@@ -543,15 +572,26 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
             </datalist>
             <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
               <h2 className="text-lg font-semibold">Page Mappings</h2>
-              <div className="relative w-full max-w-xs">
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search category, team, page, UTM..."
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                />
+              <div className="flex items-center gap-2">
+                <div className="relative w-full max-w-xs">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search category, team, page, UTM..."
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
+                <button
+                  onClick={handleDownloadCsv}
+                  disabled={mappings.length === 0}
+                  title="Download as CSV"
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4" />
+                  Download CSV
+                </button>
               </div>
             </div>
             <div className="overflow-x-auto">

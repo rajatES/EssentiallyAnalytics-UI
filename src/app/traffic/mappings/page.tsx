@@ -11,8 +11,9 @@ import {
   importLegacyDataCSV,
 } from "@/lib/api";
 import { MappingEntry } from "@/data/page-mapping";
-import { Trash2, Plus, ArrowLeft, UploadCloud, Loader2, X, Users, Search } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, UploadCloud, Loader2, X, Users, Search, Download } from "lucide-react";
 import Link from "next/link";
+import { downloadRowsCsv } from "@/lib/tableCsv";
 
 interface MappingWithId extends MappingEntry {
   id?: number;
@@ -183,6 +184,24 @@ export default function PageMappingsSettings() {
     } catch (err) {
       console.error("Failed to remove team", err);
     }
+  };
+
+  // Export in the same column order the importer expects, so a downloaded file
+  // round-trips cleanly back through "Upload Page Mappings".
+  const handleDownloadCsv = () => {
+    downloadRowsCsv(
+      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums"],
+      filteredMappings.map((m) => [
+        m.id ?? "",
+        m.category,
+        m.team ?? "",
+        m.platform,
+        m.pageName,
+        m.utmSource,
+        (m.utmMediums || []).join(", "),
+      ]),
+      "traffic-page-mappings",
+    );
   };
 
   const handleMappingFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -493,15 +512,26 @@ export default function PageMappingsSettings() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
             <h2 className="text-lg font-semibold">Page Mappings</h2>
-            <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search category, team, page, UTM..."
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative w-full max-w-xs">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search category, team, page, UTM..."
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </div>
+              <button
+                onClick={handleDownloadCsv}
+                disabled={filteredMappings.length === 0}
+                title="Download as CSV"
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                <Download className="w-4 h-4" />
+                Download CSV
+              </button>
             </div>
           </div>
           <table className="w-full text-sm text-left">
