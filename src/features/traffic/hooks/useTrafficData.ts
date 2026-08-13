@@ -13,16 +13,19 @@ import {
   format, subDays, eachDayOfInterval, parseISO, startOfWeek,
   startOfMonth, subWeeks, startOfToday,
 } from "date-fns";
+import { DEFAULT_PLATFORM_KEY, type TrafficPlatformKey } from "@/lib/traffic-platforms";
 
 export function useTrafficData() {
   const queryClient = useQueryClient();
 
-  const [platform, setPlatform] = useState<"Facebook" | "Threads">("Facebook");
+  const [platform, setPlatform] = useState<TrafficPlatformKey>(DEFAULT_PLATFORM_KEY);
   const [startDate, setStartDate] = useState(format(subDays(subDays(new Date(), 1), 6), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(subDays(new Date(), 1), "yyyy-MM-dd"));
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
 
-  const utmSource = platform === "Facebook" ? "fb" : "threads";
+  // The platform key IS the utmSource param — the backend expands it to every
+  // source spelling that platform reports under (common/traffic-platforms.ts).
+  const utmSource = platform;
 
   const { data: mappings = [], isLoading: loadingMappings } = useQuery({
     queryKey: ["mappings"],
@@ -73,9 +76,9 @@ export function useTrafficData() {
 
   const data = useMemo(() => {
     if (!rawData.length) return [];
-    const processed = processAggregatedData(rawData, selectedCampaign, mappings);
+    const processed = processAggregatedData(rawData, platform, mappings);
     return processed.sort((a, b) => b.totals.sessions - a.totals.sessions);
-  }, [rawData, selectedCampaign, mappings]);
+  }, [rawData, platform, mappings]);
 
   const applyPreset = (preset: "30days" | "prevWeek" | "thisMonth" | "last7Days") => {
     const yesterday = subDays(startOfToday(), 1);

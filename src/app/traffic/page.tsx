@@ -13,8 +13,6 @@ import {
   X,
   Database,
   UserCheck,
-  Facebook,
-  Layers,
   Settings,
   ArrowLeft,
   Trash2,
@@ -47,6 +45,12 @@ import {
 } from "@/lib/api";
 import { MappingEntry } from "@/data/page-mapping";
 import { downloadRowsCsv } from "@/lib/tableCsv";
+import {
+  DEFAULT_PLATFORM_KEY,
+  PLATFORM_LABEL_OPTIONS,
+  TRAFFIC_PLATFORMS,
+  platformKeyFromLabel,
+} from "@/lib/traffic-platforms";
 
 interface MappingWithId extends MappingEntry {
   id?: number;
@@ -74,7 +78,6 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   const [newTeam, setNewTeam] = useState("");
   const [newPlatform, setNewPlatform] = useState("Facebook");
   const [newPageName, setNewPageName] = useState("");
-  const [newUtmSource, setNewUtmSource] = useState("fb");
   const [newMediums, setNewMediums] = useState("");
 
   // Upload States
@@ -113,7 +116,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       team: newTeam.trim() || null,
       platform: newPlatform,
       pageName: newPageName,
-      utmSource: newUtmSource,
+      // Derived from the platform so the row lands on the right tab — there is
+      // no utmSource field in this form.
+      utmSource: platformKeyFromLabel(newPlatform) ?? DEFAULT_PLATFORM_KEY,
       utmMediums: mediumsArray,
     };
 
@@ -328,11 +333,15 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   const cancelEdit = () => setEditingKey(null);
 
   const handleSaveEdit = async (ids: number[]) => {
+    const platformKey = platformKeyFromLabel(editForm.platform);
     const payload = {
       category: editForm.category.trim() || "Uncategorized",
       team: editForm.team.trim() || null,
       platform: editForm.platform,
       pageName: editForm.pageName.trim(),
+      // Keep utmSource in step with the platform, otherwise switching a page's
+      // platform leaves it resolving on its old tab.
+      ...(platformKey ? { utmSource: platformKey } : {}),
     };
     if (!payload.pageName) {
       alert("Page name cannot be empty");
@@ -527,8 +536,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   value={newPlatform}
                   onChange={(e) => setNewPlatform(e.target.value)}
                 >
-                  <option value="Facebook">Facebook</option>
-                  <option value="Threads">Threads</option>
+                  {PLATFORM_LABEL_OPTIONS.map((label) => (
+                    <option key={label} value={label}>{label}</option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-1 sm:col-span-2 lg:col-span-1">
@@ -676,8 +686,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                     setEditForm((f) => ({ ...f, platform: e.target.value }))
                                   }
                                 >
-                                  <option value="Facebook">Facebook</option>
-                                  <option value="Threads">Threads</option>
+                                  {PLATFORM_LABEL_OPTIONS.map((label) => (
+                                    <option key={label} value={label}>{label}</option>
+                                  ))}
                                 </select>
                               </td>
                               <td className="px-6 py-3">
@@ -951,24 +962,22 @@ export default function WebTrafficPage() {
 
       <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1 shrink-0">
-            <button
-              onClick={() => filters.setPlatform("Facebook")}
-              className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${filters.platform === "Facebook"
-                ? "bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-            >
-              <Facebook size={16} /> <span className="hidden sm:inline">Facebook</span>
-            </button>
-            <button
-              onClick={() => filters.setPlatform("Threads")}
-              className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${filters.platform === "Threads"
-                ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-            >
-              <Layers size={16} /> <span className="hidden sm:inline">Threads</span>
-            </button>
+            {TRAFFIC_PLATFORMS.map((p) => {
+              const Icon = p.icon;
+              const isActive = filters.platform === p.key;
+              return (
+                <button
+                  key={p.key}
+                  onClick={() => filters.setPlatform(p.key)}
+                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isActive
+                    ? p.activeClass
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                >
+                  <Icon size={16} /> <span className="hidden sm:inline">{p.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <button

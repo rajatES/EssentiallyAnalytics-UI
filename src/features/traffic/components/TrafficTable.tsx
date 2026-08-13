@@ -13,12 +13,17 @@ import {
   ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_PLATFORM_KEY,
+  getPlatform,
+  type TrafficPlatformKey,
+} from "@/lib/traffic-platforms";
 import React from "react";
 
 interface TrafficTableProps {
   data: AggregatedPageData[];
   dateHeaders: string[];
-  platform?: string;
+  platform?: TrafficPlatformKey;
   onOpenMappings?: () => void;
 }
 
@@ -244,8 +249,8 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
 
     const firstColumnHeader =
       viewMode === "team" ? "Team / Page Name" : "Category / Page Name";
-    const platformLabel = platform === "Threads" ? "Threads" : "FB";
-    const title = `${platformLabel} - Traffic Report - ${buildDateLabel()}`;
+    const label = getPlatform(platform ?? DEFAULT_PLATFORM_KEY).shortLabel;
+    const title = `${label} - Traffic Report - ${buildDateLabel()}`;
 
     const csvRows = [
       csvField(title),

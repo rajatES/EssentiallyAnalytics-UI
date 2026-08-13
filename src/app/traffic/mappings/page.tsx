@@ -14,6 +14,11 @@ import { MappingEntry } from "@/data/page-mapping";
 import { Trash2, Plus, ArrowLeft, UploadCloud, Loader2, X, Users, Search, Download } from "lucide-react";
 import Link from "next/link";
 import { downloadRowsCsv } from "@/lib/tableCsv";
+import {
+  DEFAULT_PLATFORM_KEY,
+  PLATFORM_LABEL_OPTIONS,
+  platformKeyFromLabel,
+} from "@/lib/traffic-platforms";
 
 interface MappingWithId extends MappingEntry {
   id?: number;
@@ -29,7 +34,6 @@ export default function PageMappingsSettings() {
   const [newTeam, setNewTeam] = useState("");
   const [newPlatform, setNewPlatform] = useState("Facebook");
   const [newPageName, setNewPageName] = useState("");
-  const [newUtmSource, setNewUtmSource] = useState("fb");
   const [newMediums, setNewMediums] = useState("");
 
   // Team Management
@@ -132,7 +136,8 @@ export default function PageMappingsSettings() {
       team: newTeam.trim() || null,
       platform: newPlatform,
       pageName: newPageName,
-      utmSource: newUtmSource,
+      // Derived from the platform — this form has no utmSource field.
+      utmSource: platformKeyFromLabel(newPlatform) ?? DEFAULT_PLATFORM_KEY,
       utmMediums: mediumsArray,
     };
 
@@ -452,8 +457,9 @@ export default function PageMappingsSettings() {
                 value={newPlatform}
                 onChange={(e) => setNewPlatform(e.target.value)}
               >
-                <option value="Facebook">Facebook</option>
-                <option value="Threads">Threads</option>
+                {PLATFORM_LABEL_OPTIONS.map((label) => (
+                  <option key={label} value={label}>{label}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1">

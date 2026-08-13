@@ -1,6 +1,7 @@
 import axios from "axios";
 import { MappingEntry } from "../data/page-mapping";
 import { AggregatedPageData, AggregatedMetric, CountryStat, HeadlineData } from "../types";
+import { platformKeysForMapping, type TrafficPlatformKey } from "./traffic-platforms";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const API_BASE_URL = `/v1/analytics`;
@@ -195,23 +196,36 @@ export async function fetchAvailableCampaigns(
   }
 }
 
+/**
+ * Fold the raw (day × medium) rows into per-page rows for the traffic table.
+ *
+ * `platform` scopes the medium → page lookup. The same UTM medium is mapped to
+ * different page names on different platforms (e.g. 'golf_fan_page_es' is
+ * "ES Golf" on Facebook and "EssentiallyGolf" on Threads), so an unscoped
+ * lookup resolved those by whichever mapping row happened to be read last.
+ * Scoping also keeps a generic medium like 'referral' — which Reddit uses for
+ * its untagged organic traffic — from leaking a Reddit page name onto the
+ * Facebook or Threads tab.
+ */
 export function processAggregatedData(
   rawData: AggregatedMetric[],
-  _selectedCampaign: string,
+  platform: TrafficPlatformKey,
   mappingData: MappingEntry[],
 ): AggregatedPageData[] {
   const mappingLookup: Record<string, PageInfo> = {};
   const pageNameToTeam: Record<string, string | undefined> = {};
-  
+
   for (let i = 0; i < mappingData.length; i++) {
     const entry = mappingData[i];
     const cleanPageName = (entry.pageName || "").trim();
     if (!cleanPageName) continue;
-    
+
     if (entry.team?.trim()) {
       pageNameToTeam[cleanPageName.toLowerCase()] = entry.team.trim();
     }
-    
+
+    if (!platformKeysForMapping(entry).includes(platform)) continue;
+
     if (Array.isArray(entry.utmMediums)) {
       for (let j = 0; j < entry.utmMediums.length; j++) {
         const med = (entry.utmMediums[j] || "").trim().toLowerCase();
