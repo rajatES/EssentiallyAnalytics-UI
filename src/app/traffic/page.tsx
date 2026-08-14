@@ -596,7 +596,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                 <option key={t} value={t} />
               ))}
             </datalist>
-            <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
               <h2 className="text-lg font-semibold">Page Mappings</h2>
               <div className="flex items-center gap-2">
                 <div className="relative w-full max-w-xs">
@@ -624,12 +624,12 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               <table className="w-full text-sm text-left whitespace-nowrap">
                 <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-6 py-3">Category</th>
-                    <th className="px-6 py-3">Team</th>
-                    <th className="px-6 py-3">Platform</th>
-                    <th className="px-6 py-3">Page Name</th>
-                    <th className="px-6 py-3">UTM Mediums</th>
-                    <th className="px-6 py-3 text-right">Actions</th>
+                    <th className="px-4 py-2.5">Category</th>
+                    <th className="px-4 py-2.5">Team</th>
+                    <th className="px-4 py-2.5">Platform</th>
+                    <th className="px-4 py-2.5">Page Name</th>
+                    <th className="px-4 py-2.5">UTM Mediums</th>
+                    <th className="px-4 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -637,7 +637,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-6 py-8 text-center text-gray-500"
+                        className="px-4 py-8 text-center text-gray-500"
                       >
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-blue-500" />
                         Loading mappings...
@@ -647,7 +647,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-6 py-8 text-center text-gray-500"
+                        className="px-4 py-8 text-center text-gray-500"
                       >
                         No mappings found. Add one above or upload a CSV.
                       </td>
@@ -656,7 +656,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-6 py-8 text-center text-gray-500"
+                        className="px-4 py-8 text-center text-gray-500"
                       >
                         No mappings match &quot;{searchQuery}&quot;.
                       </td>
@@ -673,7 +673,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                         >
                           {isEditing ? (
                             <>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5">
                                 <input
                                   className={inputClass}
                                   value={editForm.category}
@@ -683,7 +683,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   placeholder="Category"
                                 />
                               </td>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5">
                                 <input
                                   className={inputClass}
                                   value={editForm.team}
@@ -694,7 +694,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   placeholder="Unassigned"
                                 />
                               </td>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5">
                                 <select
                                   className={inputClass}
                                   value={editForm.platform}
@@ -707,7 +707,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   ))}
                                 </select>
                               </td>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5">
                                 <input
                                   className={inputClass}
                                   value={editForm.pageName}
@@ -717,7 +717,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   placeholder="Page Name"
                                 />
                               </td>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5">
                                 <div className="flex flex-wrap gap-1.5 max-w-md">
                                   {m.utmMediums.map((med) => (
                                     <span
@@ -730,7 +730,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   ))}
                                 </div>
                               </td>
-                              <td className="px-6 py-3 text-right space-x-2">
+                              <td className="px-4 py-2.5 text-right space-x-2">
                                 <button
                                   onClick={() => handleSaveEdit(m.ids)}
                                   className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 p-2 rounded-lg transition-colors"
@@ -749,8 +749,8 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                             </>
                           ) : (
                             <>
-                              <td className="px-6 py-3 font-bold">{m.category}</td>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5 font-bold">{m.category}</td>
+                              <td className="px-4 py-2.5">
                                 {m.team ? (
                                   <span className="font-semibold text-violet-600 dark:text-violet-400">
                                     {m.team}
@@ -761,11 +761,11 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   </span>
                                 )}
                               </td>
-                              <td className="px-6 py-3">{m.platform}</td>
-                              <td className="px-6 py-3 font-bold text-blue-600 dark:text-blue-400">
+                              <td className="px-4 py-2.5">{m.platform}</td>
+                              <td className="px-4 py-2.5 font-bold text-blue-600 dark:text-blue-400">
                                 {m.pageName}
                               </td>
-                              <td className="px-6 py-3">
+                              <td className="px-4 py-2.5">
                                 <div className="flex flex-wrap gap-1.5 max-w-md">
                                   {m.utmMediums.map((med) => (
                                     <span
@@ -778,7 +778,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   ))}
                                 </div>
                               </td>
-                              <td className="px-6 py-3 text-right space-x-2">
+                              <td className="px-4 py-2.5 text-right space-x-2">
                                 <button
                                   onClick={() => startEdit(m)}
                                   className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-lg transition-colors"
@@ -978,7 +978,7 @@ export default function WebTrafficPage() {
   } = trafficData;
 
   return (
-    <div className="space-y-6 pb-4 animate-in fade-in duration-300">
+    <div className="space-y-4 pb-4 animate-in fade-in duration-300">
 
       <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1 shrink-0">
@@ -989,7 +989,7 @@ export default function WebTrafficPage() {
                 <button
                   key={p.key}
                   onClick={() => filters.setPlatform(p.key)}
-                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isActive
+                  className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${isActive
                     ? p.activeClass
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
@@ -1005,7 +1005,7 @@ export default function WebTrafficPage() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${tab === key
+                className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${tab === key
                   ? "bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
@@ -1018,7 +1018,7 @@ export default function WebTrafficPage() {
 
           <button
             onClick={() => setShowMappings(true)}
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-full text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-3.5 py-1.5 rounded-full text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors shadow-sm"
           >
             <Settings className="w-4 h-4" />
             <span className="hidden sm:inline">Mappings</span>
@@ -1039,7 +1039,7 @@ export default function WebTrafficPage() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => filters.setStartDate(e.target.value)}
-                className="bg-transparent w-full sm:w-[130px] text-sm pl-9 pr-2 py-1.5 sm:py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer"
+                className="bg-transparent w-full sm:w-[122px] text-sm pl-8 pr-2 py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer"
               />
             </div>
             <ChevronRight className="hidden sm:block w-4 h-4 text-gray-400 mx-0.5" />
@@ -1047,7 +1047,7 @@ export default function WebTrafficPage() {
               type="date"
               value={filters.endDate}
               onChange={(e) => filters.setEndDate(e.target.value)}
-              className="bg-transparent w-full sm:w-[130px] text-sm px-3 sm:px-2 py-1.5 sm:py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer border-t sm:border-t-0 border-gray-200 dark:border-gray-700 mt-1 sm:mt-0"
+              className="bg-transparent w-full sm:w-[122px] text-sm px-3 sm:px-2 py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer border-t sm:border-t-0 border-gray-200 dark:border-gray-700 mt-1 sm:mt-0"
             />
           </div>
 
@@ -1072,7 +1072,7 @@ export default function WebTrafficPage() {
             <select
               value={filters.selectedCampaign}
               onChange={(e) => filters.setSelectedCampaign(e.target.value)}
-              className="flex-1 sm:flex-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-200 text-sm font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 sm:p-1.5 px-3 min-w-[160px]"
+              className="flex-1 sm:flex-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-200 text-sm font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 px-3 min-w-[150px]"
             >
               <option value="">All Campaigns</option>
               {options.availableCampaigns.map((c: any) => (
@@ -1097,7 +1097,7 @@ export default function WebTrafficPage() {
             <button
               onClick={sync.handleSync}
               disabled={sync.isSyncing}
-              className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 font-bold rounded-lg text-sm px-4 py-2 transition-all shadow-sm disabled:opacity-50"
+              className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 font-bold rounded-lg text-xs px-3.5 py-2 transition-all shadow-sm disabled:opacity-50"
             >
               <Database className={cn("w-4 h-4", sync.isSyncing && "animate-pulse")} />
               <span className="whitespace-nowrap">{sync.isSyncing ? "Syncing..." : "Sync BQ"}</span>
@@ -1105,7 +1105,7 @@ export default function WebTrafficPage() {
           )}
           <button
             onClick={() => refresh()}
-            className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-black font-bold rounded-lg text-sm px-5 py-2 transition-all shadow-sm active:scale-95"
+            className="flex-1 xl:flex-none justify-center flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-black font-bold rounded-lg text-xs px-4 py-2 transition-all shadow-sm active:scale-95"
           >
             <RefreshCcw className={cn("w-4 h-4", loading && "animate-spin")} />
             <span className="whitespace-nowrap">Refresh</span>
@@ -1113,7 +1113,7 @@ export default function WebTrafficPage() {
         </div>
       </div>
 
-      <div className="relative space-y-6">
+      <div className="relative space-y-4">
         {loading && (
           <div className="absolute inset-0 z-50 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-[2px] flex items-center justify-center rounded-2xl">
             <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-lg flex items-center gap-3 border border-gray-100 dark:border-gray-800">
@@ -1125,7 +1125,7 @@ export default function WebTrafficPage() {
 
         <Headlines data={headlines} loading={loading} rawData={rawData} mappedSessions={stats.sessions} />
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <StatCard title="Sessions" value={stats.sessions.toLocaleString()} icon={MousePointer2} colorClass="bg-blue-500" loading={loading} />
           <StatCard title="Users" value={stats.users.toLocaleString()} icon={Users} colorClass="bg-indigo-500" loading={loading} />
           <StatCard title="Pageviews" value={stats.pageviews.toLocaleString()} icon={Eye} colorClass="bg-emerald-500" loading={loading} />
@@ -1133,11 +1133,11 @@ export default function WebTrafficPage() {
           <StatCard title="Recurring" value={stats.recurring_users?.toLocaleString() || "0"} icon={UserCheck} colorClass="bg-purple-500" loading={loading} />
         </div>
 
-        <div className="flex flex-col lg:flex-row xl:grid xl:grid-cols-3 gap-6 items-stretch">
-          <div className="w-full lg:w-2/3 xl:w-auto xl:col-span-2 min-h-[300px]">
+        <div className="flex flex-col lg:flex-row xl:grid xl:grid-cols-3 gap-4 items-stretch">
+          <div className="w-full lg:w-2/3 xl:w-auto xl:col-span-2 min-h-[260px]">
             <TrafficChart data={data} dateHeaders={options.dateHeaders} stats={stats} />
           </div>
-          <div className="w-full lg:w-1/3 xl:w-auto xl:col-span-1 min-h-[300px]">
+          <div className="w-full lg:w-1/3 xl:w-auto xl:col-span-1 min-h-[260px]">
             <CountryStats countryStats={countryStats || []} />
           </div>
         </div>

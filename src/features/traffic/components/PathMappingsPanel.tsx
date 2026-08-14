@@ -120,7 +120,7 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
         <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white flex items-center gap-2">
           <Link2 className="w-5 h-5 text-orange-500" /> Add Landing Page Mapping
         </h2>
@@ -169,7 +169,7 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-lg font-semibold">Landing Page Mappings</h2>
           <div className="relative w-full max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -182,38 +182,38 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
           <table className="w-full text-sm text-left whitespace-nowrap">
             <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-6 py-3">URL Pattern</th>
-                <th className="px-6 py-3">Page Name</th>
-                <th className="px-6 py-3">Category</th>
-                <th className="px-6 py-3">Team</th>
-                <th className="px-6 py-3 text-right">Priority</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                <th className="px-4 py-2.5">URL Pattern</th>
+                <th className="px-4 py-2.5">Page Name</th>
+                <th className="px-4 py-2.5">Category</th>
+                <th className="px-4 py-2.5">Team</th>
+                <th className="px-4 py-2.5 text-right">Priority</th>
+                <th className="px-4 py-2.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {loading ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-blue-500" />Loading…
                 </td></tr>
               ) : !filtered.length ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                   {rows.length ? `No mappings match "${search}".` : "No landing page mappings yet. Add one above."}
                 </td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-800 dark:text-gray-200">
                   {editingId === r.id ? (
                     <>
-                      <td className="px-6 py-3"><input className={input} value={editForm.pattern}
+                      <td className="px-4 py-2.5"><input className={input} value={editForm.pattern}
                         onChange={(e) => setEditForm((f) => ({ ...f, pattern: e.target.value }))} /></td>
-                      <td className="px-6 py-3"><input className={input} value={editForm.pageName}
+                      <td className="px-4 py-2.5"><input className={input} value={editForm.pageName}
                         onChange={(e) => setEditForm((f) => ({ ...f, pageName: e.target.value }))} /></td>
-                      <td className="px-6 py-3"><input className={input} value={editForm.category}
+                      <td className="px-4 py-2.5"><input className={input} value={editForm.category}
                         onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))} /></td>
-                      <td className="px-6 py-3"><input className={input} value={editForm.team} list="path-team-options"
+                      <td className="px-4 py-2.5"><input className={input} value={editForm.team} list="path-team-options"
                         onChange={(e) => setEditForm((f) => ({ ...f, team: e.target.value }))} /></td>
-                      <td className="px-6 py-3"><input className={input} type="number" value={editForm.priority}
+                      <td className="px-4 py-2.5"><input className={input} type="number" value={editForm.priority}
                         onChange={(e) => setEditForm((f) => ({ ...f, priority: Number(e.target.value) }))} /></td>
-                      <td className="px-6 py-3 text-right space-x-2">
+                      <td className="px-4 py-2.5 text-right space-x-2">
                         <button onClick={() => saveEdit(r.id)} className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 p-2 rounded-lg" title="Save">
                           <Check className="w-4 h-4" />
                         </button>
@@ -224,15 +224,15 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
                     </>
                   ) : (
                     <>
-                      <td className="px-6 py-3 font-mono text-xs text-orange-600 dark:text-orange-400">{r.pattern}</td>
-                      <td className="px-6 py-3 font-bold text-blue-600 dark:text-blue-400">{r.pageName}</td>
-                      <td className="px-6 py-3 font-semibold">{r.category}</td>
-                      <td className="px-6 py-3">
+                      <td className="px-4 py-2.5 font-mono text-xs text-orange-600 dark:text-orange-400">{r.pattern}</td>
+                      <td className="px-4 py-2.5 font-bold text-blue-600 dark:text-blue-400">{r.pageName}</td>
+                      <td className="px-4 py-2.5 font-semibold">{r.category}</td>
+                      <td className="px-4 py-2.5">
                         {r.team ? <span className="font-semibold text-violet-600 dark:text-violet-400">{r.team}</span>
                           : <span className="text-gray-400 italic">Unassigned</span>}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums">{r.priority}</td>
-                      <td className="px-6 py-3 text-right space-x-2">
+                      <td className="px-4 py-2.5 text-right tabular-nums">{r.priority}</td>
+                      <td className="px-4 py-2.5 text-right space-x-2">
                         <button onClick={() => startEdit(r)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-lg" title="Edit">
                           <Pencil className="w-4 h-4" />
                         </button>

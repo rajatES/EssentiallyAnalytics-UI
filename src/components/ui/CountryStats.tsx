@@ -19,11 +19,11 @@ export function CountryStats({ countryStats }: CountryStatsProps) {
   }, [countryStats]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm h-full flex flex-col">
-      <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white mb-6">
-        <Globe className="w-5 h-5 text-emerald-500" /> Top Countries
+    <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm h-full flex flex-col">
+      <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white mb-4">
+        <Globe className="w-4 h-4 text-emerald-500" /> Top Countries
       </h3>
-      <div className="space-y-4 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+      <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
         {countryData.map((item) => (
           <div key={item.label}>
             <div className="flex justify-between text-sm mb-0.5">
@@ -37,9 +37,9 @@ export function CountryStats({ countryStats }: CountryStatsProps) {
                 {item.percent.toFixed(1)}%
               </span>
             </div>
-            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden">
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500"
+                className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
                 style={{ width: `${item.percent}%` }}
               ></div>
             </div>

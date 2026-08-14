@@ -78,11 +78,11 @@ export function TrafficChart({ data, dateHeaders, stats }: TrafficChartProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 lg:col-span-2">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 lg:col-span-2">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">
           Traffic Trend
         </h3>
-        <div className="h-[300px] w-full">
+        <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
@@ -134,22 +134,22 @@ export function TrafficChart({ data, dateHeaders, stats }: TrafficChartProps) {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
           Metric Distribution
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Ratio of Sessions vs Users vs Views
         </p>
-        <div className="flex-1 min-h-[250px] relative">
+        <div className="flex-1 min-h-[210px] relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={80}
-                outerRadius={100}
+                innerRadius={62}
+                outerRadius={82}
                 paddingAngle={5}
                 dataKey="value"
               >
@@ -165,7 +165,7 @@ export function TrafficChart({ data, dateHeaders, stats }: TrafficChartProps) {
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-            <span className="text-3xl font-bold text-gray-900 dark:text-white">
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">
               {stats.sessions.toLocaleString()}
             </span>
             <span className="text-xs text-gray-400 uppercase font-semibold">

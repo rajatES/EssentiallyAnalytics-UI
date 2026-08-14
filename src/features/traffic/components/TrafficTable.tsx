@@ -351,7 +351,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
         >
           <td
             className={cn(
-              "px-6 py-4 sticky left-0 z-20 border-r border-gray-200/60 dark:border-gray-700 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] dark:shadow-none",
+              "px-4 py-2.5 sticky left-0 z-20 border-r border-gray-200/60 dark:border-gray-700 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] dark:shadow-none",
               stickyHeaderClass,
             )}
           >
@@ -361,7 +361,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
               ) : (
                 <ChevronDown className="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" />
               )}
-              <span className="font-extrabold text-gray-800 dark:text-gray-200 text-base uppercase tracking-wide">
+              <span className="font-extrabold text-gray-800 dark:text-gray-200 text-sm uppercase tracking-wide">
                 {groupName}
               </span>
               <span
@@ -374,16 +374,16 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
               </span>
             </div>
           </td>
-          <td className="px-6 py-4 text-right font-black text-gray-800 dark:text-gray-200">
+          <td className="px-4 py-2.5 text-right font-black text-gray-800 dark:text-gray-200">
             {totals.sessions.toLocaleString()}
           </td>
-          <td className="px-6 py-4 text-right font-black text-gray-800 dark:text-gray-200">
+          <td className="px-4 py-2.5 text-right font-black text-gray-800 dark:text-gray-200">
             {totals.users.toLocaleString()}
           </td>
-          <td className="px-6 py-4 text-right font-black text-gray-800 dark:text-gray-200">
+          <td className="px-4 py-2.5 text-right font-black text-gray-800 dark:text-gray-200">
             {totals.pageviews.toLocaleString()}
           </td>
-          <td className="px-6 py-4 text-right font-black text-gray-800 dark:text-gray-200">
+          <td className="px-4 py-2.5 text-right font-black text-gray-800 dark:text-gray-200">
             {((totals.engagement_sum / (totals.count || 1)) * 100).toFixed(1)}%
           </td>
 
@@ -394,7 +394,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
               <td
                 key={date}
                 className={cn(
-                  "px-6 py-4 text-right font-bold tabular-nums border-l border-dashed border-gray-300/50 dark:border-gray-700",
+                  "px-4 py-2.5 text-right font-bold tabular-nums border-l border-dashed border-gray-300/50 dark:border-gray-700",
                   isZero
                     ? "text-gray-400 dark:text-gray-600"
                     : "text-gray-800 dark:text-gray-300",
@@ -416,8 +416,8 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
             key={row.pageName}
             className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
           >
-            <td className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-blue-50/20 dark:group-hover:bg-blue-900/10 border-r border-gray-100 dark:border-gray-800 z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.02)] dark:shadow-none">
-              <div className="flex items-center gap-2 w-72 flex-wrap">
+            <td className="px-4 py-2.5 font-medium text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-blue-50/20 dark:group-hover:bg-blue-900/10 border-r border-gray-100 dark:border-gray-800 z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.02)] dark:shadow-none">
+              <div className="flex items-center gap-2 w-56 flex-wrap">
                 <div className="truncate shrink-0" title={row.pageName}>
                   {row.pageName}
                 </div>
@@ -435,16 +435,16 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
                 )}
               </div>
             </td>
-            <td className="px-6 py-4 text-right font-bold text-blue-600 dark:text-blue-400 bg-blue-50/10 dark:bg-blue-900/10">
+            <td className="px-4 py-2.5 text-right font-bold text-blue-600 dark:text-blue-400 bg-blue-50/10 dark:bg-blue-900/10">
               {row.totals.sessions.toLocaleString()}
             </td>
-            <td className="px-6 py-4 text-right font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/10 dark:bg-indigo-900/10">
+            <td className="px-4 py-2.5 text-right font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/10 dark:bg-indigo-900/10">
               {row.totals.users.toLocaleString()}
             </td>
-            <td className="px-6 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50/10 dark:bg-emerald-900/10">
+            <td className="px-4 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50/10 dark:bg-emerald-900/10">
               {row.totals.pageviews.toLocaleString()}
             </td>
-            <td className="px-6 py-4 text-right font-semibold text-amber-600 dark:text-amber-500 bg-amber-50/10 dark:bg-amber-900/10">
+            <td className="px-4 py-2.5 text-right font-semibold text-amber-600 dark:text-amber-500 bg-amber-50/10 dark:bg-amber-900/10">
               {(row.totals.engagement_rate_avg * 100).toFixed(1)}%
             </td>
 
@@ -455,7 +455,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
                 <td
                   key={date}
                   className={cn(
-                    "px-6 py-4 text-right tabular-nums border-l border-dashed border-gray-100 dark:border-gray-800",
+                    "px-4 py-2.5 text-right tabular-nums border-l border-dashed border-gray-100 dark:border-gray-800",
                     isZero
                       ? "text-gray-300 dark:text-gray-700"
                       : "text-gray-700 dark:text-gray-300",
@@ -476,14 +476,14 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col h-full max-h-[900px] w-full overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col h-full max-h-[760px] w-full overflow-hidden">
       {/* Header */}
-      <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm z-20 rounded-t-2xl">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm z-20 rounded-t-2xl">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-            <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-base">
             Detailed Breakdown
           </h3>
 
@@ -528,10 +528,10 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
           </div>
         </div>
 
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 gap-2">
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700 gap-2">
           <button
             onClick={toggleAllGroups}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+            className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors shadow-sm ring-1 ring-black/5 dark:ring-white/10"
             title={allCollapsed ? "Expand all groups" : "Collapse all groups"}
           >
             {allCollapsed ? (
@@ -546,7 +546,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export CSV</span>
@@ -558,7 +558,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
                 key={m}
                 onClick={() => setGridMetric(m)}
                 className={cn(
-                  "px-4 py-2 text-xs font-bold rounded-lg transition-all capitalize",
+                  "px-3 py-1.5 text-xs font-bold rounded-md transition-all capitalize",
                   gridMetric === m
                     ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-600/50",
@@ -576,25 +576,25 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 shadow-sm backdrop-blur-md">
             <tr>
-              <th className="px-6 py-4 font-bold tracking-wider w-80 sticky left-0 bg-gray-50 dark:bg-gray-800 z-40 border-r border-gray-200/60 dark:border-gray-700 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
+              <th className="px-4 py-2.5 font-bold tracking-wider w-64 sticky left-0 bg-gray-50 dark:bg-gray-800 z-40 border-r border-gray-200/60 dark:border-gray-700 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
                 {viewMode === "team" ? "Team / Page Name" : "Category / Page Name"}
               </th>
-              <th className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100 bg-blue-50/40 dark:bg-blue-900/20 min-w-[100px]">
+              <th className="px-4 py-2.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-blue-50/40 dark:bg-blue-900/20 min-w-[84px]">
                 Total
                 <br />
                 Sessions
               </th>
-              <th className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100 bg-indigo-50/40 dark:bg-indigo-900/20 min-w-[100px]">
+              <th className="px-4 py-2.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-indigo-50/40 dark:bg-indigo-900/20 min-w-[84px]">
                 Total
                 <br />
                 Users
               </th>
-              <th className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100 bg-emerald-50/40 dark:bg-emerald-900/20 min-w-[100px]">
+              <th className="px-4 py-2.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-emerald-50/40 dark:bg-emerald-900/20 min-w-[84px]">
                 Total
                 <br />
                 Views
               </th>
-              <th className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100 bg-amber-50/40 dark:bg-amber-900/20 min-w-[100px]">
+              <th className="px-4 py-2.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-amber-50/40 dark:bg-amber-900/20 min-w-[84px]">
                 Avg
                 <br />
                 Eng. Rate
@@ -603,7 +603,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
               {dateHeaders.map((date) => (
                 <th
                   key={date}
-                  className="px-6 py-4 text-right font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap min-w-[110px]"
+                  className="px-4 py-2.5 text-right font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap min-w-[88px]"
                 >
                   {format(parseISO(date), "MMM dd")}
                   <div className="text-[10px] opacity-50 capitalize font-normal mt-0.5">

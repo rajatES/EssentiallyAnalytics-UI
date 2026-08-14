@@ -1,39 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, TrendingUp, TrendingDown, Minus, Download, RefreshCcw } from "lucide-react";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
+import {
+  Calendar,
+  MousePointer2,
+  Users,
+  Eye,
+  Activity,
+  Download,
+  RefreshCcw,
+  BarChart3,
+  FileText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StatCard } from "@/components/ui/StatCard";
+import { DeltaLabel } from "@/components/ui/DeltaLabel";
 import { downloadRowsCsv } from "@/lib/tableCsv";
 import { getPlatform, type TrafficPlatformKey } from "@/lib/traffic-platforms";
-import { useCompareData, type ComparedRow, type DateRange } from "../hooks/useCompareData";
+import {
+  useCompareData,
+  type ComparedRow,
+  type DateRange,
+  type MetricSet,
+} from "../hooks/useCompareData";
 
-function DeltaBadge({ pct, delta }: { pct: number | null; delta: number }) {
-  if (pct === null) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-        new
-      </span>
-    );
-  }
-  const flat = Math.abs(pct) < 0.05;
-  const up = delta > 0;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold",
-        flat
-          ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-          : up
-            ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-            : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-      )}
-    >
-      {flat ? <Minus className="w-3 h-3" /> : up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-      {up && !flat ? "+" : ""}
-      {pct.toFixed(1)}%
-    </span>
-  );
-}
+const STAT_ICONS = {
+  sessions: MousePointer2,
+  users: Users,
+  pageviews: Eye,
+  engagement: Activity,
+} as const;
+
+const STAT_COLORS = {
+  sessions: "bg-blue-500",
+  users: "bg-indigo-500",
+  pageviews: "bg-emerald-500",
+  engagement: "bg-amber-500",
+} as const;
 
 function RangePicker({
   label,
@@ -49,83 +62,130 @@ function RangePicker({
   return (
     <div
       className={cn(
-        "flex-1 min-w-[260px] rounded-xl border p-3",
+        "flex-1 min-w-[240px] rounded-lg border p-2",
         tone === "a"
           ? "border-blue-200 dark:border-blue-900 bg-blue-50/40 dark:bg-blue-950/20"
           : "border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/30",
       )}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span
-          className={cn(
-            "px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
-            tone === "a"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-500 text-white",
-          )}
-        >
-          {label}
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+          tone === "a" ? "bg-blue-600 text-white" : "bg-gray-500 text-white",
+        )}
+      >
+        {label}
+      </span>
+      <div className="flex items-center gap-2 mt-2">
         <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
         <input
           type="date"
           value={range.start}
           onChange={(e) => onChange({ ...range, start: e.target.value })}
-          className="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[130px]"
+          className="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[122px]"
         />
         <span className="text-gray-400">→</span>
         <input
           type="date"
           value={range.end}
           onChange={(e) => onChange({ ...range, end: e.target.value })}
-          className="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[130px]"
+          className="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[122px]"
         />
       </div>
     </div>
   );
 }
 
+/** A table cell: Period A's value, with the change vs Period B beneath it. */
+function MetricCell({
+  a,
+  b,
+  colorClass,
+  percent,
+}: {
+  a: number;
+  b: number;
+  colorClass: string;
+  percent?: boolean;
+}) {
+  const pct = !b ? (a ? null : 0) : ((a - b) / b) * 100;
+  const fmt = (n: number) => (percent ? `${(n * 100).toFixed(1)}%` : n.toLocaleString());
+  return (
+    <td className="px-4 py-2 text-right align-top">
+      <div className={cn("font-bold tabular-nums", colorClass)}>{fmt(a)}</div>
+      <div className="flex justify-end mt-0.5">
+        <DeltaLabel pct={pct} delta={a - b} baseline={b} />
+      </div>
+      <div className="text-[10px] text-gray-400 tabular-nums mt-0.5">was {fmt(b)}</div>
+    </td>
+  );
+}
+
 function ComparisonTable({
   title,
   subtitle,
+  icon: Icon,
   rows,
   labelHeader,
+  showEngagement,
+  csvName,
 }: {
   title: string;
   subtitle: string;
+  icon: typeof BarChart3;
   rows: ComparedRow[];
   labelHeader: string;
+  showEngagement?: boolean;
+  csvName: string;
 }) {
   const [limit, setLimit] = useState(25);
   const shown = rows.slice(0, limit);
 
+  const cols: Array<[keyof MetricSet, string, string, boolean]> = [
+    ["sessions", "Sessions", "text-blue-600 dark:text-blue-400", false],
+    ["users", "Users", "text-indigo-600 dark:text-indigo-400", false],
+    ["pageviews", "Views", "text-emerald-600 dark:text-emerald-400", false],
+  ];
+  if (showEngagement) {
+    cols.push(["engagement", "Eng. Rate", "text-amber-600 dark:text-amber-500", true]);
+  }
+
   const handleExport = () =>
     downloadRowsCsv(
-      [labelHeader, "Group", "Period A", "Period B", "Change", "% Change"],
+      [
+        labelHeader,
+        "Group",
+        ...cols.flatMap(([, label]) => [`${label} (A)`, `${label} (B)`, `${label} Δ%`]),
+      ],
       rows.map((r) => [
         r.label,
         r.sublabel ?? "",
-        r.a,
-        r.b,
-        r.delta,
-        r.pct === null ? "new" : r.pct.toFixed(2),
+        ...cols.flatMap(([key]) => {
+          const a = r.a[key];
+          const b = r.b[key];
+          const pct = !b ? (a ? "new" : "0.00") : (((a - b) / b) * 100).toFixed(2);
+          return [a, b, pct];
+        }),
       ]),
-      `compare-${title.toLowerCase().replace(/\s+/g, "-")}`,
+      csvName,
     );
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-      <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
-        <div>
-          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">{title}</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 bg-gray-50/50 dark:bg-gray-900/50">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 text-base">{title}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+          </div>
         </div>
         <button
           onClick={handleExport}
           disabled={!rows.length}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
         >
           <Download className="w-4 h-4" />
           <span className="hidden sm:inline">Export CSV</span>
@@ -135,26 +195,30 @@ function ComparisonTable({
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
             <tr>
-              <th className="px-6 py-3 font-bold">{labelHeader}</th>
-              <th className="px-6 py-3 text-right font-bold text-blue-600 dark:text-blue-400">Period A</th>
-              <th className="px-6 py-3 text-right font-bold">Period B</th>
-              <th className="px-6 py-3 text-right font-bold">Change</th>
-              <th className="px-6 py-3 text-right font-bold w-28">%</th>
+              <th className="px-4 py-2.5 font-bold tracking-wider">{labelHeader}</th>
+              {cols.map(([key, label]) => (
+                <th key={key} className="px-4 py-2.5 text-right font-bold min-w-[100px]">
+                  {label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {!rows.length ? (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                <td colSpan={cols.length + 1} className="px-4 py-8 text-center text-gray-500">
                   No data for these ranges.
                 </td>
               </tr>
             ) : (
               shown.map((r) => (
                 <tr key={r.key} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10">
-                  <td className="px-6 py-3">
-                    <div className="max-w-[420px]">
-                      <div className="truncate font-medium text-gray-700 dark:text-gray-300" title={r.label}>
+                  <td className="px-4 py-2 align-top">
+                    <div className="max-w-[380px]">
+                      <div
+                        className="truncate font-medium text-gray-700 dark:text-gray-300"
+                        title={r.label}
+                      >
                         {r.label}
                       </div>
                       {r.sublabel && (
@@ -162,24 +226,15 @@ function ComparisonTable({
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-3 text-right font-bold text-blue-600 dark:text-blue-400 tabular-nums">
-                    {r.a.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-3 text-right font-semibold text-gray-600 dark:text-gray-400 tabular-nums">
-                    {r.b.toLocaleString()}
-                  </td>
-                  <td
-                    className={cn(
-                      "px-6 py-3 text-right font-bold tabular-nums",
-                      r.delta > 0 ? "text-green-600 dark:text-green-400" : r.delta < 0 ? "text-red-600 dark:text-red-400" : "text-gray-400",
-                    )}
-                  >
-                    {r.delta > 0 ? "+" : ""}
-                    {r.delta.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-3 text-right">
-                    <DeltaBadge pct={r.pct} delta={r.delta} />
-                  </td>
+                  {cols.map(([key, , color, percent]) => (
+                    <MetricCell
+                      key={key}
+                      a={r.a[key]}
+                      b={r.b[key]}
+                      colorClass={color}
+                      percent={percent}
+                    />
+                  ))}
                 </tr>
               ))
             )}
@@ -199,10 +254,9 @@ function ComparisonTable({
 }
 
 /**
- * Side-by-side comparison of two arbitrary date ranges.
- *
- * Lives in its own tab and reuses the existing endpoints, so the default traffic
- * view is untouched by it.
+ * Compare tab: the Overview layout, with each metric carrying its change against
+ * a second period directly underneath. Reuses StatCard and the same chart shape
+ * as Overview so the two tabs read identically.
  */
 export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
   const {
@@ -212,41 +266,78 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
     setRangeB,
     applyPreset,
     metrics,
+    chartData,
     pageRows,
     landingRows,
     loading,
   } = useCompareData(platform);
 
+  const statValue = (key: string, value: number) =>
+    key === "engagement" ? `${(value * 100).toFixed(2)}%` : value.toLocaleString();
+
+  // Recharts hands the payload over as a readonly array, so the prop type has to
+  // match or TS rejects the content renderer.
+  const chartTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: readonly { name?: string; value?: number; color?: string }[];
+    label?: string | number;
+  }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-3 rounded-lg shadow-lg">
+        <p className="font-bold text-gray-900 dark:text-white mb-2">{label}</p>
+        {payload.map((entry, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 text-xs font-medium mb-1"
+            style={{ color: entry.color }}
+          >
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span>
+              {entry.name}: {(entry.value ?? 0).toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
-        <div className="flex flex-wrap gap-4 items-stretch">
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+        <div className="flex flex-row flex-wrap items-stretch gap-3 w-full xl:w-auto">
           <RangePicker label="Period A" tone="a" range={rangeA} onChange={setRangeA} />
           <RangePicker label="Period B" tone="b" range={rangeB} onChange={setRangeB} />
-          <div className="flex flex-col justify-center gap-2 min-w-[150px]">
-            <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">
-              Set B relative to A
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {([
+        </div>
+        <div className="flex flex-col gap-1.5 shrink-0">
+          <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">
+            Set B relative to A
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
                 ["prevPeriod", "Prev period"],
                 ["prevWeek", "-1 week"],
                 ["prevMonth", "-4 weeks"],
-              ] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => applyPreset(key)}
-                  className="whitespace-nowrap px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => applyPreset(key)}
+                className="whitespace-nowrap px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="relative space-y-6">
+      <div className="relative space-y-4">
         {loading && (
           <div className="absolute inset-0 z-50 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-[2px] flex items-center justify-center rounded-2xl">
             <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-lg flex items-center gap-3 border border-gray-100 dark:border-gray-800">
@@ -256,41 +347,80 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {metrics.map((m) => (
-            <div
-              key={m.label}
-              className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  {m.label}
-                </span>
-                <DeltaBadge pct={m.pct} delta={m.delta} />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
-                {m.a.toLocaleString()}
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                vs {m.b.toLocaleString()} in Period B ({m.delta > 0 ? "+" : ""}
-                {m.delta.toLocaleString()})
-              </p>
-            </div>
+            <StatCard
+              key={m.key}
+              title={m.label}
+              value={statValue(m.key, m.a)}
+              icon={STAT_ICONS[m.key]}
+              colorClass={STAT_COLORS[m.key]}
+              loading={loading}
+              delta={{ pct: m.pct, delta: m.delta, baseline: m.b }}
+            />
           ))}
         </div>
 
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+            Sessions Trend
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+            Aligned by position in each range, so equal-length periods line up day for day
+          </p>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="cmpA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" strokeOpacity={0.2} />
+                <Tooltip content={chartTooltip} />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="periodB"
+                  name="Period B"
+                  stroke="#9ca3af"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  fillOpacity={0}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="periodA"
+                  name="Period A"
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                  fill="url(#cmpA)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         <ComparisonTable
-          title="By Page"
-          subtitle={`${getPlatform(platform).label} sessions per mapped page, Period A vs B`}
+          title="Detailed Breakdown"
+          subtitle={`${getPlatform(platform).label} sessions per mapped page — Period A, change vs B`}
+          icon={BarChart3}
           rows={pageRows}
-          labelHeader="Page"
+          labelHeader="Category / Page Name"
+          showEngagement
+          csvName="compare-by-page"
         />
 
         <ComparisonTable
-          title="By Landing Page"
-          subtitle="Sessions per article — works for untagged organic traffic"
+          title="Top Landing Pages"
+          subtitle="Per article — works for untagged organic traffic"
+          icon={FileText}
           rows={landingRows}
-          labelHeader="Landing page"
+          labelHeader="Page"
+          csvName="compare-landing-pages"
         />
       </div>
     </div>
