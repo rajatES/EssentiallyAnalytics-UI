@@ -207,6 +207,90 @@ export async function fetchAvailableCampaigns(
  * its untagged organic traffic — from leaking a Reddit page name onto the
  * Facebook or Threads tab.
  */
+export interface TopPageRow {
+  page_path: string;
+  sessions: number;
+  pageviews: number;
+  users: number;
+  section: string;
+  /** Set when a landing-page mapping claimed this path. */
+  pageName: string | null;
+  team: string | null;
+  matchedPattern: string | null;
+}
+
+// ---- Landing-page (URL pattern) mappings ----
+
+export interface PagePathMappingRow {
+  id: number;
+  pattern: string;
+  pageName: string;
+  category: string;
+  team: string | null;
+  priority: number;
+}
+
+export async function fetchPagePathMappings(): Promise<PagePathMappingRow[]> {
+  try {
+    const response = await apiClient.get(`${MAPPINGS_URL}/paths`);
+    return response.data;
+  } catch (error) {
+    console.error("Path Mappings Error:", error);
+    return [];
+  }
+}
+
+export async function createPagePathMapping(
+  mapping: Partial<PagePathMappingRow>,
+): Promise<PagePathMappingRow> {
+  const response = await apiClient.post(`${MAPPINGS_URL}/paths`, mapping);
+  return response.data;
+}
+
+export async function updatePagePathMapping(
+  id: number,
+  mapping: Partial<PagePathMappingRow>,
+): Promise<PagePathMappingRow> {
+  const response = await apiClient.patch(`${MAPPINGS_URL}/paths/${id}`, mapping);
+  return response.data;
+}
+
+export async function deletePagePathMapping(id: number): Promise<void> {
+  await apiClient.delete(`${MAPPINGS_URL}/paths/${id}`);
+}
+
+export async function batchUpdatePagePathTeam(
+  ids: number[],
+  team: string | null,
+): Promise<PagePathMappingRow[]> {
+  const response = await apiClient.patch(`${MAPPINGS_URL}/paths/batch/team`, {
+    ids,
+    team,
+  });
+  return response.data;
+}
+
+/**
+ * Top landing pages for a platform. This is the only readable breakdown for
+ * untagged organic traffic, where every session shares utm_medium 'referral'.
+ */
+export async function fetchTopPages(
+  startDate: string,
+  endDate: string,
+  source: string,
+  limit = 100,
+): Promise<TopPageRow[]> {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/pages`, {
+      params: { startDate, endDate, utmSource: source, limit },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Top Pages Error:", error);
+    return [];
+  }
+}
+
 export function processAggregatedData(
   rawData: AggregatedMetric[],
   platform: TrafficPlatformKey,

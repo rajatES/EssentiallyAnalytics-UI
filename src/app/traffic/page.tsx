@@ -24,7 +24,9 @@ import {
   LayoutList,
   Briefcase,
   Search,
-  Download
+  Download,
+  Link2,
+  GitCompareArrows
 } from "lucide-react";
 
 import { StatCard } from "@/components/ui/StatCard";
@@ -33,6 +35,9 @@ import { cn } from "@/lib/utils";
 import { CountryStats } from "@/components/ui/CountryStats";
 import { TrafficChart } from "@/features/traffic/components/TrafficChart";
 import { TrafficTable } from "@/features/traffic/components/TrafficTable";
+import { TopPagesTable } from "@/features/traffic/components/TopPagesTable";
+import { PathMappingsPanel } from "@/features/traffic/components/PathMappingsPanel";
+import { CompareView } from "@/features/traffic/components/CompareView";
 import { useTrafficData } from "@/features/traffic/hooks/useTrafficData";
 import {
   fetchPageMappings,
@@ -59,7 +64,7 @@ interface MappingWithId extends MappingEntry {
 export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void, onMappingsChanged?: () => void }) {
   const [mappings, setMappings] = useState<MappingWithId[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"mappings" | "teams">("mappings");
+  const [viewMode, setViewMode] = useState<"mappings" | "teams" | "paths">("mappings");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Inline row editing, keyed by pageName (a "row" is all UTM-medium mappings
@@ -429,10 +434,21 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
           >
             <Users className="w-4 h-4" /> Teams
           </button>
+          <button
+            onClick={() => setViewMode("paths")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${viewMode === "paths"
+              ? "bg-white dark:bg-gray-900 shadow-sm text-orange-600 dark:text-orange-400"
+              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
+          >
+            <Link2 className="w-4 h-4" /> Landing Pages
+          </button>
         </div>
       </div>
 
-      {viewMode === "mappings" ? (
+      {viewMode === "paths" ? (
+        <PathMappingsPanel onChanged={onMappingsChanged} />
+      ) : viewMode === "mappings" ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
@@ -922,6 +938,8 @@ export default function WebTrafficPage() {
   const { canAccess } = useRole();
   const [mounted, setMounted] = useState(false);
   const [showMappings, setShowMappings] = useState(false);
+  // Compare lives in its own tab so the default overview is untouched by it.
+  const [tab, setTab] = useState<"overview" | "compare">("overview");
 
   const trafficData = useTrafficData();
 
@@ -949,6 +967,8 @@ export default function WebTrafficPage() {
     rawData,
     countryStats,
     headlines,
+    topPages,
+    loadingPages,
     loading,
     filters,
     options,
@@ -980,6 +1000,22 @@ export default function WebTrafficPage() {
             })}
           </div>
 
+          <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1 shrink-0">
+            {([["overview", "Overview"], ["compare", "Compare"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${tab === key
+                  ? "bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                {key === "compare" ? <GitCompareArrows size={16} /> : <Activity size={16} />}
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
+          </div>
+
           <button
             onClick={() => setShowMappings(true)}
             className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-full text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors shadow-sm"
@@ -989,6 +1025,10 @@ export default function WebTrafficPage() {
           </button>
         </div>
 
+      {tab === "compare" ? (
+        <CompareView platform={filters.platform} />
+      ) : (
+      <>
       <div className="bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
         <div className="flex flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
 
@@ -1102,7 +1142,7 @@ export default function WebTrafficPage() {
           </div>
         </div>
 
-        <div className="w-full pb-4">
+        <div className="w-full">
           <TrafficTable
             data={data}
             dateHeaders={options.dateHeaders}
@@ -1110,7 +1150,17 @@ export default function WebTrafficPage() {
             onOpenMappings={() => setShowMappings(true)}
           />
         </div>
+
+        <div className="w-full pb-4">
+          <TopPagesTable
+            rows={topPages}
+            platform={filters.platform}
+            loading={loadingPages}
+          />
+        </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

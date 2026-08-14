@@ -1,0 +1,277 @@
+import { useMemo, useState } from "react";
+import { FileText, Download, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { downloadRowsCsv } from "@/lib/tableCsv";
+import { getPlatform, type TrafficPlatformKey } from "@/lib/traffic-platforms";
+import type { TopPageRow } from "@/lib/api";
+import React from "react";
+
+interface TopPagesTableProps {
+  rows: TopPageRow[];
+  platform: TrafficPlatformKey;
+  loading?: boolean;
+  siteOrigin?: string;
+}
+
+type GroupMode = "flat" | "section" | "team";
+
+/**
+ * Landing-page breakdown for the selected platform.
+ *
+ * The medium-based table above this one can't segment untagged organic traffic
+ * — every organic session carries medium 'referral', so it collapses to a single
+ * row. Grouping by the page each session landed on is what makes that traffic
+ * readable, and it needs no UTM tagging or page mappings to work.
+ */
+export function TopPagesTable({
+  rows,
+  platform,
+  loading,
+  siteOrigin = "https://www.essentiallysports.com",
+}: TopPagesTableProps) {
+  const [groupMode, setGroupMode] = useState<GroupMode>("section");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  const totals = useMemo(
+    () =>
+      rows.reduce(
+        (a, r) => ({
+          sessions: a.sessions + r.sessions,
+          pageviews: a.pageviews + r.pageviews,
+          users: a.users + r.users,
+        }),
+        { sessions: 0, pageviews: 0, users: 0 },
+      ),
+    [rows],
+  );
+
+  const grouped = useMemo(() => {
+    const map: Record<string, { rows: TopPageRow[]; sessions: number }> = {};
+    for (const r of rows) {
+      const key =
+        groupMode === "team"
+          ? r.team?.trim() || "Unassigned"
+          : r.section || "Other";
+      (map[key] ??= { rows: [], sessions: 0 });
+      map[key].rows.push(r);
+      map[key].sessions += r.sessions;
+    }
+    return Object.entries(map).sort((a, b) => {
+      if (a[0] === "Unassigned") return 1;
+      if (b[0] === "Unassigned") return -1;
+      return b[1].sessions - a[1].sessions;
+    });
+  }, [rows, groupMode]);
+
+  const toggle = (name: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+
+  // Turn the slug into something readable: drop the section prefix, de-hyphenate.
+  const titleFromPath = (path: string) => {
+    const slug = path.replace(/^\//, "").replace(/\/$/, "");
+    if (!slug) return "Home";
+    const words = slug.split("-").slice(1).join(" ");
+    return (words || slug).replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const share = (n: number) => (totals.sessions ? (n / totals.sessions) * 100 : 0);
+
+  const handleExport = () => {
+    downloadRowsCsv(
+      ["Section", "Mapped Page", "Team", "Page Path", "Sessions", "Users", "Pageviews", "% of Sessions"],
+      rows.map((r) => [
+        r.section,
+        r.pageName ?? "",
+        r.team ?? "",
+        r.page_path,
+        r.sessions,
+        r.users,
+        r.pageviews,
+        share(r.sessions).toFixed(2),
+      ]),
+      `${getPlatform(platform).shortLabel.toLowerCase()}-landing-pages`,
+    );
+  };
+
+  const renderRow = (r: TopPageRow, indent = false) => (
+    <tr
+      key={r.page_path}
+      className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
+    >
+      <td className={cn("px-6 py-3", indent && "pl-10")}>
+        <div className="flex items-center gap-2 max-w-[520px]">
+          <span
+            className="truncate font-medium text-gray-700 dark:text-gray-300"
+            title={r.page_path}
+          >
+            {titleFromPath(r.page_path)}
+          </span>
+          {r.pageName && (
+            <span
+              className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800"
+              title={`Matched by pattern ${r.matchedPattern}`}
+            >
+              {r.pageName}
+            </span>
+          )}
+          {r.team && groupMode !== "team" && (
+            <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-700">
+              {r.team}
+            </span>
+          )}
+          <a
+            href={`${siteOrigin}${r.page_path}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity shrink-0"
+            title={`Open ${r.page_path}`}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+        <div className="text-[11px] text-gray-400 truncate max-w-[520px]" title={r.page_path}>
+          {r.page_path}
+        </div>
+      </td>
+      <td className="px-6 py-3 text-right font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+        {r.sessions.toLocaleString()}
+      </td>
+      <td className="px-6 py-3 text-right font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+        {r.users.toLocaleString()}
+      </td>
+      <td className="px-6 py-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+        {r.pageviews.toLocaleString()}
+      </td>
+      <td className="px-6 py-3 text-right w-40">
+        <div className="flex items-center gap-2 justify-end">
+          <div className="w-20 bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-blue-500 h-1.5 rounded-full"
+              style={{ width: `${Math.min(share(r.sessions), 100)}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-500 tabular-nums w-11 text-right">
+            {share(r.sessions).toFixed(1)}%
+          </span>
+        </div>
+      </td>
+    </tr>
+  );
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col max-h-[720px] overflow-hidden">
+      <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 bg-gray-50/50 dark:bg-gray-900/50">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <FileText className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">
+              Top Landing Pages
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Where {getPlatform(platform).label} sessions started — works without UTM tagging
+            </p>
+          </div>
+        </div>
+
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 gap-2">
+          {(["section", "team", "flat"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setGroupMode(m)}
+              className={cn(
+                "px-4 py-2 text-xs font-bold rounded-lg transition-all capitalize",
+                groupMode === m
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200",
+              )}
+            >
+              {m === "section" ? "By Section" : m === "team" ? "By Team" : "All Pages"}
+            </button>
+          ))}
+          <button
+            onClick={handleExport}
+            disabled={!rows.length}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-auto flex-1">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20">
+            <tr>
+              <th className="px-6 py-4 font-bold tracking-wider">Page</th>
+              <th className="px-6 py-4 text-right font-bold min-w-[90px]">Sessions</th>
+              <th className="px-6 py-4 text-right font-bold min-w-[90px]">Users</th>
+              <th className="px-6 py-4 text-right font-bold min-w-[90px]">Views</th>
+              <th className="px-6 py-4 text-right font-bold w-40">Share</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                  Loading landing pages…
+                </td>
+              </tr>
+            ) : !rows.length ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                  No landing-page data for this range yet.
+                </td>
+              </tr>
+            ) : groupMode === "flat" ? (
+              rows.map((r) => renderRow(r))
+            ) : (
+              grouped.map(([section, g]) => {
+                const isCollapsed = collapsed.has(section);
+                return (
+                  <React.Fragment key={section}>
+                    <tr
+                      className="bg-gray-100 dark:bg-gray-800/50 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+                      onClick={() => toggle(section)}
+                    >
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          {isCollapsed ? (
+                            <ChevronRight className="w-4 h-4 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                          )}
+                          <span className="font-extrabold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
+                            {section}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            {g.rows.length}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right font-black text-gray-800 dark:text-gray-200 tabular-nums">
+                        {g.sessions.toLocaleString()}
+                      </td>
+                      <td colSpan={2} />
+                      <td className="px-6 py-3 text-right text-xs font-bold text-gray-500 tabular-nums">
+                        {share(g.sessions).toFixed(1)}%
+                      </td>
+                    </tr>
+                    {!isCollapsed && g.rows.map((r) => renderRow(r, true))}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

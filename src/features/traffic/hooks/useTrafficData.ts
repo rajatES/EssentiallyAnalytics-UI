@@ -7,6 +7,7 @@ import {
   fetchCountryStats,
   processAggregatedData,
   fetchPageMappings,
+  fetchTopPages,
   triggerManualSync,
 } from "@/lib/api";
 import {
@@ -54,6 +55,12 @@ export function useTrafficData() {
     enabled: !!startDate && !!endDate,
   });
 
+  const { data: topPages = [], isFetching: fetchingPages } = useQuery({
+    queryKey: ["topPages", utmSource, startDate, endDate],
+    queryFn: () => fetchTopPages(startDate, endDate, utmSource, 200),
+    enabled: !!startDate && !!endDate,
+  });
+
   const { data: availableCampaigns = [], isFetching: fetchingCampaigns } = useQuery({
     queryKey: ["campaigns", utmSource, startDate, endDate],
     queryFn: () => fetchAvailableCampaigns(startDate, endDate, utmSource),
@@ -68,6 +75,7 @@ export function useTrafficData() {
       queryClient.invalidateQueries({ queryKey: ["countryStats"] });
       queryClient.invalidateQueries({ queryKey: ["headlines"] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["topPages"] });
     },
     onError: () => {
       alert("Failed to sync BigQuery data. Check console for details.");
@@ -131,6 +139,10 @@ export function useTrafficData() {
     rawData,
     countryStats,
     headlines,
+    topPages,
+    // Kept out of the shared `loading` flag on purpose — that flag drives a
+    // full-page blocking overlay, and the landing-page table can load on its own.
+    loadingPages: fetchingPages,
     loading,
     filters: {
       platform, setPlatform, startDate, setStartDate, endDate, setEndDate,
@@ -144,6 +156,7 @@ export function useTrafficData() {
       queryClient.invalidateQueries({ queryKey: ["headlines"] });
       queryClient.invalidateQueries({ queryKey: ["countryStats"] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["topPages"] });
     },
     refreshMappings: () => {
       queryClient.invalidateQueries({ queryKey: ["mappings"] });
