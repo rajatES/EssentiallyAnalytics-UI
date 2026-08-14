@@ -33,14 +33,14 @@ export function StatCard({
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
             {title}
           </p>
           {loading ? (
             <div className="h-7 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mt-1"></div>
           ) : (
             <>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 {value}
               </h3>
               {delta && (

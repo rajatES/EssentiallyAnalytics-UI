@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { downloadRowsCsv } from "@/lib/tableCsv";
 import { getPlatform, type TrafficPlatformKey } from "@/lib/traffic-platforms";
 import type { TopPageRow } from "@/lib/api";
+import { titleFromPath } from "../pageTitle";
 import React from "react";
 
 interface TopPagesTableProps {
@@ -38,7 +39,11 @@ export function TopPagesTable({
   siteOrigin = "https://www.essentiallysports.com",
 }: TopPagesTableProps) {
   const [groupMode, setGroupMode] = useState<GroupMode>("section");
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Tracks which sections are OPEN rather than which are closed, so the table
+  // starts fully collapsed — there are hundreds of article rows, and the section
+  // totals are the useful first view. Also avoids needing an effect to collapse
+  // groups that only exist once data has loaded.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const totals = useMemo(
     () =>
@@ -76,27 +81,18 @@ export function TopPagesTable({
     });
   }, [rows, groupMode]);
 
-  const allCollapsed =
-    grouped.length > 0 && grouped.every(([name]) => collapsed.has(name));
+  const allCollapsed = expanded.size === 0;
 
   const toggleAll = () =>
-    setCollapsed(allCollapsed ? new Set() : new Set(grouped.map(([name]) => name)));
+    setExpanded(allCollapsed ? new Set(grouped.map(([name]) => name)) : new Set());
 
   const toggle = (name: string) =>
-    setCollapsed((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name);
       else next.add(name);
       return next;
     });
-
-  // Turn the slug into something readable: drop the section prefix, de-hyphenate.
-  const titleFromPath = (path: string) => {
-    const slug = path.replace(/^\//, "").replace(/\/$/, "");
-    if (!slug) return "Home";
-    const words = slug.split("-").slice(1).join(" ");
-    return (words || slug).replace(/\b\w/g, (c) => c.toUpperCase());
-  };
 
   const share = (n: number) => (totals.sessions ? (n / totals.sessions) * 100 : 0);
 
@@ -125,21 +121,21 @@ export function TopPagesTable({
       <td className={cn("px-4 py-2", indent && "pl-9")}>
         <div className="flex items-center gap-2 max-w-[460px]">
           <span
-            className="truncate font-medium text-gray-700 dark:text-gray-300"
+            className="truncate text-gray-700 dark:text-gray-300"
             title={r.page_path}
           >
             {titleFromPath(r.page_path)}
           </span>
           {r.pageName && (
             <span
-              className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800"
+              className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-100 dark:border-orange-900"
               title={`Matched by pattern ${r.matchedPattern}`}
             >
               {r.pageName}
             </span>
           )}
           {r.team && groupMode !== "team" && (
-            <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-700">
+            <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-900">
               {r.team}
             </span>
           )}
@@ -153,17 +149,17 @@ export function TopPagesTable({
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
-        <div className="text-[11px] text-gray-400 truncate max-w-[460px]" title={r.page_path}>
+        <div className="text-[10px] text-gray-400 truncate max-w-[460px]" title={r.page_path}>
           {r.page_path}
         </div>
       </td>
-      <td className="px-4 py-2 text-right font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+      <td className="px-4 py-2 text-right font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
         {r.sessions.toLocaleString()}
       </td>
-      <td className="px-4 py-2 text-right font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+      <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400 tabular-nums">
         {r.users.toLocaleString()}
       </td>
-      <td className="px-4 py-2 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+      <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-400 tabular-nums">
         {r.pageviews.toLocaleString()}
       </td>
       <td className="px-4 py-2 text-right w-36">
@@ -174,7 +170,7 @@ export function TopPagesTable({
               style={{ width: `${Math.min(share(r.sessions), 100)}%` }}
             />
           </div>
-          <span className="text-xs text-gray-500 tabular-nums w-11 text-right">
+          <span className="text-[10px] text-gray-500 tabular-nums w-10 text-right">
             {share(r.sessions).toFixed(1)}%
           </span>
         </div>
@@ -190,10 +186,10 @@ export function TopPagesTable({
             <FileText className="w-4 h-4 text-orange-600 dark:text-orange-400" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 dark:text-gray-100 text-base">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
               Top Landing Pages
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">
               Where {getPlatform(platform).label} sessions started — works without UTM tagging
             </p>
           </div>
@@ -205,7 +201,7 @@ export function TopPagesTable({
               key={m}
               onClick={() => setGroupMode(m)}
               className={cn(
-                "px-3 py-1.5 text-xs font-bold rounded-md transition-all capitalize",
+                "px-3 py-1.5 text-[11px] font-semibold rounded-md transition-all",
                 groupMode === m
                   ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200",
@@ -218,12 +214,12 @@ export function TopPagesTable({
             onClick={toggleAll}
             disabled={groupMode === "flat" || !rows.length}
             title={allCollapsed ? "Expand all sections" : "Collapse all sections"}
-            className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors shadow-sm ring-1 ring-black/5 dark:ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors shadow-sm ring-1 ring-black/5 dark:ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {allCollapsed ? (
-              <ChevronsUpDown className="w-4 h-4" />
+              <ChevronsUpDown className="w-3.5 h-3.5" />
             ) : (
-              <ChevronsDownUp className="w-4 h-4" />
+              <ChevronsDownUp className="w-3.5 h-3.5" />
             )}
             <span className="hidden sm:inline">
               {allCollapsed ? "Expand all" : "Collapse all"}
@@ -232,23 +228,23 @@ export function TopPagesTable({
           <button
             onClick={handleExport}
             disabled={!rows.length}
-            className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors shadow-sm disabled:opacity-50"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export CSV</span>
           </button>
         </div>
       </div>
 
       <div className="overflow-auto flex-1">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20">
+        <table className="w-full text-xs text-left">
+          <thead className="text-[11px] text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20">
             <tr>
-              <th className="px-4 py-2.5 font-bold tracking-wider">Page</th>
-              <th className="px-4 py-2.5 text-right font-bold min-w-[84px]">Sessions</th>
-              <th className="px-4 py-2.5 text-right font-bold min-w-[84px]">Users</th>
-              <th className="px-4 py-2.5 text-right font-bold min-w-[84px]">Views</th>
-              <th className="px-4 py-2.5 text-right font-bold w-36">Share</th>
+              <th className="px-4 py-2.5 font-semibold tracking-wider">Page</th>
+              <th className="px-4 py-2.5 text-right font-semibold min-w-[84px]">Sessions</th>
+              <th className="px-4 py-2.5 text-right font-semibold min-w-[84px]">Users</th>
+              <th className="px-4 py-2.5 text-right font-semibold min-w-[84px]">Views</th>
+              <th className="px-4 py-2.5 text-right font-semibold w-36">Share</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -268,42 +264,42 @@ export function TopPagesTable({
               rows.map((r) => renderRow(r))
             ) : (
               grouped.map(([section, g]) => {
-                const isCollapsed = collapsed.has(section);
+                const isOpen = expanded.has(section);
                 return (
                   <React.Fragment key={section}>
                     <tr
-                      className="bg-gray-100 dark:bg-gray-800/50 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+                      className="bg-gray-50 dark:bg-gray-800/50 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-800"
                       onClick={() => toggle(section)}
                     >
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
-                          {isCollapsed ? (
-                            <ChevronRight className="w-4 h-4 text-gray-500" />
+                          {isOpen ? (
+                            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                           ) : (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                            <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                           )}
-                          <span className="font-extrabold text-gray-800 dark:text-gray-200 uppercase tracking-wide text-sm">
+                          <span className="font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide text-[11px]">
                             {section}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                             {g.rows.length}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-right font-black text-gray-800 dark:text-gray-200 tabular-nums">
+                      <td className="px-4 py-2 text-right font-semibold text-gray-700 dark:text-gray-200 tabular-nums">
                         {g.sessions.toLocaleString()}
                       </td>
-                      <td className="px-4 py-2 text-right font-black text-gray-800 dark:text-gray-200 tabular-nums">
+                      <td className="px-4 py-2 text-right font-medium text-gray-600 dark:text-gray-300 tabular-nums">
                         {g.users.toLocaleString()}
                       </td>
-                      <td className="px-4 py-2 text-right font-black text-gray-800 dark:text-gray-200 tabular-nums">
+                      <td className="px-4 py-2 text-right font-medium text-gray-600 dark:text-gray-300 tabular-nums">
                         {g.pageviews.toLocaleString()}
                       </td>
-                      <td className="px-4 py-2 text-right text-xs font-bold text-gray-500 tabular-nums">
+                      <td className="px-4 py-2 text-right text-[10px] font-medium text-gray-500 tabular-nums">
                         {share(g.sessions).toFixed(1)}%
                       </td>
                     </tr>
-                    {!isCollapsed && g.rows.map((r) => renderRow(r, true))}
+                    {isOpen && g.rows.map((r) => renderRow(r, true))}
                   </React.Fragment>
                 );
               })

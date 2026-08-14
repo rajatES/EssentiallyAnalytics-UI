@@ -70,7 +70,7 @@ function RangePicker({
     >
       <span
         className={cn(
-          "px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+          "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
           tone === "a" ? "bg-blue-600 text-white" : "bg-gray-500 text-white",
         )}
       >
@@ -82,21 +82,28 @@ function RangePicker({
           type="date"
           value={range.start}
           onChange={(e) => onChange({ ...range, start: e.target.value })}
-          className="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[122px]"
+          className="bg-transparent text-xs outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[122px]"
         />
         <span className="text-gray-400">→</span>
         <input
           type="date"
           value={range.end}
           onChange={(e) => onChange({ ...range, end: e.target.value })}
-          className="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[122px]"
+          className="bg-transparent text-xs outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer w-[122px]"
         />
       </div>
     </div>
   );
 }
 
-/** A table cell: Period A's value, with the change vs Period B beneath it. */
+/**
+ * A table cell: Period A's value with its change beneath.
+ *
+ * Two lines, not three. An earlier version also printed "was <B>" on every cell,
+ * which put twelve numbers in a four-column row and made the table unreadable
+ * next to the Overview tab. Period B now lives in the cell's tooltip, and the
+ * column header states the direction of the comparison once.
+ */
 function MetricCell({
   a,
   b,
@@ -111,12 +118,11 @@ function MetricCell({
   const pct = !b ? (a ? null : 0) : ((a - b) / b) * 100;
   const fmt = (n: number) => (percent ? `${(n * 100).toFixed(1)}%` : n.toLocaleString());
   return (
-    <td className="px-4 py-2 text-right align-top">
-      <div className={cn("font-bold tabular-nums", colorClass)}>{fmt(a)}</div>
+    <td className="px-4 py-2 text-right align-middle" title={`Period B: ${fmt(b)}`}>
+      <div className={cn("font-semibold tabular-nums", colorClass)}>{fmt(a)}</div>
       <div className="flex justify-end mt-0.5">
         <DeltaLabel pct={pct} delta={a - b} baseline={b} />
       </div>
-      <div className="text-[10px] text-gray-400 tabular-nums mt-0.5">was {fmt(b)}</div>
     </td>
   );
 }
@@ -143,11 +149,11 @@ function ComparisonTable({
 
   const cols: Array<[keyof MetricSet, string, string, boolean]> = [
     ["sessions", "Sessions", "text-blue-600 dark:text-blue-400", false],
-    ["users", "Users", "text-indigo-600 dark:text-indigo-400", false],
-    ["pageviews", "Views", "text-emerald-600 dark:text-emerald-400", false],
+    ["users", "Users", "text-gray-600 dark:text-gray-400", false],
+    ["pageviews", "Views", "text-gray-600 dark:text-gray-400", false],
   ];
   if (showEngagement) {
-    cols.push(["engagement", "Eng. Rate", "text-amber-600 dark:text-amber-500", true]);
+    cols.push(["engagement", "Eng. Rate", "text-gray-600 dark:text-gray-400", true]);
   }
 
   const handleExport = () =>
@@ -178,27 +184,30 @@ function ComparisonTable({
             <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 dark:text-gray-100 text-base">{title}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{title}</h3>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">{subtitle}</p>
           </div>
         </div>
         <button
           onClick={handleExport}
           disabled={!rows.length}
-          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+          className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
         >
           <Download className="w-4 h-4" />
           <span className="hidden sm:inline">Export CSV</span>
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
+        <table className="w-full text-xs text-left">
+          <thead className="text-[11px] text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
             <tr>
-              <th className="px-4 py-2.5 font-bold tracking-wider">{labelHeader}</th>
+              <th className="px-4 py-2.5 font-semibold tracking-wider">{labelHeader}</th>
               {cols.map(([key, label]) => (
-                <th key={key} className="px-4 py-2.5 text-right font-bold min-w-[100px]">
+                <th key={key} className="px-4 py-2.5 text-right font-semibold min-w-[100px]">
                   {label}
+                  <div className="text-[9px] font-normal normal-case text-gray-400 mt-0.5">
+                    A · vs B
+                  </div>
                 </th>
               ))}
             </tr>
@@ -216,13 +225,13 @@ function ComparisonTable({
                   <td className="px-4 py-2 align-top">
                     <div className="max-w-[380px]">
                       <div
-                        className="truncate font-medium text-gray-700 dark:text-gray-300"
+                        className="truncate text-gray-700 dark:text-gray-300"
                         title={r.label}
                       >
                         {r.label}
                       </div>
                       {r.sublabel && (
-                        <div className="text-[11px] text-gray-400 truncate">{r.sublabel}</div>
+                        <div className="text-[10px] text-gray-400 truncate">{r.sublabel}</div>
                       )}
                     </div>
                   </td>
@@ -328,7 +337,7 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
               <button
                 key={key}
                 onClick={() => applyPreset(key)}
-                className="whitespace-nowrap px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="whitespace-nowrap px-3 py-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 {label}
               </button>
@@ -362,7 +371,7 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
         </div>
 
         <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">
             Sessions Trend
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">

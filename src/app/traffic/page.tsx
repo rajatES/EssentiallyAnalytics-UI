@@ -406,10 +406,10 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
             <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               Settings & Mappings
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Configure UTM tracking maps and team assignments.
             </p>
           </div>
@@ -418,7 +418,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
         <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700 w-fit">
           <button
             onClick={() => setViewMode("mappings")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${viewMode === "mappings"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === "mappings"
               ? "bg-white dark:bg-gray-900 shadow-sm text-blue-600 dark:text-blue-400"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
@@ -427,7 +427,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
           </button>
           <button
             onClick={() => setViewMode("teams")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${viewMode === "teams"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === "teams"
               ? "bg-white dark:bg-gray-900 shadow-sm text-indigo-600 dark:text-indigo-400"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
@@ -436,7 +436,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
           </button>
           <button
             onClick={() => setViewMode("paths")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${viewMode === "paths"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === "paths"
               ? "bg-white dark:bg-gray-900 shadow-sm text-orange-600 dark:text-orange-400"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
@@ -452,7 +452,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
-              <h2 className="text-base font-bold mb-1 flex items-center gap-2 text-gray-900 dark:text-white">
+              <h2 className="text-sm font-bold mb-1 flex items-center gap-2 text-gray-900 dark:text-white">
                 <UploadCloud className="w-5 h-5 text-blue-500" /> Upload Page
                 Mappings
               </h2>
@@ -469,7 +469,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               <button
                 onClick={() => mappingFileInputRef.current?.click()}
                 disabled={isUploadingMapping}
-                className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg text-sm font-bold transition disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
               >
                 {isUploadingMapping ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -481,7 +481,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
             </div>
 
             <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
-              <h2 className="text-base font-bold mb-1 flex items-center gap-2 text-gray-900 dark:text-white">
+              <h2 className="text-sm font-bold mb-1 flex items-center gap-2 text-gray-900 dark:text-white">
                 <UploadCloud className="w-5 h-5 text-green-500" /> Upload Legacy
                 Analytics
               </h2>
@@ -499,7 +499,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               <button
                 onClick={() => analyticsFileInputRef.current?.click()}
                 disabled={isUploadingAnalytics}
-                className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg text-sm font-bold transition disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
               >
                 {isUploadingAnalytics ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -514,7 +514,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
+            <h2 className="text-sm font-bold mb-4 text-gray-900 dark:text-white">
               Add Single Mapping
             </h2>
             <form
@@ -526,7 +526,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   Category
                 </label>
                 <input
-                  className="w-full p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="e.g. USS"
@@ -537,7 +537,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   Team
                 </label>
                 <input
-                  className="w-full p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   value={newTeam}
                   onChange={(e) => setNewTeam(e.target.value)}
                   placeholder="e.g. Design Team"
@@ -548,7 +548,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   Platform
                 </label>
                 <select
-                  className="w-full p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   value={newPlatform}
                   onChange={(e) => setNewPlatform(e.target.value)}
                 >
@@ -562,7 +562,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   Page Name
                 </label>
                 <input
-                  className="w-full p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   value={newPageName}
                   onChange={(e) => setNewPageName(e.target.value)}
                   placeholder="Display Name"
@@ -573,7 +573,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   UTM Mediums (comma separated)
                 </label>
                 <input
-                  className="w-full p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   value={newMediums}
                   onChange={(e) => setNewMediums(e.target.value)}
                   placeholder="uss_page_1, uss_page_2"
@@ -582,7 +582,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               <div className="sm:col-span-2 lg:col-span-6 flex justify-end mt-2">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors"
                 >
                   <Plus className="w-4 h-4" /> Add Mapping
                 </button>
@@ -597,7 +597,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               ))}
             </datalist>
             <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Page Mappings</h2>
+              <h2 className="text-sm font-semibold">Page Mappings</h2>
               <div className="flex items-center gap-2">
                 <div className="relative w-full max-w-xs">
                   <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -606,14 +606,14 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search category, team, page, UTM..."
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-1.5 pl-9 pr-3 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 </div>
                 <button
                   onClick={handleDownloadCsv}
                   disabled={mappings.length === 0}
                   title="Download as CSV"
-                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   <Download className="w-4 h-4" />
                   Download CSV
@@ -621,8 +621,8 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left whitespace-nowrap">
-                <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs border-b border-gray-200 dark:border-gray-700">
+              <table className="w-full text-xs text-left whitespace-nowrap">
+                <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-[11px] border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-4 py-2.5">Category</th>
                     <th className="px-4 py-2.5">Team</th>
@@ -665,7 +665,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     filteredMappings.map((m) => {
                       const isEditing = editingKey === m.pageName;
                       const inputClass =
-                        "w-full p-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none";
+                        "w-full p-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none";
                       return (
                         <tr
                           key={m.pageName}
@@ -809,7 +809,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-indigo-500" /> Active Teams
               </h2>
               {activeTeams.length === 0 && !loading && (
@@ -822,11 +822,11 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   key={teamName}
                   className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden"
                 >
-                  <div className="bg-gray-50 dark:bg-gray-800/50 px-5 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-base">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">
                       {teamName}
                     </h3>
-                    <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-full font-bold">
+                    <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-[10px] px-2 py-0.5 rounded-full font-bold">
                       {groupedByTeam[teamName].length} Pages
                     </span>
                   </div>
@@ -834,7 +834,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     {groupedByTeam[teamName].map((page) => (
                       <div
                         key={page.pageName}
-                        className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm"
+                        className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-lg text-xs font-medium shadow-sm"
                       >
                         <span className="text-gray-800 dark:text-gray-200">
                           {page.pageName}
@@ -858,7 +858,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                             e.target.value = "";
                           }
                         }}
-                        className="appearance-none bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg pl-3 pr-8 py-1.5 outline-none hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-colors"
+                        className="appearance-none bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-xs font-medium rounded-lg pl-3 pr-8 py-1 outline-none hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-colors"
                         defaultValue=""
                       >
                         <option value="" disabled>+ Add Page</option>
@@ -875,12 +875,12 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Users className="w-5 h-5 text-gray-400" /> Unassigned Pages
               </h2>
               <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
                 {(!groupedByTeam["Unassigned"] || groupedByTeam["Unassigned"].length === 0) ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
+                  <p className="text-xs text-gray-500 text-center py-4">
                     All pages are currently assigned to teams!
                   </p>
                 ) : (
@@ -890,7 +890,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                         key={page.pageName}
                         className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-lg"
                       >
-                        <span className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                        <span className="font-bold text-xs text-gray-800 dark:text-gray-200">
                           {page.pageName}
                         </span>
                         <div className="flex gap-2">
@@ -989,7 +989,7 @@ export default function WebTrafficPage() {
                 <button
                   key={p.key}
                   onClick={() => filters.setPlatform(p.key)}
-                  className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${isActive
+                  className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${isActive
                     ? p.activeClass
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
@@ -1005,7 +1005,7 @@ export default function WebTrafficPage() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${tab === key
+                className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${tab === key
                   ? "bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
@@ -1018,7 +1018,7 @@ export default function WebTrafficPage() {
 
           <button
             onClick={() => setShowMappings(true)}
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-3.5 py-1.5 rounded-full text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-3.5 py-1.5 rounded-full text-xs font-bold text-gray-700 dark:text-gray-200 transition-colors shadow-sm"
           >
             <Settings className="w-4 h-4" />
             <span className="hidden sm:inline">Mappings</span>
@@ -1039,7 +1039,7 @@ export default function WebTrafficPage() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => filters.setStartDate(e.target.value)}
-                className="bg-transparent w-full sm:w-[122px] text-sm pl-8 pr-2 py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer"
+                className="bg-transparent w-full sm:w-[122px] text-xs pl-8 pr-2 py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer"
               />
             </div>
             <ChevronRight className="hidden sm:block w-4 h-4 text-gray-400 mx-0.5" />
@@ -1047,7 +1047,7 @@ export default function WebTrafficPage() {
               type="date"
               value={filters.endDate}
               onChange={(e) => filters.setEndDate(e.target.value)}
-              className="bg-transparent w-full sm:w-[122px] text-sm px-3 sm:px-2 py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer border-t sm:border-t-0 border-gray-200 dark:border-gray-700 mt-1 sm:mt-0"
+              className="bg-transparent w-full sm:w-[122px] text-xs px-3 sm:px-2 py-1 outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer border-t sm:border-t-0 border-gray-200 dark:border-gray-700 mt-1 sm:mt-0"
             />
           </div>
 
@@ -1072,7 +1072,7 @@ export default function WebTrafficPage() {
             <select
               value={filters.selectedCampaign}
               onChange={(e) => filters.setSelectedCampaign(e.target.value)}
-              className="flex-1 sm:flex-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-200 text-sm font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 px-3 min-w-[150px]"
+              className="flex-1 sm:flex-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-200 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 px-3 min-w-[150px]"
             >
               <option value="">All Campaigns</option>
               {options.availableCampaigns.map((c: any) => (
@@ -1118,7 +1118,7 @@ export default function WebTrafficPage() {
           <div className="absolute inset-0 z-50 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-[2px] flex items-center justify-center rounded-2xl">
             <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-lg flex items-center gap-3 border border-gray-100 dark:border-gray-800">
               <RefreshCcw className="w-5 h-5 text-indigo-600 animate-spin" />
-              <span className="font-bold text-gray-900 dark:text-white">Refreshing Data...</span>
+              <span className="text-xs font-bold text-gray-900 dark:text-white">Refreshing Data...</span>
             </div>
           </div>
         )}

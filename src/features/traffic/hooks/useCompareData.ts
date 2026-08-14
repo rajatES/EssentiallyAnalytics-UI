@@ -17,6 +17,7 @@ import {
 } from "@/lib/api";
 import type { TrafficPlatformKey } from "@/lib/traffic-platforms";
 import type { AggregatedPageData } from "@/types";
+import { titleFromPath } from "../pageTitle";
 
 export interface DateRange {
   start: string;
@@ -239,8 +240,10 @@ export function useCompareData(platform: TrafficPlatformKey) {
         (rows ?? []).map((r) => [
           r.page_path,
           {
-            label: r.pageName || r.page_path,
-            sublabel: r.team || r.section,
+            // Article title identifies the row; the mapped page is context, not
+            // identity — one mapping covers hundreds of paths.
+            label: titleFromPath(r.page_path),
+            sublabel: [r.pageName, r.team || r.section].filter(Boolean).join(" · "),
             metrics: {
               sessions: r.sessions,
               users: r.users,

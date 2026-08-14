@@ -116,13 +116,13 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
   };
 
   const input =
-    "w-full p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white";
+    "w-full p-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
-        <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white flex items-center gap-2">
-          <Link2 className="w-5 h-5 text-orange-500" /> Add Landing Page Mapping
+        <h2 className="text-sm font-bold mb-1 text-gray-900 dark:text-white flex items-center gap-2">
+          <Link2 className="w-4 h-4 text-orange-500" /> Add Landing Page Mapping
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Match landing page URLs to a page and team. Use <code>*</code> as a wildcard —
@@ -131,22 +131,22 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
         </p>
         <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
           <div className="space-y-1 lg:col-span-2">
-            <label className="text-xs font-bold uppercase text-gray-500">URL Pattern</label>
+            <label className="text-[10px] font-semibold uppercase text-gray-500">URL Pattern</label>
             <input className={input} value={form.pattern} placeholder="/wnba-*"
               onChange={(e) => setForm((f) => ({ ...f, pattern: e.target.value }))} />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold uppercase text-gray-500">Page Name</label>
+            <label className="text-[10px] font-semibold uppercase text-gray-500">Page Name</label>
             <input className={input} value={form.pageName} placeholder="WNBA Content"
               onChange={(e) => setForm((f) => ({ ...f, pageName: e.target.value }))} />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold uppercase text-gray-500">Category</label>
+            <label className="text-[10px] font-semibold uppercase text-gray-500">Category</label>
             <input className={input} value={form.category} placeholder="WNBA"
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold uppercase text-gray-500">Team</label>
+            <label className="text-[10px] font-semibold uppercase text-gray-500">Team</label>
             <input className={input} value={form.team} placeholder="Unassigned" list="path-team-options"
               onChange={(e) => setForm((f) => ({ ...f, team: e.target.value }))} />
             <datalist id="path-team-options">
@@ -154,13 +154,13 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
             </datalist>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold uppercase text-gray-500">Priority</label>
+            <label className="text-[10px] font-semibold uppercase text-gray-500">Priority</label>
             <input className={input} type="number" value={form.priority}
               onChange={(e) => setForm((f) => ({ ...f, priority: Number(e.target.value) }))} />
           </div>
           <div className="sm:col-span-2 lg:col-span-6 flex justify-end">
             <button type="submit" disabled={saving}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Add Mapping
             </button>
@@ -170,17 +170,17 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
 
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-lg font-semibold">Landing Page Mappings</h2>
+          <h2 className="text-sm font-semibold">Landing Page Mappings</h2>
           <div className="relative w-full max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search pattern, page, team..."
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-1.5 pl-9 pr-3 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left whitespace-nowrap">
-            <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs border-b border-gray-200 dark:border-gray-700">
+          <table className="w-full text-xs text-left whitespace-nowrap">
+            <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-semibold uppercase text-[11px] border-b border-gray-200 dark:border-gray-700">
               <tr>
                 <th className="px-4 py-2.5">URL Pattern</th>
                 <th className="px-4 py-2.5">Page Name</th>
@@ -225,10 +225,10 @@ export function PathMappingsPanel({ onChanged }: { onChanged?: () => void }) {
                   ) : (
                     <>
                       <td className="px-4 py-2.5 font-mono text-xs text-orange-600 dark:text-orange-400">{r.pattern}</td>
-                      <td className="px-4 py-2.5 font-bold text-blue-600 dark:text-blue-400">{r.pageName}</td>
+                      <td className="px-4 py-2.5 font-semibold text-blue-600 dark:text-blue-400">{r.pageName}</td>
                       <td className="px-4 py-2.5 font-semibold">{r.category}</td>
                       <td className="px-4 py-2.5">
-                        {r.team ? <span className="font-semibold text-violet-600 dark:text-violet-400">{r.team}</span>
+                        {r.team ? <span className="text-violet-600 dark:text-violet-400">{r.team}</span>
                           : <span className="text-gray-400 italic">Unassigned</span>}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums">{r.priority}</td>

@@ -39,13 +39,13 @@ export function Headlines({
         <div>
           <div className="flex items-center gap-2 text-gray-500 mb-1">
             <Clock className="w-4 h-4" />
-            <span className="text-xs font-semibold uppercase tracking-wider">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">
               Day over Day
             </span>
           </div>
-          <div className="text-xl font-bold text-gray-900 dark:text-white">
+          <div className="text-lg font-bold text-gray-900 dark:text-white">
             {data.daily.sessions.toLocaleString()}{" "}
-            <span className="text-sm font-normal text-gray-400">sessions</span>
+            <span className="text-xs font-normal text-gray-400">sessions</span>
           </div>
           <p className="text-xs text-gray-400 mt-1">
             vs yesterday ({data.daily.prevSessions.toLocaleString()})
@@ -69,13 +69,13 @@ export function Headlines({
         <div>
           <div className="flex items-center gap-2 text-gray-500 mb-1">
             <Calendar className="w-4 h-4" />
-            <span className="text-xs font-semibold uppercase tracking-wider">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">
               Week over Week
             </span>
           </div>
-          <div className="text-xl font-bold text-gray-900 dark:text-white">
+          <div className="text-lg font-bold text-gray-900 dark:text-white">
             {data.weekly.sessions.toLocaleString()}{" "}
-            <span className="text-sm font-normal text-gray-400">sessions</span>
+            <span className="text-xs font-normal text-gray-400">sessions</span>
           </div>
           <p className="text-xs text-gray-400 mt-1">{data.weekly.range}</p>
         </div>
@@ -97,13 +97,13 @@ export function Headlines({
         <div>
           <div className="flex items-center gap-2 text-gray-500 mb-1">
             <Database className="w-4 h-4" />
-            <span className="text-xs font-semibold uppercase tracking-wider">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">
               Total API Traffic
             </span>
           </div>
-          <div className="text-xl font-bold text-gray-900 dark:text-white">
+          <div className="text-lg font-bold text-gray-900 dark:text-white">
             {totalRawSessions.toLocaleString()}{" "}
-            <span className="text-sm font-normal text-gray-400">sessions</span>
+            <span className="text-xs font-normal text-gray-400">sessions</span>
           </div>
           <p className="text-xs text-gray-400 mt-1">
             Unmapped:{" "}

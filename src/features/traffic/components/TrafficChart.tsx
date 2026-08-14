@@ -165,10 +165,10 @@ export function TrafficChart({ data, dateHeaders, stats }: TrafficChartProps) {
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
               {stats.sessions.toLocaleString()}
             </span>
-            <span className="text-xs text-gray-400 uppercase font-semibold">
+            <span className="text-[10px] text-gray-400 uppercase font-semibold">
               Sessions
             </span>
           </div>
