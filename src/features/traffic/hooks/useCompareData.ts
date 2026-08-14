@@ -10,14 +10,11 @@ import {
 } from "date-fns";
 import {
   fetchAggregatedData,
-  fetchTopPages,
   fetchPageMappings,
   processAggregatedData,
-  type TopPageRow,
 } from "@/lib/api";
 import type { TrafficPlatformKey } from "@/lib/traffic-platforms";
 import type { AggregatedPageData } from "@/types";
-import { titleFromPath } from "../pageTitle";
 
 export interface DateRange {
   start: string;
@@ -164,15 +161,6 @@ export function useCompareData(platform: TrafficPlatformKey) {
     ...mk(rangeB, "cmp-agg"),
     queryFn: () => fetchAggregatedData(rangeB.start, rangeB.end, platform),
   });
-  const pagesA = useQuery({
-    ...mk(rangeA, "cmp-pages"),
-    queryFn: () => fetchTopPages(rangeA.start, rangeA.end, platform, 200),
-  });
-  const pagesB = useQuery({
-    ...mk(rangeB, "cmp-pages"),
-    queryFn: () => fetchTopPages(rangeB.start, rangeB.end, platform, 200),
-  });
-
   const dataA = useMemo(
     () => processAggregatedData(aggA.data ?? [], platform, mappings),
     [aggA.data, mappings, platform],
@@ -234,28 +222,6 @@ export function useCompareData(platform: TrafficPlatformKey) {
     return buildRows(toMap(dataA), toMap(dataB));
   }, [dataA, dataB]);
 
-  const landingRows: ComparedRow[] = useMemo(() => {
-    const toMap = (rows: TopPageRow[] | undefined) =>
-      new Map(
-        (rows ?? []).map((r) => [
-          r.page_path,
-          {
-            // Article title identifies the row; the mapped page is context, not
-            // identity — one mapping covers hundreds of paths.
-            label: titleFromPath(r.page_path),
-            sublabel: [r.pageName, r.team || r.section].filter(Boolean).join(" · "),
-            metrics: {
-              sessions: r.sessions,
-              users: r.users,
-              pageviews: r.pageviews,
-              engagement: 0,
-            },
-          },
-        ]),
-      );
-    return buildRows(toMap(pagesA.data), toMap(pagesB.data));
-  }, [pagesA.data, pagesB.data]);
-
   const applyPreset = (preset: "prevPeriod" | "prevWeek" | "prevMonth") => {
     const span = Math.max(
       differenceInCalendarDays(parseISO(rangeA.end), parseISO(rangeA.start)),
@@ -285,10 +251,8 @@ export function useCompareData(platform: TrafficPlatformKey) {
     metrics,
     chartData,
     pageRows,
-    landingRows,
     totalsA,
     totalsB,
-    loading:
-      aggA.isFetching || aggB.isFetching || pagesA.isFetching || pagesB.isFetching,
+    loading: aggA.isFetching || aggB.isFetching,
   };
 }

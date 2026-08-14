@@ -21,7 +21,6 @@ import {
   Download,
   RefreshCcw,
   BarChart3,
-  FileText,
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -299,7 +298,6 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
     metrics,
     chartData,
     pageRows,
-    landingRows,
     loading,
   } = useCompareData(platform);
 
@@ -470,15 +468,6 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
           labelHeader="Category / Page Name"
           showEngagement
           csvName="compare-by-page"
-        />
-
-        <ComparisonTable
-          title="Top Landing Pages"
-          subtitle={`${getPlatform(platform).label} · period totals per article · ${periodNote}`}
-          icon={FileText}
-          rows={landingRows}
-          labelHeader="Page"
-          csvName="compare-landing-pages"
         />
       </div>
     </div>
