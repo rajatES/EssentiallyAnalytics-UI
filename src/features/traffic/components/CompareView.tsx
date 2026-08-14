@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -21,6 +22,7 @@ import {
   RefreshCcw,
   BarChart3,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatCard } from "@/components/ui/StatCard";
@@ -48,6 +50,23 @@ const STAT_COLORS = {
   engagement: "bg-amber-500",
 } as const;
 
+/** Inclusive day count for a range, or 0 if either date is unparseable. */
+function rangeDays(range: DateRange): number {
+  try {
+    return differenceInCalendarDays(parseISO(range.end), parseISO(range.start)) + 1;
+  } catch {
+    return 0;
+  }
+}
+
+function rangeLabel(range: DateRange): string {
+  try {
+    return `${format(parseISO(range.start), "d MMM")} – ${format(parseISO(range.end), "d MMM")}`;
+  } catch {
+    return "—";
+  }
+}
+
 function RangePicker({
   label,
   tone,
@@ -59,6 +78,7 @@ function RangePicker({
   range: DateRange;
   onChange: (r: DateRange) => void;
 }) {
+  const days = rangeDays(range);
   return (
     <div
       className={cn(
@@ -68,14 +88,20 @@ function RangePicker({
           : "border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/30",
       )}
     >
-      <span
-        className={cn(
-          "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-          tone === "a" ? "bg-blue-600 text-white" : "bg-gray-500 text-white",
-        )}
-      >
-        {label}
-      </span>
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+            tone === "a" ? "bg-blue-600 text-white" : "bg-gray-500 text-white",
+          )}
+        >
+          {label}
+        </span>
+        {/* Day count makes the size of the window being summed explicit. */}
+        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+          {days > 0 ? `${days} ${days === 1 ? "day" : "days"}` : "invalid range"}
+        </span>
+      </div>
       <div className="flex items-center gap-2 mt-2">
         <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
         <input
@@ -96,14 +122,7 @@ function RangePicker({
   );
 }
 
-/**
- * A table cell: Period A's value with its change beneath.
- *
- * Two lines, not three. An earlier version also printed "was <B>" on every cell,
- * which put twelve numbers in a four-column row and made the table unreadable
- * next to the Overview tab. Period B now lives in the cell's tooltip, and the
- * column header states the direction of the comparison once.
- */
+/** A table cell: Period A's value, the change, then Period B's value beneath. */
 function MetricCell({
   a,
   b,
@@ -118,11 +137,12 @@ function MetricCell({
   const pct = !b ? (a ? null : 0) : ((a - b) / b) * 100;
   const fmt = (n: number) => (percent ? `${(n * 100).toFixed(1)}%` : n.toLocaleString());
   return (
-    <td className="px-4 py-2 text-right align-middle" title={`Period B: ${fmt(b)}`}>
+    <td className="px-4 py-2 text-right align-top">
       <div className={cn("font-semibold tabular-nums", colorClass)}>{fmt(a)}</div>
       <div className="flex justify-end mt-0.5">
         <DeltaLabel pct={pct} delta={a - b} baseline={b} />
       </div>
+      <div className="text-[10px] text-gray-400 tabular-nums mt-0.5">was {fmt(b)}</div>
     </td>
   );
 }
@@ -147,13 +167,16 @@ function ComparisonTable({
   const [limit, setLimit] = useState(25);
   const shown = rows.slice(0, limit);
 
-  const cols: Array<[keyof MetricSet, string, string, boolean]> = [
-    ["sessions", "Sessions", "text-blue-600 dark:text-blue-400", false],
-    ["users", "Users", "text-gray-600 dark:text-gray-400", false],
-    ["pageviews", "Views", "text-gray-600 dark:text-gray-400", false],
+  // Column labels name the aggregation ("Total Sessions", not "Sessions"), the
+  // same wording the Overview table uses. Without it a reader can't tell whether
+  // a number is a period total, a daily peak, or an average.
+  const cols: Array<[keyof MetricSet, string, string, string, boolean]> = [
+    ["sessions", "Total", "Sessions", "text-blue-600 dark:text-blue-400", false],
+    ["users", "Total", "Users", "text-gray-600 dark:text-gray-400", false],
+    ["pageviews", "Total", "Views", "text-gray-600 dark:text-gray-400", false],
   ];
   if (showEngagement) {
-    cols.push(["engagement", "Eng. Rate", "text-gray-600 dark:text-gray-400", true]);
+    cols.push(["engagement", "Avg", "Eng. Rate", "text-gray-600 dark:text-gray-400", true]);
   }
 
   const handleExport = () =>
@@ -161,7 +184,7 @@ function ComparisonTable({
       [
         labelHeader,
         "Group",
-        ...cols.flatMap(([, label]) => [`${label} (A)`, `${label} (B)`, `${label} Δ%`]),
+        ...cols.flatMap(([, agg, label]) => [`${agg} ${label} (A)`, `${agg} ${label} (B)`, `${label} Δ%`]),
       ],
       rows.map((r) => [
         r.label,
@@ -202,12 +225,11 @@ function ComparisonTable({
           <thead className="text-[11px] text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
             <tr>
               <th className="px-4 py-2.5 font-semibold tracking-wider">{labelHeader}</th>
-              {cols.map(([key, label]) => (
+              {cols.map(([key, agg, label]) => (
                 <th key={key} className="px-4 py-2.5 text-right font-semibold min-w-[100px]">
+                  {agg}
+                  <br />
                   {label}
-                  <div className="text-[9px] font-normal normal-case text-gray-400 mt-0.5">
-                    A · vs B
-                  </div>
                 </th>
               ))}
             </tr>
@@ -235,7 +257,7 @@ function ComparisonTable({
                       )}
                     </div>
                   </td>
-                  {cols.map(([key, , color, percent]) => (
+                  {cols.map(([key, , , color, percent]) => (
                     <MetricCell
                       key={key}
                       a={r.a[key]}
@@ -283,6 +305,13 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
 
   const statValue = (key: string, value: number) =>
     key === "engagement" ? `${(value * 100).toFixed(2)}%` : value.toLocaleString();
+
+  const daysA = rangeDays(rangeA);
+  const daysB = rangeDays(rangeB);
+  // Totals over windows of different lengths aren't comparable — a 30-day period
+  // will always "beat" a 7-day one. Say so rather than letting it read as growth.
+  const lengthMismatch = daysA > 0 && daysB > 0 && daysA !== daysB;
+  const periodNote = `${rangeLabel(rangeA)} (${daysA}d) vs ${rangeLabel(rangeB)} (${daysB}d)`;
 
   // Recharts hands the payload over as a readonly array, so the prop type has to
   // match or TS rejects the content renderer.
@@ -346,6 +375,20 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
         </div>
       </div>
 
+      {lengthMismatch && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-800 dark:text-amber-200">
+            <span className="font-semibold">
+              Period A is {daysA} days, Period B is {daysB} days.
+            </span>{" "}
+            The tables below show period <em>totals</em>, so the longer period will
+            look larger regardless of performance. Use &ldquo;Prev period&rdquo; to
+            match the lengths.
+          </p>
+        </div>
+      )}
+
       <div className="relative space-y-4">
         {loading && (
           <div className="absolute inset-0 z-50 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-[2px] flex items-center justify-center rounded-2xl">
@@ -355,6 +398,12 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
             </div>
           </div>
         )}
+
+        <p className="text-[11px] text-gray-500 dark:text-gray-400 -mb-1">
+          Showing <span className="font-semibold">Period A totals</span> ({rangeLabel(rangeA)}),
+          with the change against Period B ({rangeLabel(rangeB)}) beneath each figure.
+          Engagement is a period average, not a total.
+        </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {metrics.map((m) => (
@@ -415,7 +464,7 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
 
         <ComparisonTable
           title="Detailed Breakdown"
-          subtitle={`${getPlatform(platform).label} sessions per mapped page — Period A, change vs B`}
+          subtitle={`${getPlatform(platform).label} · period totals per mapped page · ${periodNote}`}
           icon={BarChart3}
           rows={pageRows}
           labelHeader="Category / Page Name"
@@ -425,7 +474,7 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
 
         <ComparisonTable
           title="Top Landing Pages"
-          subtitle="Per article — works for untagged organic traffic"
+          subtitle={`${getPlatform(platform).label} · period totals per article · ${periodNote}`}
           icon={FileText}
           rows={landingRows}
           labelHeader="Page"
