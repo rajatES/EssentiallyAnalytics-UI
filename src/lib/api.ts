@@ -94,6 +94,12 @@ export async function updatePageMapping(id: number, mapping: Partial<MappingEntr
   return apiClient.patch(`${MAPPINGS_URL}/${id}`, mapping);
 }
 
+/** Wipe every UTM page mapping. Rejected with 403 for non-admin callers. */
+export async function deleteAllPageMappings(): Promise<{ deleted: number }> {
+  const response = await apiClient.delete(MAPPINGS_URL);
+  return response.data;
+}
+
 /** Batch-update the team field for multiple page-mapping IDs in a single
  *  request, avoiding the race condition of N parallel PATCH calls. */
 export async function batchUpdatePageMappingTeam(

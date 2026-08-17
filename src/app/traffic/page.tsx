@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useRole } from "@/hooks/useRole";
 import {
   MousePointer2,
@@ -26,7 +26,8 @@ import {
   Search,
   Download,
   Link2,
-  GitCompareArrows
+  GitCompareArrows,
+  Filter
 } from "lucide-react";
 
 import { StatCard } from "@/components/ui/StatCard";
@@ -43,6 +44,7 @@ import {
   fetchPageMappings,
   createPageMapping,
   deletePageMapping,
+  deleteAllPageMappings,
   updatePageMapping,
   batchUpdatePageMappingTeam,
   importPageMappingsCSV,
@@ -55,17 +57,34 @@ import {
   PLATFORM_LABEL_OPTIONS,
   TRAFFIC_PLATFORMS,
   platformKeyFromLabel,
+  platformKeysForMapping,
+  type TrafficPlatformKey,
 } from "@/lib/traffic-platforms";
 
 interface MappingWithId extends MappingEntry {
   id?: number;
 }
 
+// Sentinel for the team dropdown — an empty value already means "no filter",
+// so rows with no team need a distinct token.
+const TEAM_UNASSIGNED = "__unassigned__";
+
+const filterSelectClass =
+  "rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-1.5 pl-2.5 pr-7 text-xs font-medium text-gray-700 dark:text-gray-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400";
+
 export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void, onMappingsChanged?: () => void }) {
+  const { canAccess } = useRole();
+  const isAdmin = canAccess("admin");
+
   const [mappings, setMappings] = useState<MappingWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"mappings" | "teams" | "paths">("mappings");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [platformFilter, setPlatformFilter] = useState<TrafficPlatformKey | "">("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [teamFilter, setTeamFilter] = useState("");
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Inline row editing, keyed by pageName (a "row" is all UTM-medium mappings
   // sharing that page). Edits cascade to every underlying id so the page's
@@ -266,33 +285,84 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
     return Array.from(byName.values());
   }, [mappings]);
 
-  // Rows matching the search box — matches across category, team, platform,
-  // page name and any of the UTM mediums.
-  const filteredMappings = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return dedupedMappings;
-    return dedupedMappings.filter((m) =>
-      [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
+  // The single filter predicate, shared by the table and the CSV export so a
+  // download always contains exactly the rows on screen.
+  //
+  // Platform is resolved through platformKeysForMapping() rather than compared
+  // to the `platform` column, so the filter agrees with which tab a row
+  // actually resolves on — the table holds rows where the platform label and
+  // utmSource disagree.
+  const rowMatches = useCallback(
+    (m: {
+      category?: string;
+      team?: string | null;
+      platform?: string | null;
+      utmSource?: string | null;
+      pageName: string;
+      utmMediums?: string[];
+    }) => {
+      if (platformFilter && !platformKeysForMapping(m).includes(platformFilter)) {
+        return false;
+      }
+      if (categoryFilter && (m.category || "").trim() !== categoryFilter) {
+        return false;
+      }
+      if (teamFilter) {
+        const team = m.team?.trim() || "";
+        if (teamFilter === TEAM_UNASSIGNED ? team !== "" : team !== teamFilter) {
+          return false;
+        }
+      }
+
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
         .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [dedupedMappings, searchQuery]);
+        .some((v) => String(v).toLowerCase().includes(q));
+    },
+    [platformFilter, categoryFilter, teamFilter, searchQuery],
+  );
+
+  const hasActiveFilters =
+    Boolean(platformFilter || categoryFilter || teamFilter) || searchQuery.trim() !== "";
+
+  const clearFilters = () => {
+    setPlatformFilter("");
+    setCategoryFilter("");
+    setTeamFilter("");
+    setSearchQuery("");
+  };
+
+  const filteredMappings = useMemo(
+    () => dedupedMappings.filter(rowMatches),
+    [dedupedMappings, rowMatches],
+  );
+
+  // Dropdown options come from the data rather than a fixed list, so a category
+  // or team that only exists in imported rows is still selectable.
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    mappings.forEach((m) => {
+      const c = (m.category || "").trim();
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [mappings]);
+
+  const hasUnassigned = useMemo(
+    () => mappings.some((m) => !m.team?.trim()),
+    [mappings],
+  );
 
   // Export the raw mapping rows (not the deduped view) in the importer's column
   // order so a downloaded file round-trips back through "Upload Page Mappings".
-  // Respects the current search box.
+  // Respects the search box and the platform/category/team filters.
+  const exportRows = useMemo(() => mappings.filter(rowMatches), [mappings, rowMatches]);
+
   const handleDownloadCsv = () => {
-    const q = searchQuery.trim().toLowerCase();
-    const rows = mappings.filter(
-      (m) =>
-        !q ||
-        [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
-          .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(q)),
-    );
     downloadRowsCsv(
       ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums"],
-      rows.map((m) => [
+      exportRows.map((m) => [
         m.id ?? "",
         m.category,
         m.team ?? "",
@@ -303,6 +373,33 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       ]),
       "traffic-page-mappings",
     );
+  };
+
+  // Irreversible and unfiltered — it always clears the whole table, never just
+  // the filtered view, so the typed confirmation states the real total.
+  const handleDeleteAll = async () => {
+    if (mappings.length === 0) return;
+    const answer = prompt(
+      `This permanently deletes ALL ${mappings.length} page mapping rows.\n` +
+        `Traffic tables will fall back to raw UTM mediums until mappings are re-imported.\n\n` +
+        `Type DELETE ALL to confirm.`,
+    );
+    if (answer?.trim().toUpperCase() !== "DELETE ALL") return;
+
+    setIsDeletingAll(true);
+    try {
+      const res = await deleteAllPageMappings();
+      clearFilters();
+      await loadMappings();
+      alert(`Deleted ${res.deleted} page mappings.`);
+    } catch (err) {
+      console.error("Failed to delete all mappings", err);
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      alert(message || "Failed to delete all mappings");
+    } finally {
+      setIsDeletingAll(false);
+    }
   };
 
   const handleDeletePage = async (ids: number[]) => {
@@ -596,28 +693,105 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                 <option key={t} value={t} />
               ))}
             </datalist>
-            <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-sm font-semibold">Page Mappings</h2>
-              <div className="flex items-center gap-2">
-                <div className="relative w-full max-w-xs">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search category, team, page, UTM..."
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-1.5 pl-9 pr-3 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                  />
+            <div className="flex flex-col gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-sm font-semibold">Page Mappings</h2>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                    {hasActiveFilters
+                      ? `${filteredMappings.length} of ${dedupedMappings.length} pages`
+                      : `${dedupedMappings.length} pages`}
+                  </span>
                 </div>
-                <button
-                  onClick={handleDownloadCsv}
-                  disabled={mappings.length === 0}
-                  title="Download as CSV"
-                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                <div className="flex items-center gap-2">
+                  <div className="relative w-full max-w-xs">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search category, team, page, UTM..."
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-1.5 pl-9 pr-3 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    />
+                  </div>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={handleDownloadCsv}
+                        disabled={exportRows.length === 0}
+                        title={
+                          hasActiveFilters
+                            ? `Download the ${exportRows.length} filtered mapping rows as CSV`
+                            : "Download all mapping rows as CSV"
+                        }
+                        className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download CSV
+                      </button>
+                      <button
+                        onClick={handleDeleteAll}
+                        disabled={mappings.length === 0 || isDeletingAll}
+                        title="Permanently delete every page mapping"
+                        className="flex items-center gap-2 border border-red-200 dark:border-red-900/50 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-lg text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {isDeletingAll ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                        {isDeletingAll ? "Deleting..." : "Delete All"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="w-3.5 h-3.5 text-gray-400" />
+                <select
+                  value={platformFilter}
+                  onChange={(e) =>
+                    setPlatformFilter(e.target.value as TrafficPlatformKey | "")
+                  }
+                  className={filterSelectClass}
                 >
-                  <Download className="w-4 h-4" />
-                  Download CSV
-                </button>
+                  <option value="">All platforms</option>
+                  {TRAFFIC_PLATFORMS.map((p) => (
+                    <option key={p.key} value={p.key}>{p.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className={filterSelectClass}
+                >
+                  <option value="">All categories</option>
+                  {categoryOptions.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <select
+                  value={teamFilter}
+                  onChange={(e) => setTeamFilter(e.target.value)}
+                  className={filterSelectClass}
+                >
+                  <option value="">All teams</option>
+                  {activeTeams.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                  {hasUnassigned && (
+                    <option value={TEAM_UNASSIGNED}>Unassigned</option>
+                  )}
+                </select>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" /> Clear
+                  </button>
+                )}
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -658,7 +832,13 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                         colSpan={6}
                         className="px-4 py-8 text-center text-gray-500"
                       >
-                        No mappings match &quot;{searchQuery}&quot;.
+                        No mappings match the current filters.
+                        <button
+                          onClick={clearFilters}
+                          className="ml-2 font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          Clear filters
+                        </button>
                       </td>
                     </tr>
                   ) : (
