@@ -1,18 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { residualRank } from "@/lib/groupOrder";
 import { DeltaLabel } from "./DeltaLabel";
 import { TableCsvButton } from "./TableCsvButton";
 
+/** One value pair per column group, keyed by the group's `key`. */
 export interface PeriodComparisonRow {
   label: string;
-  periodCurrent: number;
-  periodPrevious: number;
-  dayCurrent: number;
-  dayPrevious: number;
+  values: Record<string, { current: number; previous: number }>;
+}
+
+/** A three-column block: a span, the span it compares against, and the change. */
+export interface ComparisonGroup {
+  key: string;
+  /** Block heading — "Selected period", "Latest day", "Month to date". */
+  title: string;
+  currentLabel: string;
+  previousLabel: string;
 }
 
 export interface MetricOption {
@@ -22,13 +29,9 @@ export interface MetricOption {
 
 interface Props {
   rows: PeriodComparisonRow[];
+  groups: ComparisonGroup[];
   /** Header for the label column — "Category", "Sport", "Team". */
   rowHeader: string;
-  /** Human range labels for the four value columns. */
-  periodLabel: string;
-  prevPeriodLabel: string;
-  dayLabel: string;
-  prevDayLabel: string;
   title?: string;
   subtitle?: string;
   csvFilename: string;
@@ -39,6 +42,15 @@ interface Props {
   onMetricChange?: (key: string) => void;
 }
 
+/** Tints cycle so adjacent column blocks stay visually separable. */
+const GROUP_TINTS = [
+  "bg-blue-50/70 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300",
+  "bg-violet-50/70 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300",
+  "bg-amber-50/70 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300",
+];
+
+const EMPTY_PAIR = { current: 0, previous: 0 };
+
 /** null pct = "no baseline", which DeltaLabel renders as "new". */
 function pct(current: number, previous: number): number | null {
   if (previous > 0) return ((current - previous) / previous) * 100;
@@ -46,19 +58,16 @@ function pct(current: number, previous: number): number | null {
 }
 
 /**
- * Compact period-over-period summary: one row per group, the selected range
- * against the range before it, and the latest day against the day before it.
+ * Compact period-over-period summary: one row per group, measured across
+ * several comparison windows side by side.
  *
- * Both comparisons show the value being measured against, not just the
- * percentage — a drop of 40% reads very differently from 50 than from 50,000.
+ * Every window shows the value being measured against, not just the percentage
+ * — a drop of 40% reads very differently from 50 than from 50,000.
  */
 export function PeriodComparisonTable({
   rows,
+  groups,
   rowHeader,
-  periodLabel,
-  prevPeriodLabel,
-  dayLabel,
-  prevDayLabel,
   title = "Period Comparison",
   subtitle,
   csvFilename,
@@ -70,28 +79,33 @@ export function PeriodComparisonTable({
   activeMetric,
   onMetricChange,
 }: Props) {
+  const sortKey = groups[0]?.key;
+
   const sorted = useMemo(
     () =>
       [...rows].sort((a, b) => {
         const rank = residualRank(a.label) - residualRank(b.label);
-        return rank !== 0 ? rank : b.periodCurrent - a.periodCurrent;
+        if (rank !== 0) return rank;
+        const av = a.values[sortKey]?.current ?? 0;
+        const bv = b.values[sortKey]?.current ?? 0;
+        return bv - av;
       }),
-    [rows],
+    [rows, sortKey],
   );
 
-  const totals = useMemo(
-    () =>
-      rows.reduce(
-        (acc, r) => ({
-          periodCurrent: acc.periodCurrent + r.periodCurrent,
-          periodPrevious: acc.periodPrevious + r.periodPrevious,
-          dayCurrent: acc.dayCurrent + r.dayCurrent,
-          dayPrevious: acc.dayPrevious + r.dayPrevious,
-        }),
-        { periodCurrent: 0, periodPrevious: 0, dayCurrent: 0, dayPrevious: 0 },
-      ),
-    [rows],
-  );
+  const totals = useMemo(() => {
+    const acc: Record<string, { current: number; previous: number }> = {};
+    for (const group of groups) acc[group.key] = { current: 0, previous: 0 };
+    for (const row of rows) {
+      for (const group of groups) {
+        const pair = row.values[group.key];
+        if (!pair) continue;
+        acc[group.key].current += pair.current;
+        acc[group.key].previous += pair.previous;
+      }
+    }
+    return acc;
+  }, [rows, groups]);
 
   const groupHead =
     "px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider";
@@ -100,59 +114,40 @@ export function PeriodComparisonTable({
   const groupEdge = "border-l border-gray-200 dark:border-gray-700";
 
   const valueCells = (
-    row: Pick<
-      PeriodComparisonRow,
-      "periodCurrent" | "periodPrevious" | "dayCurrent" | "dayPrevious"
-    >,
+    values: Record<string, { current: number; previous: number }>,
     strong: boolean,
-  ) => (
-    <>
-      <td
-        className={cn(
-          cell,
-          groupEdge,
-          strong
-            ? "font-bold text-gray-900 dark:text-white"
-            : "font-semibold text-gray-800 dark:text-gray-100",
-        )}
-      >
-        {formatValue(row.periodCurrent)}
-      </td>
-      <td className={cn(cell, "text-gray-500 dark:text-gray-400")}>
-        {formatValue(row.periodPrevious)}
-      </td>
-      <td className={cell}>
-        <DeltaLabel
-          pct={pct(row.periodCurrent, row.periodPrevious)}
-          baseline={row.periodPrevious}
-          signed
-          className="justify-end"
-        />
-      </td>
-      <td
-        className={cn(
-          cell,
-          groupEdge,
-          strong
-            ? "font-bold text-gray-900 dark:text-white"
-            : "font-semibold text-gray-800 dark:text-gray-100",
-        )}
-      >
-        {formatValue(row.dayCurrent)}
-      </td>
-      <td className={cn(cell, "text-gray-500 dark:text-gray-400")}>
-        {formatValue(row.dayPrevious)}
-      </td>
-      <td className={cell}>
-        <DeltaLabel
-          pct={pct(row.dayCurrent, row.dayPrevious)}
-          baseline={row.dayPrevious}
-          signed
-          className="justify-end"
-        />
-      </td>
-    </>
-  );
+  ) =>
+    groups.map((group) => {
+      const { current, previous } = values[group.key] ?? EMPTY_PAIR;
+      return (
+        <React.Fragment key={group.key}>
+          <td
+            className={cn(
+              cell,
+              groupEdge,
+              strong
+                ? "font-bold text-gray-900 dark:text-white"
+                : "font-semibold text-gray-800 dark:text-gray-100",
+            )}
+          >
+            {formatValue(current)}
+          </td>
+          <td className={cn(cell, "text-gray-500 dark:text-gray-400")}>
+            {formatValue(previous)}
+          </td>
+          <td className={cell}>
+            <DeltaLabel
+              pct={pct(current, previous)}
+              baseline={previous}
+              signed
+              className="justify-end"
+            />
+          </td>
+        </React.Fragment>
+      );
+    });
+
+  const columnCount = groups.length * 3 + 1;
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
@@ -165,9 +160,11 @@ export function PeriodComparisonTable({
             <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
               {title}
             </h3>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400">
-              {subtitle ?? `${periodLabel} vs ${prevPeriodLabel}`}
-            </p>
+            {subtitle && (
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                {subtitle}
+              </p>
+            )}
           </div>
         </div>
 
@@ -197,52 +194,56 @@ export function PeriodComparisonTable({
       <div className="overflow-auto max-h-[560px]">
         <table className="w-full text-xs text-left">
           <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95 backdrop-blur-md text-gray-500 dark:text-gray-400">
+            {/* The label column header sits in the second row, so a CSV export
+                of both header rows stays column-aligned. */}
             <tr className="border-b border-gray-100 dark:border-gray-800">
               <th className="bg-gray-50 dark:bg-gray-800" />
-              <th
-                colSpan={3}
-                className={cn(
-                  groupHead,
-                  groupEdge,
-                  "bg-blue-50/70 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300",
-                )}
-              >
-                Selected period
-              </th>
-              <th
-                colSpan={3}
-                className={cn(
-                  groupHead,
-                  groupEdge,
-                  "bg-violet-50/70 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300",
-                )}
-              >
-                Latest day
-              </th>
+              {groups.map((group, idx) => (
+                <th
+                  key={group.key}
+                  colSpan={3}
+                  className={cn(
+                    groupHead,
+                    groupEdge,
+                    GROUP_TINTS[idx % GROUP_TINTS.length],
+                  )}
+                >
+                  {group.title}
+                </th>
+              ))}
             </tr>
             <tr className="border-b border-gray-200 dark:border-gray-700 text-[11px] uppercase tracking-wider">
               <th className="px-4 py-2 text-left font-semibold tracking-wider bg-gray-50 dark:bg-gray-800">
                 {rowHeader}
               </th>
-              <th className={cn(colHead, groupEdge)}>{periodLabel}</th>
-              <th className={colHead}>{prevPeriodLabel}</th>
-              <th className={colHead}>Change</th>
-              <th className={cn(colHead, groupEdge)}>{dayLabel}</th>
-              <th className={colHead}>{prevDayLabel}</th>
-              <th className={colHead}>Change</th>
+              {groups.map((group) => (
+                <React.Fragment key={group.key}>
+                  <th className={cn(colHead, groupEdge)}>
+                    {group.currentLabel}
+                  </th>
+                  <th className={colHead}>{group.previousLabel}</th>
+                  <th className={colHead}>Change</th>
+                </React.Fragment>
+              ))}
             </tr>
           </thead>
 
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td
+                  colSpan={columnCount}
+                  className="px-4 py-8 text-center text-gray-500"
+                >
                   Loading comparison…
                 </td>
               </tr>
             ) : !sorted.length ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td
+                  colSpan={columnCount}
+                  className="px-4 py-8 text-center text-gray-500"
+                >
                   No data for the selected range yet.
                 </td>
               </tr>
@@ -255,7 +256,7 @@ export function PeriodComparisonTable({
                   <td className="px-4 py-2.5 font-semibold text-gray-700 dark:text-gray-200">
                     {row.label}
                   </td>
-                  {valueCells(row, false)}
+                  {valueCells(row.values, false)}
                 </tr>
               ))
             )}

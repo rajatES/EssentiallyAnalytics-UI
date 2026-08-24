@@ -27,7 +27,10 @@ export function Headlines({
       : "0.0";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-0">
+    // No mb-0 here: Tailwind v4 implements space-y-* as margin-bottom inside
+    // :where(), so any margin utility on this row silently cancels the parent's
+    // gap and glues the chips to the stat cards below.
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
       <HeadlineChips windows={data} metricLabel="sessions" loading={loading} />
 
       {/* Mapping leakage — a data-quality check, not a period comparison. */}

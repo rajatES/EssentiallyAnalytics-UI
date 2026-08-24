@@ -77,7 +77,7 @@ function Chip({
   return (
     <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-gray-500 mb-1">
+        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
           <Icon className="w-4 h-4 shrink-0" />
           <span
             className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap"
@@ -85,19 +85,22 @@ function Chip({
           >
             {short}
           </span>
-          <span className="text-[11px] text-gray-400 whitespace-nowrap">
+          <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {spanLabel(w.start, w.end)}
           </span>
         </div>
         <div className="text-lg font-bold text-gray-900 dark:text-white">
           {formatValue(w.value)}
           {metricLabel && (
-            <span className="text-xs font-normal text-gray-400"> {metricLabel}</span>
+            <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+              {" "}
+              {metricLabel}
+            </span>
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-1 truncate">
+        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate">
           vs {formatValue(w.prevValue)}
-          <span className="text-gray-300 dark:text-gray-600">
+          <span className="text-gray-500 dark:text-gray-400">
             {" · "}
             {spanLabel(w.prevStart, w.prevEnd)}
           </span>

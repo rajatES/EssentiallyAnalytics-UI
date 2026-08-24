@@ -11,10 +11,12 @@ import {
   formatDayLabel,
   formatRangeLabel,
   getPreviousPeriod,
+  monthToDateWindow,
   previousDay,
 } from "@/lib/periods";
 import {
   PeriodComparisonTable,
+  type ComparisonGroup,
   type MetricOption,
   type PeriodComparisonRow,
 } from "@/components/ui/PeriodComparisonTable";
@@ -40,10 +42,10 @@ interface Props {
 }
 
 /**
- * Category-level period comparison for the active platform.
+ * Category-level comparison for the active platform, across three windows.
  *
- * The previous range comes from a second fetch keyed exactly like the page's own
- * range query, so switching the date picker to that range hits the cache.
+ * Each extra window is a second fetch keyed exactly like the page's own range
+ * query, so picking that range in the date picker hits the cache.
  */
 export function TrafficSummaryTable({
   platform,
@@ -66,24 +68,6 @@ export function TrafficSummaryTable({
     staleTime: 1000 * 60 * 60,
   });
 
-  const { data: prevRaw = [], isFetching } = useQuery({
-    queryKey: [
-      "analytics-aggregated",
-      platform,
-      prevStart,
-      prevEnd,
-      campaign ?? "",
-    ],
-    queryFn: () =>
-      fetchAggregatedData(prevStart, prevEnd, platform, campaign || undefined),
-    enabled: !!prevStart && !!prevEnd,
-  });
-
-  const prevData = useMemo(
-    () => processAggregatedData(prevRaw, platform, mappings),
-    [prevRaw, platform, mappings],
-  );
-
   // Latest day actually present in the data rather than the range end, so a
   // reporting lag doesn't leave the day columns sitting on an empty date.
   const latestDay = useMemo(() => {
@@ -97,46 +81,115 @@ export function TrafficSummaryTable({
   }, [data, endDate]);
 
   const prevDayStr = useMemo(() => previousDay(latestDay), [latestDay]);
+  const mtd = useMemo(() => monthToDateWindow(latestDay), [latestDay]);
+
+  const rangeQuery = (start: string, end: string) => ({
+    queryKey: ["analytics-aggregated", platform, start, end, campaign ?? ""],
+    queryFn: () =>
+      fetchAggregatedData(start, end, platform, campaign || undefined),
+    enabled: !!start && !!end,
+  });
+
+  const prevPeriod = useQuery(rangeQuery(prevStart, prevEnd));
+  const mtdCurrent = useQuery(rangeQuery(mtd.start, mtd.end));
+  const mtdPrevious = useQuery(rangeQuery(mtd.prevStart, mtd.prevEnd));
+
+  const prevData = useMemo(
+    () => processAggregatedData(prevPeriod.data ?? [], platform, mappings),
+    [prevPeriod.data, platform, mappings],
+  );
+  const mtdData = useMemo(
+    () => processAggregatedData(mtdCurrent.data ?? [], platform, mappings),
+    [mtdCurrent.data, platform, mappings],
+  );
+  const mtdPrevData = useMemo(
+    () => processAggregatedData(mtdPrevious.data ?? [], platform, mappings),
+    [mtdPrevious.data, platform, mappings],
+  );
 
   const rows = useMemo(() => {
-    const byCategory = new Map<string, PeriodComparisonRow>();
-    const bucket = (category: string) => {
-      const key = category || "Other";
-      let row = byCategory.get(key);
-      if (!row) {
-        row = {
-          label: key,
-          periodCurrent: 0,
-          periodPrevious: 0,
-          dayCurrent: 0,
-          dayPrevious: 0,
-        };
-        byCategory.set(key, row);
+    const categoryOf = (page: AggregatedPageData) => page.category || "Other";
+
+    const sumRange = (pages: AggregatedPageData[]) => {
+      const totals = new Map<string, number>();
+      for (const page of pages) {
+        const key = categoryOf(page);
+        totals.set(key, (totals.get(key) ?? 0) + page.totals[metric]);
       }
-      return row;
+      return totals;
     };
 
-    for (const page of data) {
-      const row = bucket(page.category);
-      row.periodCurrent += page.totals[metric];
-      for (const day of page.dailyTrend) {
-        if (day.date === latestDay) row.dayCurrent += day[metric];
-        else if (day.date === prevDayStr) row.dayPrevious += day[metric];
+    // The four datasets overlap, so a single day is read from the first one
+    // that covers it — summing across them would count the same day twice.
+    const sumDay = (date: string) => {
+      for (const pages of [data, prevData, mtdData, mtdPrevData]) {
+        const totals = new Map<string, number>();
+        let found = false;
+        for (const page of pages) {
+          for (const entry of page.dailyTrend) {
+            if (entry.date !== date) continue;
+            found = true;
+            const key = categoryOf(page);
+            totals.set(key, (totals.get(key) ?? 0) + entry[metric]);
+          }
+        }
+        if (found) return totals;
+      }
+      return new Map<string, number>();
+    };
+
+    const parts = {
+      range: { current: sumRange(data), previous: sumRange(prevData) },
+      day: { current: sumDay(latestDay), previous: sumDay(prevDayStr) },
+      mtd: { current: sumRange(mtdData), previous: sumRange(mtdPrevData) },
+    };
+
+    const labels = new Set<string>();
+    for (const group of Object.values(parts)) {
+      for (const side of Object.values(group)) {
+        for (const key of side.keys()) labels.add(key);
       }
     }
 
-    // The day before the latest one falls in the previous range whenever a
-    // single day is selected, so both datasets have to be scanned for it.
-    for (const page of prevData) {
-      const row = bucket(page.category);
-      row.periodPrevious += page.totals[metric];
-      for (const day of page.dailyTrend) {
-        if (day.date === prevDayStr) row.dayPrevious += day[metric];
-      }
-    }
+    return Array.from(labels).map<PeriodComparisonRow>((label) => ({
+      label,
+      values: {
+        range: {
+          current: parts.range.current.get(label) ?? 0,
+          previous: parts.range.previous.get(label) ?? 0,
+        },
+        day: {
+          current: parts.day.current.get(label) ?? 0,
+          previous: parts.day.previous.get(label) ?? 0,
+        },
+        mtd: {
+          current: parts.mtd.current.get(label) ?? 0,
+          previous: parts.mtd.previous.get(label) ?? 0,
+        },
+      },
+    }));
+  }, [data, prevData, mtdData, mtdPrevData, metric, latestDay, prevDayStr]);
 
-    return Array.from(byCategory.values());
-  }, [data, prevData, metric, latestDay, prevDayStr]);
+  const groups: ComparisonGroup[] = [
+    {
+      key: "range",
+      title: "Selected period",
+      currentLabel: formatRangeLabel(startDate, endDate),
+      previousLabel: formatRangeLabel(prevStart, prevEnd),
+    },
+    {
+      key: "day",
+      title: "Latest day",
+      currentLabel: formatDayLabel(latestDay),
+      previousLabel: formatDayLabel(prevDayStr),
+    },
+    {
+      key: "mtd",
+      title: "Month to date",
+      currentLabel: formatRangeLabel(mtd.start, mtd.end),
+      previousLabel: formatRangeLabel(mtd.prevStart, mtd.prevEnd),
+    },
+  ];
 
   const platformUi = getPlatform(platform);
   const metricLabel =
@@ -145,14 +198,16 @@ export function TrafficSummaryTable({
   return (
     <PeriodComparisonTable
       rows={rows}
+      groups={groups}
       rowHeader="Category"
-      periodLabel={formatRangeLabel(startDate, endDate)}
-      prevPeriodLabel={formatRangeLabel(prevStart, prevEnd)}
-      dayLabel={formatDayLabel(latestDay)}
-      prevDayLabel={formatDayLabel(prevDayStr)}
-      subtitle={`${platformUi.label} ${metricLabel.toLowerCase()} by category — this range vs the range before it`}
+      subtitle={`${platformUi.label} ${metricLabel.toLowerCase()} by category, each window against the one before it`}
       csvFilename={`${platformUi.shortLabel.toLowerCase()}-period-comparison`}
-      loading={loading || isFetching}
+      loading={
+        loading ||
+        prevPeriod.isFetching ||
+        mtdCurrent.isFetching ||
+        mtdPrevious.isFetching
+      }
       metricOptions={METRICS}
       activeMetric={metric}
       onMetricChange={(key) => setMetric(key as Metric)}

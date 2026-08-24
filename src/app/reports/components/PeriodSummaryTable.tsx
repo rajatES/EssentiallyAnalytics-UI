@@ -7,10 +7,12 @@ import {
   formatDayLabel,
   formatRangeLabel,
   getPreviousPeriod,
+  monthToDateWindow,
   previousDay,
 } from "@/lib/periods";
 import {
   PeriodComparisonTable,
+  type ComparisonGroup,
   type MetricOption,
   type PeriodComparisonRow,
 } from "@/components/ui/PeriodComparisonTable";
@@ -59,6 +61,26 @@ const fetchPerPageData = async ({
   return data as { pages: PerPageMetric[] };
 };
 
+/**
+ * Newest date in the series carrying any non-zero metric.
+ *
+ * The overview series zero-fills every date in the range, so its last entry is
+ * usually today with nothing synced yet.
+ */
+function latestDayWithData(
+  series: Array<Record<string, unknown>> | undefined,
+  fallback: string,
+): string {
+  if (!series?.length) return fallback;
+  for (let i = series.length - 1; i >= 0; i--) {
+    const day = series[i];
+    if (METRICS.some((m) => Number(day[m.key]) > 0)) {
+      return String(day.date).slice(0, 10);
+    }
+  }
+  return fallback;
+}
+
 interface Props {
   selectedProfileIds: string[];
   startDate: string;
@@ -86,19 +108,13 @@ export default function PeriodSummaryTable({
     [startDate, endDate],
   );
 
-  // The overview series zero-fills every date in the range, so the last entry
-  // is usually today with nothing synced yet — walk back to a day with data.
-  const latestDay = useMemo(() => {
-    if (!timeSeries?.length) return endDate;
-    for (let i = timeSeries.length - 1; i >= 0; i--) {
-      const day = timeSeries[i];
-      const hasData = METRICS.some((m) => Number(day[m.key]) > 0);
-      if (hasData) return String(day.date).slice(0, 10);
-    }
-    return endDate;
-  }, [timeSeries, endDate]);
+  const latestDay = useMemo(
+    () => latestDayWithData(timeSeries, endDate),
+    [timeSeries, endDate],
+  );
 
   const prevDayStr = useMemo(() => previousDay(latestDay), [latestDay]);
+  const mtd = useMemo(() => monthToDateWindow(latestDay), [latestDay]);
 
   const enabled = selectedProfileIds.length > 0;
 
@@ -130,6 +146,25 @@ export default function PeriodSummaryTable({
     staleTime: 1000 * 60 * 5,
   });
 
+  const mtdCurrent = useQuery({
+    queryKey: ["per-page-aggregate", selectedProfileIds, mtd.start, mtd.end],
+    queryFn: fetchPerPageData,
+    enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const mtdPrevious = useQuery({
+    queryKey: [
+      "per-page-aggregate",
+      selectedProfileIds,
+      mtd.prevStart,
+      mtd.prevEnd,
+    ],
+    queryFn: fetchPerPageData,
+    enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const { data: mappings = [] } = useQuery({
     queryKey: ["report-sports-mappings"],
     queryFn: fetchReportSportsMappings,
@@ -152,10 +187,11 @@ export default function PeriodSummaryTable({
       if (!row) {
         row = {
           label: key,
-          periodCurrent: 0,
-          periodPrevious: 0,
-          dayCurrent: 0,
-          dayPrevious: 0,
+          values: {
+            range: { current: 0, previous: 0 },
+            day: { current: 0, previous: 0 },
+            mtd: { current: 0, previous: 0 },
+          },
         };
         bySport.set(key, row);
       }
@@ -164,33 +200,34 @@ export default function PeriodSummaryTable({
 
     const add = (
       pages: PerPageMetric[] | undefined,
-      field: keyof PeriodComparisonRow,
+      group: string,
+      side: "current" | "previous",
     ) => {
       for (const page of pages ?? []) {
-        const row = bucket(page.profileId);
-        (row[field] as number) += Number(page[metric]) || 0;
+        bucket(page.profileId).values[group][side] +=
+          Number(page[metric]) || 0;
       }
     };
 
-    add(currentPeriod.data?.pages, "periodCurrent");
-    add(previousPeriod.data?.pages, "periodPrevious");
-    add(currentDay.data?.pages, "dayCurrent");
-    add(previousDayData.data?.pages, "dayPrevious");
+    add(currentPeriod.data?.pages, "range", "current");
+    add(previousPeriod.data?.pages, "range", "previous");
+    add(currentDay.data?.pages, "day", "current");
+    add(previousDayData.data?.pages, "day", "previous");
+    add(mtdCurrent.data?.pages, "mtd", "current");
+    add(mtdPrevious.data?.pages, "mtd", "previous");
 
     // Profiles with no activity in any window would otherwise show as all-zero
     // rows padding the table — the endpoint returns a row per requested profile.
-    return Array.from(bySport.values()).filter(
-      (r) =>
-        r.periodCurrent > 0 ||
-        r.periodPrevious > 0 ||
-        r.dayCurrent > 0 ||
-        r.dayPrevious > 0,
+    return Array.from(bySport.values()).filter((r) =>
+      Object.values(r.values).some((v) => v.current > 0 || v.previous > 0),
     );
   }, [
     currentPeriod.data,
     previousPeriod.data,
     currentDay.data,
     previousDayData.data,
+    mtdCurrent.data,
+    mtdPrevious.data,
     sportByProfile,
     metric,
   ]);
@@ -198,21 +235,41 @@ export default function PeriodSummaryTable({
   const metricLabel =
     METRICS.find((m) => m.key === metric)?.label ?? "Impressions";
 
+  const groups: ComparisonGroup[] = [
+    {
+      key: "range",
+      title: "Selected period",
+      currentLabel: formatRangeLabel(startDate, endDate),
+      previousLabel: formatRangeLabel(prevStart, prevEnd),
+    },
+    {
+      key: "day",
+      title: "Latest day",
+      currentLabel: formatDayLabel(latestDay),
+      previousLabel: formatDayLabel(prevDayStr),
+    },
+    {
+      key: "mtd",
+      title: "Month to date",
+      currentLabel: formatRangeLabel(mtd.start, mtd.end),
+      previousLabel: formatRangeLabel(mtd.prevStart, mtd.prevEnd),
+    },
+  ];
+
   return (
     <PeriodComparisonTable
       rows={rows}
+      groups={groups}
       rowHeader="Sport"
-      periodLabel={formatRangeLabel(startDate, endDate)}
-      prevPeriodLabel={formatRangeLabel(prevStart, prevEnd)}
-      dayLabel={formatDayLabel(latestDay)}
-      prevDayLabel={formatDayLabel(prevDayStr)}
-      subtitle={`${metricLabel} by sport — this range vs the range before it`}
+      subtitle={`${metricLabel} by sport, each window against the one before it`}
       csvFilename="reports-period-comparison"
       loading={
         currentPeriod.isLoading ||
         previousPeriod.isLoading ||
         currentDay.isLoading ||
-        previousDayData.isLoading
+        previousDayData.isLoading ||
+        mtdCurrent.isLoading ||
+        mtdPrevious.isLoading
       }
       metricOptions={METRICS}
       activeMetric={metric}

@@ -49,6 +49,7 @@ import {
   formatDayLabel,
   formatRangeLabel,
   getPreviousPeriod,
+  monthToDateWindow,
   previousDay,
 } from "@/lib/periods";
 import {
@@ -308,7 +309,7 @@ function ChangeCell({
   // a change is meaningless without the number it is measured against.
   const baseline =
     previous > 0 ? (
-      <span className="block text-[10px] text-gray-400 dark:text-gray-500">
+      <span className="block text-[10px] text-gray-500 dark:text-gray-400">
         was {fmt(previous)}
       </span>
     ) : null;
@@ -316,7 +317,7 @@ function ChangeCell({
   if (Math.abs(diff) < 0.005) {
     return (
       <span>
-        <span className="block text-gray-400 dark:text-gray-500">—</span>
+        <span className="block text-gray-500 dark:text-gray-400">—</span>
         {baseline}
       </span>
     );
@@ -622,22 +623,80 @@ export default function RevenuePage() {
     return max || endDate;
   }, [filteredRows, endDate]);
 
+  const mtdWindow = useMemo(() => monthToDateWindow(latestDay), [latestDay]);
+
+  /* Month-to-date spans rarely coincide with the selected range, so both halves
+   * come from their own fetch rather than being sliced out of the rows above. */
+  const { data: mtdRows = [], isLoading: mtdLoading } = useQuery({
+    queryKey: ["revenue-metrics", mtdWindow.start, mtdWindow.end],
+    queryFn: () => fetchRevenueMetrics(mtdWindow.start, mtdWindow.end),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: mtdPrevRows = [], isLoading: mtdPrevLoading } = useQuery({
+    queryKey: ["revenue-metrics", mtdWindow.prevStart, mtdWindow.prevEnd],
+    queryFn: () => fetchRevenueMetrics(mtdWindow.prevStart, mtdWindow.prevEnd),
+    staleTime: 1000 * 60 * 5,
+  });
+
   const comparisonRows = useMemo<PeriodComparisonRow[]>(() => {
     const prevDayStr = previousDay(latestDay);
     const currentByTeam = new Map(teamGroups.map((g) => [g.team, g.totals.total]));
-    const teams = new Set([...currentByTeam.keys(), ...prevTotals.byTeam.keys()]);
+
+    /* The MTD fetches are unfiltered, so apply the page's page-selection to
+     * them the same way filteredRows/filteredPrevRows are filtered. */
+    const useAll =
+      selectedPages.size === 0 || selectedPages.size === allPageNames.length;
+    const totalByTeam = (rows: RevenueMetricRow[]) => {
+      const map = new Map<string, number>();
+      for (const r of rows) {
+        if (!useAll && !selectedPages.has(r.pageName)) continue;
+        const team = r.team || "Unassigned";
+        map.set(team, (map.get(team) || 0) + (Number(r.total) || 0));
+      }
+      return map;
+    };
+
+    const mtdByTeam = totalByTeam(mtdRows);
+    const mtdPrevByTeam = totalByTeam(mtdPrevRows);
+
+    const teams = new Set([
+      ...currentByTeam.keys(),
+      ...prevTotals.byTeam.keys(),
+      ...mtdByTeam.keys(),
+      ...mtdPrevByTeam.keys(),
+    ]);
 
     return Array.from(teams).map((team) => {
       const days = revenueByTeamDay.get(team);
       return {
         label: team,
-        periodCurrent: currentByTeam.get(team) || 0,
-        periodPrevious: prevTotals.byTeam.get(team) || 0,
-        dayCurrent: days?.get(latestDay) || 0,
-        dayPrevious: days?.get(prevDayStr) || 0,
+        values: {
+          range: {
+            current: currentByTeam.get(team) || 0,
+            previous: prevTotals.byTeam.get(team) || 0,
+          },
+          day: {
+            current: days?.get(latestDay) || 0,
+            previous: days?.get(prevDayStr) || 0,
+          },
+          mtd: {
+            current: mtdByTeam.get(team) || 0,
+            previous: mtdPrevByTeam.get(team) || 0,
+          },
+        },
       };
     });
-  }, [teamGroups, prevTotals, revenueByTeamDay, latestDay]);
+  }, [
+    teamGroups,
+    prevTotals,
+    revenueByTeamDay,
+    latestDay,
+    mtdRows,
+    mtdPrevRows,
+    selectedPages,
+    allPageNames.length,
+  ]);
 
   /* Pie chart data — overall source breakdown */
   const pieData = useMemo(() => {
@@ -1368,14 +1427,33 @@ export default function RevenuePage() {
 
       <PeriodComparisonTable
         rows={comparisonRows}
+        groups={[
+          {
+            key: "range",
+            title: "Selected period",
+            currentLabel: formatRangeLabel(startDate, endDate),
+            previousLabel: formatRangeLabel(prevStart, prevEnd),
+          },
+          {
+            key: "day",
+            title: "Latest day",
+            currentLabel: formatDayLabel(latestDay),
+            previousLabel: formatDayLabel(previousDay(latestDay)),
+          },
+          {
+            key: "mtd",
+            title: "Month to date",
+            currentLabel: formatRangeLabel(mtdWindow.start, mtdWindow.end),
+            previousLabel: formatRangeLabel(
+              mtdWindow.prevStart,
+              mtdWindow.prevEnd,
+            ),
+          },
+        ]}
         rowHeader="Team"
-        periodLabel={formatRangeLabel(startDate, endDate)}
-        prevPeriodLabel={formatRangeLabel(prevStart, prevEnd)}
-        dayLabel={formatDayLabel(latestDay)}
-        prevDayLabel={formatDayLabel(previousDay(latestDay))}
-        subtitle="Revenue by team — this range vs the range before it"
+        subtitle="Revenue by team, each window against the one before it"
         csvFilename="revenue-period-comparison"
-        loading={isLoading || prevLoading}
+        loading={isLoading || prevLoading || mtdLoading || mtdPrevLoading}
         formatValue={fmt}
       />
     </div>

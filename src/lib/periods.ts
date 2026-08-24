@@ -62,6 +62,29 @@ export function getPreviousPeriod(startStr: string, endStr: string) {
   };
 }
 
+/**
+ * Month-to-date up to `anchor`, against the same day span of the previous month.
+ *
+ * The day of month is clamped, so 31 Mar compares against 28/29 Feb instead of
+ * spilling into March. Mirrors buildHeadlineWindows() on the API side.
+ */
+export function monthToDateWindow(anchor: string) {
+  const day = parseISO(anchor);
+  const monthStart = startOfMonth(day);
+  const prevMonthStart = startOfMonth(subMonths(day, 1));
+  const prevMonthEnd = new Date(
+    prevMonthStart.getFullYear(),
+    prevMonthStart.getMonth(),
+    Math.min(day.getDate(), lastDayOfMonth(prevMonthStart).getDate()),
+  );
+  return {
+    start: formatDate(monthStart, "yyyy-MM-dd"),
+    end: formatDate(day, "yyyy-MM-dd"),
+    prevStart: formatDate(prevMonthStart, "yyyy-MM-dd"),
+    prevEnd: formatDate(prevMonthEnd, "yyyy-MM-dd"),
+  };
+}
+
 /** The day before a yyyy-MM-dd date, same format. */
 export function previousDay(dateStr: string): string {
   return formatDate(subDays(parseISO(dateStr), 1), "yyyy-MM-dd");
