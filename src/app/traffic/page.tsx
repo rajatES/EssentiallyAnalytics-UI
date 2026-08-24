@@ -37,6 +37,7 @@ import { CountryStats } from "@/components/ui/CountryStats";
 import { TrafficChart } from "@/features/traffic/components/TrafficChart";
 import { TrafficTable } from "@/features/traffic/components/TrafficTable";
 import { TopPagesTable } from "@/features/traffic/components/TopPagesTable";
+import { TrafficSummaryTable } from "@/features/traffic/components/TrafficSummaryTable";
 import { PathMappingsPanel } from "@/features/traffic/components/PathMappingsPanel";
 import { CompareView } from "@/features/traffic/components/CompareView";
 import { useTrafficData } from "@/features/traffic/hooks/useTrafficData";
@@ -1331,11 +1332,22 @@ export default function WebTrafficPage() {
           />
         </div>
 
-        <div className="w-full pb-4">
+        <div className="w-full">
           <TopPagesTable
             rows={topPages}
             platform={filters.platform}
             loading={loadingPages}
+          />
+        </div>
+
+        <div className="w-full pb-4">
+          <TrafficSummaryTable
+            platform={filters.platform}
+            startDate={filters.startDate}
+            endDate={filters.endDate}
+            campaign={filters.selectedCampaign}
+            data={data}
+            loading={loading}
           />
         </div>
       </div>

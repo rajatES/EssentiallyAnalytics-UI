@@ -1,11 +1,12 @@
-// 'Other' collects pages no mapping matched, 'Unassigned' pages with no team.
-// Neither is a real category, so they sit under the groups that are.
-const RESIDUAL_GROUPS = ["other", "others", "unassigned"];
+// 'Other' collects rows no mapping matched, 'Unassigned'/'Uncategorized' rows
+// with no team or sport. None is a real category, so they sit under the ones
+// that are, whatever order the rest of the table is in.
+const RESIDUAL_GROUPS = ["other", "others", "unassigned", "uncategorized"];
 
-const residualRank = (name: string) => {
+export function residualRank(name: string): number {
   const idx = RESIDUAL_GROUPS.indexOf(name.trim().toLowerCase());
   return idx === -1 ? 0 : idx + 1;
-};
+}
 
 // Sorts group entries with `compare`, after pinning the residual buckets to the
 // bottom. Mutates and returns `entries`, like Array.sort.

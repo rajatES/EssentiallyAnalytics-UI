@@ -18,7 +18,7 @@ import {
   getPlatform,
   type TrafficPlatformKey,
 } from "@/lib/traffic-platforms";
-import { sortGroupEntries } from "../groupOrder";
+import { sortGroupEntries } from "@/lib/groupOrder";
 import React from "react";
 
 interface TrafficTableProps {

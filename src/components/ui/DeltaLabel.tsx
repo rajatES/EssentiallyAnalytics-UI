@@ -10,6 +10,8 @@ interface DeltaLabelProps {
   baseline?: number;
   size?: "xs" | "sm";
   showDelta?: boolean;
+  /** Prefix the sign, so the value survives being read as plain text (CSV). */
+  signed?: boolean;
   className?: string;
 }
 
@@ -26,6 +28,7 @@ export function DeltaLabel({
   baseline,
   size = "xs",
   showDelta = false,
+  signed = false,
   className,
 }: DeltaLabelProps) {
   const text = size === "xs" ? "text-[10px]" : "text-xs";
@@ -35,7 +38,7 @@ export function DeltaLabel({
     return (
       <span
         className={cn(text, "font-bold text-blue-600 dark:text-blue-400", className)}
-        title={baseline !== undefined ? `vs ${baseline.toLocaleString()}` : undefined}
+        title={baseline !== undefined ? `vs ${baseline.toLocaleString("en-US")}` : undefined}
       >
         new
       </span>
@@ -57,7 +60,7 @@ export function DeltaLabel({
             : "text-red-500 dark:text-red-400",
         className,
       )}
-      title={baseline !== undefined ? `vs ${baseline.toLocaleString()}` : undefined}
+      title={baseline !== undefined ? `vs ${baseline.toLocaleString("en-US")}` : undefined}
     >
       {flat ? (
         <Minus size={icon} />
@@ -66,11 +69,14 @@ export function DeltaLabel({
       ) : (
         <TrendingDown size={icon} />
       )}
+      {/* ASCII hyphen, not a minus glyph: this text is what CSV exports carry,
+          and a spreadsheet only reads the former as a negative number. */}
+      {signed && !flat && (up ? "+" : "-")}
       {Math.abs(pct).toFixed(1)}%
       {showDelta && delta !== undefined && !flat && (
         <span className="text-gray-400 font-semibold ml-0.5">
           ({delta > 0 ? "+" : ""}
-          {delta.toLocaleString()})
+          {delta.toLocaleString("en-US")})
         </span>
       )}
     </span>

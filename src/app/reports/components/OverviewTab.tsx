@@ -14,6 +14,9 @@ import {
 import { METRIC_CONFIG, MetricKey, DemographicData } from "../types";
 import DemographicsSection from "./DemographicsSection";
 import PageMetricsTable from "./PageMetricsTable";
+import PeriodSummaryTable from "./PeriodSummaryTable";
+import { HeadlineChips } from "@/components/ui/HeadlineChips";
+import { fetchReportHeadlines } from "@/lib/api";
 import DateRangePicker from "../../components/DateRangePicker";
 import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";import {
   Settings2,
@@ -180,6 +183,15 @@ export default function OverviewTab({
     staleTime: 1000 * 60 * 5,
   });
 
+  // Fixed MTD/DOD/WOW windows for the headline chips — anchored on the latest
+  // synced day, independent of the date range selected below.
+  const { data: headlines = null, isLoading: loadingHeadlines } = useQuery({
+    queryKey: ["report-headlines", selectedProfileIds],
+    queryFn: () => fetchReportHeadlines(selectedProfileIds),
+    enabled: selectedProfileIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Fetch aggregated demographics for all selected profiles
   const { data: demoData = null, isLoading: loadingDemos } = useQuery({
     queryKey: ["demographics-aggregated", selectedProfileIds],
@@ -235,6 +247,14 @@ export default function OverviewTab({
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <HeadlineChips
+          windows={headlines}
+          metricLabel="impressions"
+          loading={loadingHeadlines}
+        />
+      </div>
+
       <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-gray-400" />
@@ -521,6 +541,15 @@ export default function OverviewTab({
       {/* Demographics Section */}
       {hasData && (
         <DemographicsSection data={demoData} loading={loadingDemos} />
+      )}
+
+      {hasData && (
+        <PeriodSummaryTable
+          selectedProfileIds={selectedProfileIds}
+          startDate={startDate}
+          endDate={endDate}
+          timeSeries={aggData.timeSeries}
+        />
       )}
 
       {error && (

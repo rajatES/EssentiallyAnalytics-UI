@@ -13,7 +13,7 @@ import { downloadRowsCsv } from "@/lib/tableCsv";
 import { getPlatform, type TrafficPlatformKey } from "@/lib/traffic-platforms";
 import type { TopPageRow } from "@/lib/api";
 import { titleFromPath } from "../pageTitle";
-import { sortGroupEntries } from "../groupOrder";
+import { sortGroupEntries } from "@/lib/groupOrder";
 import React from "react";
 
 interface TopPagesTableProps {

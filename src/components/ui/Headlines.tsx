@@ -1,12 +1,6 @@
-import {
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Clock,
-  Database,
-  AlertCircle,
-} from "lucide-react";
+import { Database, AlertCircle } from "lucide-react";
 import { HeadlineData } from "@/types";
+import { HeadlineChips } from "./HeadlineChips";
 
 interface HeadlinesProps {
   data: HeadlineData | null;
@@ -33,76 +27,20 @@ export function Headlines({
       : "0.0";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-0">
-      {/* Day on Day */}
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-gray-500 mb-1">
-            <Clock className="w-4 h-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">
-              Day over Day
-            </span>
-          </div>
-          <div className="text-lg font-bold text-gray-900 dark:text-white">
-            {data.daily.sessions.toLocaleString()}{" "}
-            <span className="text-xs font-normal text-gray-400">sessions</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-1">
-            vs yesterday ({data.daily.prevSessions.toLocaleString()})
-          </p>
-        </div>
-        <div
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${data.daily.diff >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-        >
-          {data.daily.diff >= 0 ? (
-            <TrendingUp className="w-4 h-4" />
-          ) : (
-            <TrendingDown className="w-4 h-4" />
-          )}
-          {data.daily.diff > 0 ? "+" : ""}
-          {data.daily.diff}%
-        </div>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-0">
+      <HeadlineChips windows={data} metricLabel="sessions" loading={loading} />
 
-      {/* Week on Week */}
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between">
-        <div>
+      {/* Mapping leakage — a data-quality check, not a period comparison. */}
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 text-gray-500 mb-1">
-            <Calendar className="w-4 h-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">
-              Week over Week
-            </span>
-          </div>
-          <div className="text-lg font-bold text-gray-900 dark:text-white">
-            {data.weekly.sessions.toLocaleString()}{" "}
-            <span className="text-xs font-normal text-gray-400">sessions</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-1">{data.weekly.range}</p>
-        </div>
-        <div
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${data.weekly.diff >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-        >
-          {data.weekly.diff >= 0 ? (
-            <TrendingUp className="w-4 h-4" />
-          ) : (
-            <TrendingDown className="w-4 h-4" />
-          )}
-          {data.weekly.diff > 0 ? "+" : ""}
-          {data.weekly.diff}%
-        </div>
-      </div>
-
-      {/* Total Traffic */}
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-gray-500 mb-1">
-            <Database className="w-4 h-4" />
+            <Database className="w-4 h-4 shrink-0" />
             <span className="text-[11px] font-semibold uppercase tracking-wider">
               Total API Traffic
             </span>
           </div>
           <div className="text-lg font-bold text-gray-900 dark:text-white">
-            {totalRawSessions.toLocaleString()}{" "}
+            {totalRawSessions.toLocaleString("en-US")}{" "}
             <span className="text-xs font-normal text-gray-400">sessions</span>
           </div>
           <p className="text-xs text-gray-400 mt-1">
@@ -114,12 +52,12 @@ export function Headlines({
                   : "text-green-500 font-bold"
               }
             >
-              {unmappedSessions.toLocaleString()}
+              {unmappedSessions.toLocaleString("en-US")}
             </span>
           </p>
         </div>
         <div
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${unmappedSessions > 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400" : "bg-green-100 text-green-700"}`}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${unmappedSessions > 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400" : "bg-green-100 text-green-700"}`}
         >
           {unmappedSessions > 0 && <AlertCircle className="w-4 h-4" />}
           {leakagePercent}% Leak

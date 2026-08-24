@@ -1,6 +1,12 @@
 import axios from "axios";
 import { MappingEntry } from "../data/page-mapping";
-import { AggregatedPageData, AggregatedMetric, CountryStat, HeadlineData } from "../types";
+import {
+  AggregatedPageData,
+  AggregatedMetric,
+  CountryStat,
+  HeadlineData,
+  HeadlineWindows,
+} from "../types";
 import { platformKeysForMapping, type TrafficPlatformKey } from "./traffic-platforms";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -470,6 +476,17 @@ export async function fetchRevenueMetrics(
   }
 }
 
+/** MTD / DOD / WOW revenue windows for the headline chips. */
+export async function fetchRevenueHeadlines(): Promise<HeadlineWindows | null> {
+  try {
+    const response = await apiClient.get(`${REVENUE_URL}/headlines`);
+    return response.data;
+  } catch (error) {
+    console.error("Revenue Headlines Error:", error);
+    return null;
+  }
+}
+
 export async function fetchRevenueMappings(): Promise<RevenueMappingRow[]> {
   try {
     const response = await apiClient.get(`${REVENUE_URL}/mappings`);
@@ -541,6 +558,21 @@ export interface ReportSportsMappingRow {
   sport: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** MTD / DOD / WOW impression windows for the selected report profiles. */
+export async function fetchReportHeadlines(
+  profileIds: string[],
+): Promise<HeadlineWindows | null> {
+  try {
+    const response = await apiClient.post("/api/analytics/aggregate/headlines", {
+      profileIds,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Report Headlines Error:", error);
+    return null;
+  }
 }
 
 export async function fetchReportSportsMappings(): Promise<ReportSportsMappingRow[]> {

@@ -2,7 +2,12 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchRevenueMetrics, RevenueMetricRow, triggerSocialManualSync } from "@/lib/api";
+import {
+  fetchRevenueHeadlines,
+  fetchRevenueMetrics,
+  RevenueMetricRow,
+  triggerSocialManualSync,
+} from "@/lib/api";
 import { useRole } from "@/hooks/useRole";
 import {
   DollarSign,
@@ -41,20 +46,30 @@ import {
   Line,
 } from "recharts";
 import {
-  parseISO,
-  format as formatDate,
-  subDays,
-  subMonths,
-  differenceInCalendarDays,
-  startOfMonth,
-  lastDayOfMonth,
-  isSameDay,
-} from "date-fns";
+  formatDayLabel,
+  formatRangeLabel,
+  getPreviousPeriod,
+  previousDay,
+} from "@/lib/periods";
+import {
+  PeriodComparisonTable,
+  type PeriodComparisonRow,
+} from "@/components/ui/PeriodComparisonTable";
+import { HeadlineChips } from "@/components/ui/HeadlineChips";
 
 /* ─── Formatting helper ─── */
 function fmt(v: string | number): string {
   const n = Number(v) || 0;
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/* Postgres date columns come back as timestamps, so a reporting day has to be
+ * read in IST — the same conversion the daily-progression charts use. */
+function istDay(value: string): string {
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? String(value).slice(0, 10)
+    : d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 }
 
 /* ─── Types ─── */
@@ -275,58 +290,6 @@ function getDefaultDates() {
   };
 }
 
-/* Derive the comparison window for the "Change" column from the selected range:
- *  - single day                              → the previous day
- *  - full calendar month (1st → month-end)  → the previous full month
- *  - month-to-date (1st → mid-month)         → same day span in the previous month
- *  - anything else (a week, arbitrary span)  → the same-length window right before it
- */
-function getPreviousPeriod(startStr: string, endStr: string) {
-  const start = parseISO(startStr);
-  const end = parseISO(endStr);
-
-  // A single selected day always compares to the day before (this must come
-  // before the month rule, else the 1st of a month would compare to the 1st
-  // of the previous month instead of the previous day).
-  if (isSameDay(start, end)) {
-    const prev = formatDate(subDays(start, 1), "yyyy-MM-dd");
-    return { prevStart: prev, prevEnd: prev };
-  }
-
-  const startsOnFirst = start.getDate() === 1;
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth();
-
-  if (startsOnFirst && sameMonth) {
-    const prevMonthStart = startOfMonth(subMonths(start, 1));
-    const endsOnMonthEnd = isSameDay(end, lastDayOfMonth(end));
-    let prevEnd: Date;
-    if (endsOnMonthEnd) {
-      prevEnd = lastDayOfMonth(prevMonthStart);
-    } else {
-      const lastDay = lastDayOfMonth(prevMonthStart).getDate();
-      prevEnd = new Date(
-        prevMonthStart.getFullYear(),
-        prevMonthStart.getMonth(),
-        Math.min(end.getDate(), lastDay),
-      );
-    }
-    return {
-      prevStart: formatDate(prevMonthStart, "yyyy-MM-dd"),
-      prevEnd: formatDate(prevEnd, "yyyy-MM-dd"),
-    };
-  }
-
-  const days = differenceInCalendarDays(end, start) + 1;
-  const prevEnd = subDays(start, 1);
-  const prevStart = subDays(prevEnd, days - 1);
-  return {
-    prevStart: formatDate(prevStart, "yyyy-MM-dd"),
-    prevEnd: formatDate(prevEnd, "yyyy-MM-dd"),
-  };
-}
-
 /* ─── Change vs previous period cell ─── */
 function ChangeCell({
   current,
@@ -341,8 +304,22 @@ function ChangeCell({
     return <span className="text-gray-300 dark:text-gray-600">…</span>;
   }
   const diff = current - previous;
+  // The previous-period value sits under every verdict, flat ones included —
+  // a change is meaningless without the number it is measured against.
+  const baseline =
+    previous > 0 ? (
+      <span className="block text-[10px] text-gray-400 dark:text-gray-500">
+        was {fmt(previous)}
+      </span>
+    ) : null;
+
   if (Math.abs(diff) < 0.005) {
-    return <span className="text-gray-400 dark:text-gray-500">—</span>;
+    return (
+      <span>
+        <span className="block text-gray-400 dark:text-gray-500">—</span>
+        {baseline}
+      </span>
+    );
   }
   const up = diff > 0;
   const color = up
@@ -350,17 +327,20 @@ function ChangeCell({
     : "text-red-600 dark:text-red-400";
   const pct = previous > 0 ? (Math.abs(diff) / previous) * 100 : null;
   return (
-    <span className={color}>
-      <span className="inline-flex items-center justify-end gap-0.5 font-medium">
-        {up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-        {up ? "+" : "−"}
-        {fmt(Math.abs(diff))}
+    <span>
+      <span className={color}>
+        <span className="inline-flex items-center justify-end gap-0.5 font-medium">
+          {up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          {up ? "+" : "−"}
+          {fmt(Math.abs(diff))}
+        </span>
+        <span className="block text-[10px] opacity-70">
+          {previous > 0
+            ? `${up ? "+" : "−"}${pct!.toFixed(1)}%`
+            : "new"}
+        </span>
       </span>
-      <span className="block text-[10px] opacity-70">
-        {previous > 0
-          ? `${up ? "+" : "−"}${pct!.toFixed(1)}%`
-          : "new"}
-      </span>
+      {baseline}
     </span>
   );
 }
@@ -377,7 +357,7 @@ function exportTableAsCSV(
   const signed = (v: number) => `${v >= 0 ? "+" : "-"}${Math.abs(v).toFixed(2)}`;
 
   // Header
-  rows.push(["Team / Page", "Bonus", "Photo", "Reel", "Story", "Text", "Total", "Change"]);
+  rows.push(["Team / Page", "Bonus", "Photo", "Reel", "Story", "Text", "Total", "Prev Period", "Change"]);
 
   for (const group of teamGroups) {
     // Team row
@@ -389,6 +369,7 @@ function exportTableAsCSV(
       group.totals.story.toFixed(2),
       group.totals.text.toFixed(2),
       group.totals.total.toFixed(2),
+      (prevTotals.byTeam.get(group.team) || 0).toFixed(2),
       signed(group.totals.total - (prevTotals.byTeam.get(group.team) || 0)),
     ]);
 
@@ -402,6 +383,7 @@ function exportTableAsCSV(
         page.story.toFixed(2),
         page.text.toFixed(2),
         page.total.toFixed(2),
+        (prevTotals.byPage.get(page.pageName) || 0).toFixed(2),
         signed(page.total - (prevTotals.byPage.get(page.pageName) || 0)),
       ]);
     }
@@ -416,6 +398,7 @@ function exportTableAsCSV(
     grandTotal.story.toFixed(2),
     grandTotal.text.toFixed(2),
     grandTotal.total.toFixed(2),
+    prevTotals.grand.toFixed(2),
     signed(grandTotal.total - prevTotals.grand),
   ]);
 
@@ -513,6 +496,14 @@ export default function RevenuePage() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Fixed MTD/DOD/WOW windows for the headline chips — deliberately anchored on
+  // the latest synced day rather than the date picker above.
+  const { data: headlines = null, isLoading: headlinesLoading } = useQuery({
+    queryKey: ["revenue-headlines"],
+    queryFn: fetchRevenueHeadlines,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const { prevStart, prevEnd } = useMemo(
     () => getPreviousPeriod(startDate, endDate),
     [startDate, endDate],
@@ -581,18 +572,21 @@ export default function RevenuePage() {
     return t;
   }, [teamGroups]);
 
-  /* Previous-period totals for the Change column, filtered to the same pages
-   * as the current view so the comparison is like-for-like. */
-  const prevTotals = useMemo(() => {
+  /* Previous-period rows, filtered to the same pages as the current view so
+   * every comparison on the page is like-for-like. */
+  const filteredPrevRows = useMemo(() => {
     const useAll =
       selectedPages.size === 0 || selectedPages.size === allPageNames.length;
-    const rows = useAll
+    return useAll
       ? prevRawRows
       : prevRawRows.filter((r) => selectedPages.has(r.pageName));
+  }, [prevRawRows, selectedPages, allPageNames.length]);
+
+  const prevTotals = useMemo(() => {
     const byTeam = new Map<string, number>();
     const byPage = new Map<string, number>();
     let grand = 0;
-    for (const r of rows) {
+    for (const r of filteredPrevRows) {
       const t = Number(r.total) || 0;
       const team = r.team || "Unassigned";
       byTeam.set(team, (byTeam.get(team) || 0) + t);
@@ -600,7 +594,50 @@ export default function RevenuePage() {
       grand += t;
     }
     return { byTeam, byPage, grand };
-  }, [prevRawRows, selectedPages, allPageNames.length]);
+  }, [filteredPrevRows]);
+
+  /* Day-level revenue per team, spanning both ranges: when a single day is
+   * selected, the day it compares against sits in the previous range. */
+  const revenueByTeamDay = useMemo(() => {
+    const map = new Map<string, Map<string, number>>();
+    for (const r of [...filteredRows, ...filteredPrevRows]) {
+      const team = r.team || "Unassigned";
+      let byDay = map.get(team);
+      if (!byDay) {
+        byDay = new Map<string, number>();
+        map.set(team, byDay);
+      }
+      const day = istDay(r.date);
+      byDay.set(day, (byDay.get(day) || 0) + (Number(r.total) || 0));
+    }
+    return map;
+  }, [filteredRows, filteredPrevRows]);
+
+  const latestDay = useMemo(() => {
+    let max = "";
+    for (const r of filteredRows) {
+      const day = istDay(r.date);
+      if (day > max) max = day;
+    }
+    return max || endDate;
+  }, [filteredRows, endDate]);
+
+  const comparisonRows = useMemo<PeriodComparisonRow[]>(() => {
+    const prevDayStr = previousDay(latestDay);
+    const currentByTeam = new Map(teamGroups.map((g) => [g.team, g.totals.total]));
+    const teams = new Set([...currentByTeam.keys(), ...prevTotals.byTeam.keys()]);
+
+    return Array.from(teams).map((team) => {
+      const days = revenueByTeamDay.get(team);
+      return {
+        label: team,
+        periodCurrent: currentByTeam.get(team) || 0,
+        periodPrevious: prevTotals.byTeam.get(team) || 0,
+        dayCurrent: days?.get(latestDay) || 0,
+        dayPrevious: days?.get(prevDayStr) || 0,
+      };
+    });
+  }, [teamGroups, prevTotals, revenueByTeamDay, latestDay]);
 
   /* Pie chart data — overall source breakdown */
   const pieData = useMemo(() => {
@@ -688,6 +725,14 @@ export default function RevenuePage() {
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <HeadlineChips
+          windows={headlines}
+          loading={headlinesLoading}
+          formatValue={fmt}
+        />
+      </div>
+
       {/* Actions */}
       <div className="flex items-center gap-3 justify-end">
           {canAccess("admin") && (
@@ -1320,6 +1365,19 @@ export default function RevenuePage() {
           </table>
         </div>{/* end overflow-x-auto */}
       </div>
+
+      <PeriodComparisonTable
+        rows={comparisonRows}
+        rowHeader="Team"
+        periodLabel={formatRangeLabel(startDate, endDate)}
+        prevPeriodLabel={formatRangeLabel(prevStart, prevEnd)}
+        dayLabel={formatDayLabel(latestDay)}
+        prevDayLabel={formatDayLabel(previousDay(latestDay))}
+        subtitle="Revenue by team — this range vs the range before it"
+        csvFilename="revenue-period-comparison"
+        loading={isLoading || prevLoading}
+        formatValue={fmt}
+      />
     </div>
   );
 }
