@@ -18,6 +18,7 @@ import {
   getPlatform,
   type TrafficPlatformKey,
 } from "@/lib/traffic-platforms";
+import { sortGroupEntries } from "../groupOrder";
 import React from "react";
 
 interface TrafficTableProps {
@@ -110,7 +111,9 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
       });
     });
 
-    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+    return sortGroupEntries(Object.entries(groups), (a, b) =>
+      a[0].localeCompare(b[0]),
+    );
   }, [data]);
 
   // ---------- Team grouping ----------
@@ -168,12 +171,9 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
       });
     });
 
-    // Sort: Unassigned always last, rest alphabetically
-    return Object.entries(groups).sort((a, b) => {
-      if (a[0] === "Unassigned") return 1;
-      if (b[0] === "Unassigned") return -1;
-      return a[0].localeCompare(b[0]);
-    });
+    return sortGroupEntries(Object.entries(groups), (a, b) =>
+      a[0].localeCompare(b[0]),
+    );
   }, [data]);
 
   const groupedData = viewMode === "category" ? categoryGroupedData : teamGroupedData;

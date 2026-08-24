@@ -13,6 +13,7 @@ import { downloadRowsCsv } from "@/lib/tableCsv";
 import { getPlatform, type TrafficPlatformKey } from "@/lib/traffic-platforms";
 import type { TopPageRow } from "@/lib/api";
 import { titleFromPath } from "../pageTitle";
+import { sortGroupEntries } from "../groupOrder";
 import React from "react";
 
 interface TopPagesTableProps {
@@ -74,11 +75,10 @@ export function TopPagesTable({
       map[key].users += r.users;
       map[key].pageviews += r.pageviews;
     }
-    return Object.entries(map).sort((a, b) => {
-      if (a[0] === "Unassigned") return 1;
-      if (b[0] === "Unassigned") return -1;
-      return b[1].sessions - a[1].sessions;
-    });
+    return sortGroupEntries(
+      Object.entries(map),
+      (a, b) => b[1].sessions - a[1].sessions,
+    );
   }, [rows, groupMode]);
 
   const allCollapsed = expanded.size === 0;
