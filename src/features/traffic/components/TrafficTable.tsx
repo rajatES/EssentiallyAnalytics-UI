@@ -13,12 +13,18 @@ import {
   ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  DEFAULT_PLATFORM_KEY,
-  getPlatform,
-  type TrafficPlatformKey,
-} from "@/lib/traffic-platforms";
+import { type TrafficPlatformKey } from "@/lib/traffic-platforms";
 import { sortGroupEntries } from "@/lib/groupOrder";
+import { triggerCsvDownload } from "@/lib/tableCsv";
+import {
+  buildTrafficCsv,
+  expandedPageCount,
+  trafficCsvFilename,
+  type TrafficExportMode,
+  type TrafficGroup,
+  type TrafficTotals,
+} from "../trafficCsv";
+import { TrafficExportDialog } from "./TrafficExportDialog";
 import React from "react";
 
 interface TrafficTableProps {
@@ -57,17 +63,11 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
   const [gridMetric, setGridMetric] = useState<MetricType>("sessions");
   const [viewMode, setViewMode] = useState<ViewMode>("category");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [exportOpen, setExportOpen] = useState(false);
 
   // ---------- Category grouping ----------
   const categoryGroupedData = useMemo(() => {
-    const groups: Record<
-      string,
-      {
-        rows: AggregatedPageData[];
-        totals: any;
-        dailyTotals: Record<string, any>;
-      }
-    > = {};
+    const groups: Record<string, TrafficGroup> = {};
 
     data.forEach((row) => {
       if (!groups[row.category]) {
@@ -118,14 +118,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
 
   // ---------- Team grouping ----------
   const teamGroupedData = useMemo(() => {
-    const groups: Record<
-      string,
-      {
-        rows: AggregatedPageData[];
-        totals: any;
-        dailyTotals: Record<string, any>;
-      }
-    > = {};
+    const groups: Record<string, TrafficGroup> = {};
 
     data.forEach((row) => {
       const teamKey = row.team?.trim() || "Unassigned";
@@ -215,7 +208,7 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
   };
 
   const getGroupMetricForDate = (
-    dailyTotals: Record<string, any>,
+    dailyTotals: Record<string, TrafficTotals>,
     dateStr: string,
   ) => {
     const dayData = dailyTotals[dateStr];
@@ -228,100 +221,31 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
   };
 
   // ---------- CSV Export ----------
-  // Quote a field only when it contains a comma, quote or newline — keeps plain
-  // labels/numbers unquoted so the output matches the reference report layout.
-  const csvField = (value: string | number) => {
-    const s = String(value);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
+  const exportPageCount = useMemo(
+    () => expandedPageCount(groupedData, collapsedGroups),
+    [groupedData, collapsedGroups],
+  );
 
-  const buildDateLabel = () => {
-    if (!dateHeaders.length) return format(new Date(), "d MMMM");
-    const first = parseISO(dateHeaders[0]);
-    const last = parseISO(dateHeaders[dateHeaders.length - 1]);
-    return dateHeaders.length === 1
-      ? format(first, "d MMMM")
-      : `${format(first, "d MMMM")} - ${format(last, "d MMMM")}`;
-  };
-
-  const handleExportCSV = () => {
+  const handleExportCSV = (mode: TrafficExportMode) => {
+    setExportOpen(false);
     if (!groupedData.length) return;
 
-    const firstColumnHeader =
-      viewMode === "team" ? "Team / Page Name" : "Category / Page Name";
-    const label = getPlatform(platform ?? DEFAULT_PLATFORM_KEY).shortLabel;
-    const title = `${label} - Traffic Report - ${buildDateLabel()}`;
-
-    const csvRows = [
-      csvField(title),
-      [
-        firstColumnHeader,
-        "Total Sessions",
-        "Total Users",
-        "Total Pageviews",
-        "Avg Engagement Rate",
-      ].join(","),
-    ];
-
-    let totalSessions = 0;
-    let totalUsers = 0;
-    let totalPageviews = 0;
-    let engagementBySessions = 0;
-
-    groupedData.forEach(([groupName, groupData]) => {
-      const { totals } = groupData;
-      const avgEngagement = totals.engagement_sum / (totals.count || 1);
-
-      csvRows.push(
-        [
-          csvField(groupName),
-          totals.sessions,
-          totals.users,
-          totals.pageviews,
-          avgEngagement,
-        ].join(","),
-      );
-
-      totalSessions += totals.sessions;
-      totalUsers += totals.users;
-      totalPageviews += totals.pageviews;
-      engagementBySessions += avgEngagement * totals.sessions;
+    const csv = buildTrafficCsv({
+      mode,
+      groups: groupedData,
+      dateHeaders,
+      metric: gridMetric,
+      viewMode,
+      collapsedGroups,
+      platform,
     });
-
-    // Session-weighted average so the grand total reflects high-traffic groups.
-    const totalEngagement = totalSessions
-      ? engagementBySessions / totalSessions
-      : 0;
-
-    csvRows.push(
-      [
-        csvField("Total"),
-        totalSessions,
-        totalUsers,
-        totalPageviews,
-        totalEngagement,
-      ].join(","),
-    );
-
-    const blob = new Blob([csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `traffic_report_${format(new Date(), "yyyy-MM-dd")}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerCsvDownload(csv, trafficCsvFilename(platform, mode));
   };
 
   // ---------- Shared row renderer ----------
   const renderGroupRows = (
     groupName: string,
-    groupData: { rows: AggregatedPageData[]; totals: any; dailyTotals: Record<string, any> },
+    groupData: TrafficGroup,
     colorIdx: number,
   ) => {
     const { rows, totals, dailyTotals } = groupData;
@@ -545,8 +469,9 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
           </button>
 
           <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"
+            onClick={() => setExportOpen(true)}
+            disabled={!groupedData.length}
+            className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:hover:bg-green-600"
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export CSV</span>
@@ -624,6 +549,18 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
           </tbody>
         </table>
       </div>
+
+      <TrafficExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        onExport={handleExportCSV}
+        viewMode={viewMode}
+        groupCount={groupedData.length}
+        pageCount={data.length}
+        expandedPageCount={exportPageCount}
+        dateCount={dateHeaders.length}
+        metricLabel={gridMetric.replace("_", " ")}
+      />
     </div>
   );
 }
