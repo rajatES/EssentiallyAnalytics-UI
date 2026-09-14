@@ -7,6 +7,8 @@ import {
   BarChart2,
   BarChart3,
   DollarSign,
+  Workflow,
+  Users,
   // Newspaper,
   // FileBarChart,
   Settings,
@@ -21,6 +23,8 @@ const navItems: { name: string; href: string; icon: typeof LayoutDashboard; minR
   { name: "Web Traffic", href: "/traffic", icon: BarChart3, minRole: "user" },
   { name: "Reports", href: "/reports", icon: BarChart2, minRole: "user" },
   { name: "Revenue", href: "/revenue", icon: DollarSign, minRole: "user" },
+  { name: "Critical Flow", href: "/critical-flow", icon: Workflow, minRole: "user" },
+  { name: "CF Resources", href: "/cf-resources", icon: Users, minRole: "user" },
   // Temporarily hidden:
   // { name: "MSN Production", href: "/msn-production", icon: Newspaper, minRole: "user" },
   // { name: "MSN Reports", href: "/msn-reports", icon: FileBarChart, minRole: "user" },

@@ -751,3 +751,125 @@ export async function updateMsnReportTargets(targets: unknown[]) {
   const res = await apiClient.put(`${MSN_URL}/reports/targets`, { targets });
   return res.data;
 }
+
+// ── Critical Flow ──
+
+const CF_URL = '/v1/critical-flow';
+
+/** Flattens filter params to query strings; arrays become comma lists. */
+function cfParams(params: Record<string, any>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v == null) continue;
+    if (Array.isArray(v)) {
+      if (!v.length) continue;
+      out[k] = v.join(',');
+    } else {
+      out[k] = String(v);
+    }
+  }
+  return out;
+}
+
+async function cfGet(path: string, params?: Record<string, any>) {
+  const res = await apiClient.get(`${CF_URL}/${path}`, {
+    params: params ? cfParams(params) : undefined,
+  });
+  return res.data;
+}
+
+export async function fetchCfSyncStatus() {
+  return cfGet('sync-status');
+}
+
+export async function triggerCfSync() {
+  const res = await apiClient.post(`${CF_URL}/sync`);
+  return res.data;
+}
+
+export async function fetchCfFilters() {
+  return cfGet('filters');
+}
+
+export async function fetchCfOverview(params: Record<string, any>) {
+  return cfGet('overview', params);
+}
+
+export async function fetchCfTimeseries(params: Record<string, any>) {
+  return cfGet('timeseries', params);
+}
+
+export async function fetchCfFunnel(params: Record<string, any>) {
+  return cfGet('funnel', params);
+}
+
+export async function fetchCfPending(params: Record<string, any>) {
+  return cfGet('pending', params);
+}
+
+export async function fetchCfWriters(params: Record<string, any>) {
+  return cfGet('writers', params);
+}
+
+export async function fetchCfEditors(params: Record<string, any>) {
+  return cfGet('editors', params);
+}
+
+export async function fetchCfAllotters(params: Record<string, any>) {
+  return cfGet('allotters', params);
+}
+
+export async function fetchCfSendBacks(params: Record<string, any>) {
+  return cfGet('send-backs', params);
+}
+
+export async function fetchCfTat(params: Record<string, any>) {
+  return cfGet('tat', params);
+}
+
+export async function fetchCfDivisions(params: Record<string, any>) {
+  return cfGet('divisions', params);
+}
+
+export async function fetchCfArticleTypes(params: Record<string, any>) {
+  return cfGet('article-types', params);
+}
+
+export async function fetchCfYahooSplit(params: Record<string, any>) {
+  return cfGet('yahoo-split', params);
+}
+
+export async function fetchCfRoster(params: Record<string, any>) {
+  return cfGet('roster', params);
+}
+
+export async function fetchCfInsights(params: Record<string, any>) {
+  return cfGet('insights', params);
+}
+
+// ── Critical Flow resources ──
+
+export async function fetchCfResourceSummary(params: Record<string, any>) {
+  return cfGet('resources/summary', params);
+}
+
+export async function fetchCfResourceBoard(params: Record<string, any>) {
+  return cfGet('resources/board', params);
+}
+
+export async function fetchCfResourceSuggest(params: Record<string, any>) {
+  return cfGet('resources/suggest', params);
+}
+
+export async function fetchCfResourceHealth() {
+  return cfGet('resources/health');
+}
+
+export async function fetchCfResourceProfiles() {
+  return cfGet('resources/profiles');
+}
+
+export async function updateCfResourceProfiles(profiles: unknown[]) {
+  const res = await apiClient.put(`${CF_URL}/resources/profiles`, { profiles });
+  return res.data;
+}
