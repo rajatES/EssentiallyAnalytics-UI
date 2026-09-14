@@ -100,16 +100,13 @@ export default function ResourcesHeader(p: Props) {
     <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Critical Flow Resources
-            </h1>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500">
-              {p.weekday ? `${p.weekday} · ` : ""}
-              {isToday ? "today" : p.date}
-              {p.currentShift && isToday ? ` · ${p.currentShift} shift now` : ""}
-            </p>
-          </div>
+          {/* The page name lives in the Topbar; this says which day and shift
+              the board is scored against, which changes as you pick dates. */}
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            {p.weekday ? `${p.weekday} · ` : ""}
+            {isToday ? "today" : p.date}
+            {p.currentShift && isToday ? ` · ${p.currentShift} shift` : ""}
+          </p>
           <input
             type="date"
             value={p.date || p.today}
