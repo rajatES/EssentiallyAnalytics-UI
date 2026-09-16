@@ -6,6 +6,12 @@ export interface MappingEntry {
   utmSource: string;
   utmMediums: string[];
   /**
+   * Narrows this entry to one utm_campaign; null/absent = catch-all.
+   * A page's normal posts and its autoposted ones share a utm_medium and
+   * differ only here.
+   */
+  utmCampaign?: string | null;
+  /**
    * Click-through URL for the page name, entered by hand.
    *
    * Traffic rows carry no platform identifier, so this is the only way to link

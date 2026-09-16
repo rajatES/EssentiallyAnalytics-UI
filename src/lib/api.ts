@@ -1,4 +1,5 @@
 import axios from "axios";
+import { buildMappingIndex, resolveMapping } from "./page-mapping-match";
 import { MappingEntry } from "../data/page-mapping";
 import {
   AggregatedPageData,
@@ -47,11 +48,6 @@ export async function logoutUser() {
   return response.data;
 }
 
-interface PageInfo {
-  pageName: string;
-  category: string;
-  team?: string | null;
-}
 export async function fetchPageMappings(): Promise<MappingEntry[]> {
   try {
     const response = await apiClient.get(MAPPINGS_URL);
@@ -308,8 +304,8 @@ export function processAggregatedData(
   platform: TrafficPlatformKey,
   mappingData: MappingEntry[],
 ): AggregatedPageData[] {
-  const mappingLookup: Record<string, PageInfo> = {};
   const pageNameToTeam: Record<string, string | undefined> = {};
+  const scoped: MappingEntry[] = [];
 
   for (let i = 0; i < mappingData.length; i++) {
     const entry = mappingData[i];
@@ -321,19 +317,13 @@ export function processAggregatedData(
     }
 
     if (!platformKeysForMapping(entry).includes(platform)) continue;
-
-    if (Array.isArray(entry.utmMediums)) {
-      for (let j = 0; j < entry.utmMediums.length; j++) {
-        const med = (entry.utmMediums[j] || "").trim().toLowerCase();
-        if (med) {
-          mappingLookup[med] = {
-            pageName: cleanPageName,
-            category: (entry.category || "").trim() || "Other",
-          };
-        }
-      }
-    }
+    scoped.push(entry);
   }
+
+  // Matching on medium alone used to collapse a page's autoposted traffic onto
+  // its normal-post row, because the two carry the same utm_medium and differ
+  // only by campaign. The shared matcher keys on both.
+  const mappingIndex = buildMappingIndex(scoped);
 
   const grouped: Record<
     string,
@@ -342,10 +332,12 @@ export function processAggregatedData(
 
   for (let i = 0; i < rawData.length; i++) {
     const row = rawData[i];
-    const rawMedium = (row.utm_medium || "").trim().toLowerCase();
-    
-    const mappedInfo = mappingLookup[rawMedium];
-    
+    const mappedInfo = resolveMapping(
+      mappingIndex,
+      row.utm_medium,
+      row.utm_campaign,
+    );
+
     let pageName = mappedInfo ? mappedInfo.pageName : (row.utm_medium || "").trim();
     if (!pageName) pageName = "Unknown";
     

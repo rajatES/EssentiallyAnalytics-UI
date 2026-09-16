@@ -40,6 +40,7 @@ export default function PageMappingsSettings() {
   const [newPlatform, setNewPlatform] = useState("Facebook");
   const [newPageName, setNewPageName] = useState("");
   const [newMediums, setNewMediums] = useState("");
+  const [newCampaign, setNewCampaign] = useState("");
   const [newPageUrl, setNewPageUrl] = useState("");
 
   // Team Management
@@ -65,7 +66,7 @@ export default function PageMappingsSettings() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return mappings;
     return mappings.filter((m) =>
-      [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
+      [m.category, m.team, m.platform, m.pageName, m.utmCampaign, ...(m.utmMediums || [])]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     );
@@ -149,6 +150,7 @@ export default function PageMappingsSettings() {
       // Derived from the platform — this form has no utmSource field.
       utmSource: platformKeyFromLabel(newPlatform) ?? DEFAULT_PLATFORM_KEY,
       utmMediums: mediumsArray,
+      utmCampaign: newCampaign.trim() || null,
       pageUrl: newPageUrl.trim() || null,
     };
 
@@ -156,6 +158,7 @@ export default function PageMappingsSettings() {
       await createPageMapping(newEntry);
       setNewPageName("");
       setNewMediums("");
+      setNewCampaign("");
       setNewPageUrl("");
       loadMappings();
     } catch (err) {
@@ -235,7 +238,7 @@ export default function PageMappingsSettings() {
   // round-trips cleanly back through "Upload Page Mappings".
   const handleDownloadCsv = () => {
     downloadRowsCsv(
-      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "pageUrl"],
+      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "utmCampaign", "pageUrl"],
       filteredMappings.map((m) => [
         m.id ?? "",
         m.category,
@@ -244,6 +247,7 @@ export default function PageMappingsSettings() {
         m.pageName,
         m.utmSource,
         (m.utmMediums || []).join(", "),
+        m.utmCampaign || "",
         m.pageUrl ?? "",
       ]),
       "traffic-page-mappings",
@@ -544,6 +548,22 @@ export default function PageMappingsSettings() {
                 placeholder="uss_page_1, uss_page_2"
               />
             </div>
+            <div className="space-y-1 lg:col-span-2">
+              <label className="text-xs font-bold uppercase text-gray-500">
+                UTM Campaign (optional)
+              </label>
+              <input
+                className="w-full p-2 rounded border border-gray-300 dark:border-gray-700 bg-transparent"
+                value={newCampaign}
+                onChange={(e) => setNewCampaign(e.target.value)}
+                placeholder="threads"
+              />
+              <p className="text-[10px] text-gray-400">
+                Leave blank for normal posts. Set{" "}
+                <code className="font-mono">threads</code> for the autoposted
+                copy of a page, which shares the same medium.
+              </p>
+            </div>
             <div className="space-y-1 lg:col-span-4">
               <label className="text-xs font-bold uppercase text-gray-500">
                 Page URL (optional)
@@ -603,6 +623,7 @@ export default function PageMappingsSettings() {
                 <th className="px-6 py-4">Platform</th>
                 <th className="px-6 py-4">Page Name</th>
                 <th className="px-6 py-4">UTM Mediums</th>
+                <th className="px-6 py-4">Campaign</th>
                 <th className="px-6 py-4">Link</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -677,6 +698,15 @@ export default function PageMappingsSettings() {
                           </span>
                         ))}
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {m.utmCampaign ? (
+                        <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded text-xs border border-amber-200 dark:border-amber-800">
+                          {m.utmCampaign}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">all</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <PageUrlCell

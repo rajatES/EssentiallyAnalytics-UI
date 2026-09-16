@@ -1,6 +1,8 @@
 export interface AggregatedMetric {
   event_day: string;
   utm_medium: string;
+  /** Carried so page mappings can tell autoposted traffic from normal posts. */
+  utm_campaign?: string | null;
   sessions: number;
   pageviews: number;
   users: number;
