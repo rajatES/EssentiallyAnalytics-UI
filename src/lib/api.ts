@@ -443,6 +443,9 @@ export function processAggregatedData(
 export interface RevenueMetricRow {
   date: string;
   pageName: string;
+  /** Meta Page ID — what the page name links through to. */
+  pageId: string | null;
+  pageUrl: string | null;
   team: string;
   bonus: string;
   photo: string;
@@ -457,6 +460,8 @@ export interface RevenueMappingRow {
   pageId: string;
   pageName: string;
   team: string | null;
+  /** Override for the link; normally null, since `pageId` resolves on its own. */
+  pageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -505,6 +510,16 @@ export async function updateRevenueMapping(
   return response.data;
 }
 
+export async function updateRevenueMappingUrl(
+  id: number,
+  pageUrl: string | null,
+): Promise<RevenueMappingRow[]> {
+  const response = await apiClient.patch(`${REVENUE_URL}/mappings/${id}`, {
+    pageUrl,
+  });
+  return response.data;
+}
+
 /** Batch-update the team for multiple revenue-mapping IDs in one request. */
 export async function batchUpdateRevenueMappingTeam(
   ids: number[],
@@ -512,6 +527,36 @@ export async function batchUpdateRevenueMappingTeam(
 ): Promise<RevenueMappingRow[]> {
   const response = await apiClient.patch(`${REVENUE_URL}/mappings/batch/team`, { ids, team });
   return response.data;
+}
+
+// ---- Page directory (click-through links) ----
+
+/**
+ * One account we can link to, as resolved by the backend from whichever of
+ * social_profiles / revenue_mappings / page_mappings knows about it.
+ */
+export interface PageDirectoryEntry {
+  name: string;
+  /** `name` reduced to letters and digits, for cross-table matching. */
+  key: string;
+  platform: "facebook" | "instagram" | "threads" | "reddit";
+  url: string;
+  id: string | null;
+  source: "mapping" | "profile" | "revenue";
+}
+
+/**
+ * Backs every clickable page name. Returns [] on failure on purpose: a missing
+ * directory should cost the links, not the table they sit in.
+ */
+export async function fetchPageDirectory(): Promise<PageDirectoryEntry[]> {
+  try {
+    const response = await apiClient.get(`/v1/page-directory`);
+    return response.data;
+  } catch (error) {
+    console.error("Page Directory Error:", error);
+    return [];
+  }
 }
 
 // ---- Email Reports APIs ----

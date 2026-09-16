@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { METRIC_CONFIG, MetricKey, Profile, DemographicData } from "../types";
+import { usePageLinks, toPageLinkPlatform } from "@/lib/page-links";
+import { PageNameLink } from "@/components/ui/PageNameLink";
 import DateRangePicker from "../../components/DateRangePicker";
 import DemographicsSection from "./DemographicsSection";
 import { useEnsureCoverage } from "../../hooks/useEnsureCoverage";
@@ -79,6 +81,15 @@ const fetchProfileDemographics = async ({ queryKey }: any) => {
 
 
 export default function ProfilesTab({ profile }: { profile: Profile | null }) {
+  const pageLinks = usePageLinks();
+  const profileHref = profile
+    ? pageLinks.resolve({
+        platform: toPageLinkPlatform(profile.platform),
+        id: profile.profileId,
+        handle: profile.username,
+        name: profile.name,
+      })
+    : null;
   const initEnd = new Date();
   const initStart = new Date();
   initStart.setDate(initStart.getDate() - 30);
@@ -394,8 +405,10 @@ export default function ProfilesTab({ profile }: { profile: Profile | null }) {
       </div>
 
       <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{profile.name}</h2>
+        <div className="group">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            <PageNameLink name={profile.name} href={profileHref} />
+          </h2>
           <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 capitalize">
             {profile.platform} Performance Breakdown
           </span>
@@ -774,7 +787,7 @@ export default function ProfilesTab({ profile }: { profile: Profile | null }) {
                 </tr>
               )}
 
-              <tr className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+              <tr className="group hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                 <td className="px-6 py-5 text-left flex items-center gap-3">
                   <div className="relative flex-shrink-0">
                     <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold text-xs uppercase overflow-hidden">
@@ -791,9 +804,11 @@ export default function ProfilesTab({ profile }: { profile: Profile | null }) {
                       )}
                     </div>
                   </div>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {profile.name}
-                  </span>
+                  <PageNameLink
+                    name={profile.name}
+                    href={profileHref}
+                    className="font-semibold text-gray-900 dark:text-white"
+                  />
                 </td>
                 <td className="px-6 py-5 text-gray-600 dark:text-gray-300 font-medium">
                   {totals.currentAudience.toLocaleString()}

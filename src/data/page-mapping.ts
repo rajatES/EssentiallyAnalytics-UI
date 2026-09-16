@@ -5,6 +5,14 @@ export interface MappingEntry {
   pageName: string;
   utmSource: string;
   utmMediums: string[];
+  /**
+   * Click-through URL for the page name, entered by hand.
+   *
+   * Traffic rows carry no platform identifier, so this is the only way to link
+   * a page the page directory can't resolve by name — every Threads account,
+   * and anything whose traffic name differs from the name Meta reports.
+   */
+  pageUrl?: string | null;
 }
 
 export const PAGE_MAPPING_DATA: MappingEntry[] = [

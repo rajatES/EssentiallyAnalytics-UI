@@ -1,6 +1,8 @@
 export interface Profile {
   profileId: string;
   name: string;
+  /** Vanity handle from Meta. The only way an Instagram profile links out. */
+  username?: string | null;
   platform: "facebook" | "instagram";
   syncState?: string;
   lastSyncError?: string;

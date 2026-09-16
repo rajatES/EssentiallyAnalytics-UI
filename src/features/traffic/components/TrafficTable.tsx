@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type TrafficPlatformKey } from "@/lib/traffic-platforms";
+import { usePageLinks, trafficPlatformToLinkPlatform } from "@/lib/page-links";
+import { PageNameLink } from "@/components/ui/PageNameLink";
 import { sortGroupEntries } from "@/lib/groupOrder";
 import { triggerCsvDownload } from "@/lib/tableCsv";
 import {
@@ -61,6 +63,11 @@ const TEAM_ROW_GRADIENTS = [
 
 export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: TrafficTableProps) {
   const [gridMetric, setGridMetric] = useState<MetricType>("sessions");
+  // Page names link out to the account they stand for. The platform tab decides
+  // which account — 'golf_fan_page_es' is a different page on Facebook than on
+  // Threads, so an unscoped lookup would send readers to the wrong one.
+  const pageLinks = usePageLinks();
+  const linkPlatform = platform ? trafficPlatformToLinkPlatform(platform) : null;
   const [viewMode, setViewMode] = useState<ViewMode>("category");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [exportOpen, setExportOpen] = useState(false);
@@ -342,9 +349,14 @@ export function TrafficTable({ data, dateHeaders, platform, onOpenMappings }: Tr
           >
             <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-blue-50/20 dark:group-hover:bg-blue-900/10 border-r border-gray-100 dark:border-gray-800 z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.02)] dark:shadow-none">
               <div className="flex items-center gap-2 w-56 flex-wrap">
-                <div className="truncate shrink-0" title={row.pageName}>
-                  {row.pageName}
-                </div>
+                <PageNameLink
+                  name={row.pageName}
+                  href={pageLinks.resolve({
+                    platform: linkPlatform,
+                    name: row.pageName,
+                  })}
+                  className="shrink-0 max-w-full"
+                />
                 {/* Category badge in team view */}
                 {isTeamView && row.category && (
                   <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">

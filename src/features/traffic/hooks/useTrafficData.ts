@@ -152,6 +152,7 @@ export function useTrafficData() {
     stats,
     refresh: () => {
       queryClient.invalidateQueries({ queryKey: ["mappings"] });
+      queryClient.invalidateQueries({ queryKey: ["page-directory"] });
       queryClient.invalidateQueries({ queryKey: ["analytics-aggregated"] });
       queryClient.invalidateQueries({ queryKey: ["headlines"] });
       queryClient.invalidateQueries({ queryKey: ["countryStats"] });
@@ -160,6 +161,9 @@ export function useTrafficData() {
     },
     refreshMappings: () => {
       queryClient.invalidateQueries({ queryKey: ["mappings"] });
+      // Editing a mapping can change where a page name links, so the shared
+      // link directory has to be refetched with it.
+      queryClient.invalidateQueries({ queryKey: ["page-directory"] });
     },
     sync: {
       isSyncing: syncMutation.isPending,

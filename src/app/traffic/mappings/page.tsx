@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   fetchPageMappings,
   createPageMapping,
@@ -19,12 +20,16 @@ import {
   PLATFORM_LABEL_OPTIONS,
   platformKeyFromLabel,
 } from "@/lib/traffic-platforms";
+import { usePageLinks, toPageLinkPlatform } from "@/lib/page-links";
+import { PageUrlCell } from "@/components/ui/PageUrlCell";
 
 interface MappingWithId extends MappingEntry {
   id?: number;
 }
 
 export default function PageMappingsSettings() {
+  const queryClient = useQueryClient();
+  const pageLinks = usePageLinks();
   const [mappings, setMappings] = useState<MappingWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +40,7 @@ export default function PageMappingsSettings() {
   const [newPlatform, setNewPlatform] = useState("Facebook");
   const [newPageName, setNewPageName] = useState("");
   const [newMediums, setNewMediums] = useState("");
+  const [newPageUrl, setNewPageUrl] = useState("");
 
   // Team Management
   const [newTeamName, setNewTeamName] = useState("");
@@ -119,6 +125,10 @@ export default function PageMappingsSettings() {
     setLoading(true);
     const data = await fetchPageMappings();
     setMappings(data);
+    // The traffic tables read page links from a separately cached directory,
+    // so a mapping edited here has to invalidate that too or the new link
+    // won't show up until the cache expires.
+    queryClient.invalidateQueries({ queryKey: ["page-directory"] });
     setLoading(false);
   };
 
@@ -139,12 +149,14 @@ export default function PageMappingsSettings() {
       // Derived from the platform — this form has no utmSource field.
       utmSource: platformKeyFromLabel(newPlatform) ?? DEFAULT_PLATFORM_KEY,
       utmMediums: mediumsArray,
+      pageUrl: newPageUrl.trim() || null,
     };
 
     try {
       await createPageMapping(newEntry);
       setNewPageName("");
       setNewMediums("");
+      setNewPageUrl("");
       loadMappings();
     } catch (err) {
       console.error("Failed to add mapping", err);
@@ -158,6 +170,34 @@ export default function PageMappingsSettings() {
       loadMappings();
     }
   };
+
+  /**
+   * Save the click-through override for one row.
+   *
+   * Deliberately not cascaded across every row sharing a page name, the way a
+   * team change is: a mapping row is scoped to a platform, and the same page
+   * name on Facebook and on Threads is two different accounts.
+   */
+  const handlePageUrlChange = async (
+    mappingId: number | undefined,
+    pageUrl: string | null,
+  ) => {
+    if (!mappingId) return;
+    try {
+      await updatePageMapping(mappingId, { pageUrl });
+      loadMappings();
+    } catch (err) {
+      console.error("Failed to update page URL", err);
+      alert("Could not save that link. Please try again.");
+    }
+  };
+
+  const linkFor = (m: MappingWithId) =>
+    pageLinks.resolve({
+      platform: toPageLinkPlatform(m.platform) ?? toPageLinkPlatform(m.utmSource),
+      name: m.pageName,
+      explicitUrl: m.pageUrl,
+    });
 
   const handleTeamChange = async (mappingId: number | undefined, team: string | null) => {
     if (!mappingId) return;
@@ -195,7 +235,7 @@ export default function PageMappingsSettings() {
   // round-trips cleanly back through "Upload Page Mappings".
   const handleDownloadCsv = () => {
     downloadRowsCsv(
-      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums"],
+      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "pageUrl"],
       filteredMappings.map((m) => [
         m.id ?? "",
         m.category,
@@ -204,6 +244,7 @@ export default function PageMappingsSettings() {
         m.pageName,
         m.utmSource,
         (m.utmMediums || []).join(", "),
+        m.pageUrl ?? "",
       ]),
       "traffic-page-mappings",
     );
@@ -263,7 +304,7 @@ export default function PageMappingsSettings() {
               <UploadCloud className="w-5 h-5 text-blue-500" /> Upload Page Mappings
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Import a CSV to bulk-add page mapping configurations. (category, platform, pageName, utmSource, utmMediums)
+              Import a CSV to bulk-add page mapping configurations. (category, team, platform, pageName, utmSource, utmMediums, pageUrl)
             </p>
             <input
               type="file"
@@ -503,6 +544,20 @@ export default function PageMappingsSettings() {
                 placeholder="uss_page_1, uss_page_2"
               />
             </div>
+            <div className="space-y-1 lg:col-span-4">
+              <label className="text-xs font-bold uppercase text-gray-500">
+                Page URL (optional)
+              </label>
+              <input
+                className="w-full p-2 rounded border border-gray-300 dark:border-gray-700 bg-transparent"
+                value={newPageUrl}
+                onChange={(e) => setNewPageUrl(e.target.value)}
+                placeholder="https://www.threads.com/@essentiallygolf"
+              />
+              <p className="text-[10px] text-gray-400">
+                Leave blank for Facebook and Reddit — those resolve on their own.
+              </p>
+            </div>
             <div className="lg:col-span-7 flex justify-end">
               <button
                 type="submit"
@@ -548,26 +603,27 @@ export default function PageMappingsSettings() {
                 <th className="px-6 py-4">Platform</th>
                 <th className="px-6 py-4">Page Name</th>
                 <th className="px-6 py-4">UTM Mediums</th>
+                <th className="px-6 py-4">Link</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center flex flex-col items-center justify-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center flex flex-col items-center justify-center text-gray-500">
                     <Loader2 className="w-6 h-6 animate-spin mb-2" />
                     Loading mappings...
                   </td>
                 </tr>
               ) : mappings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     No mappings found. Add one above or upload a CSV.
                   </td>
                 </tr>
               ) : filteredMappings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     No mappings match &quot;{searchQuery}&quot;.
                   </td>
                 </tr>
@@ -621,6 +677,13 @@ export default function PageMappingsSettings() {
                           </span>
                         ))}
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <PageUrlCell
+                        value={m.pageUrl}
+                        resolved={linkFor(m)}
+                        onSave={(url) => handlePageUrlChange(m.id, url)}
+                      />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button

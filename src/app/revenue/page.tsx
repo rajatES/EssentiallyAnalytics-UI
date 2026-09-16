@@ -57,6 +57,8 @@ import {
   type PeriodComparisonRow,
 } from "@/components/ui/PeriodComparisonTable";
 import { HeadlineChips } from "@/components/ui/HeadlineChips";
+import { usePageLinks } from "@/lib/page-links";
+import { PageNameLink } from "@/components/ui/PageNameLink";
 
 /* ─── Formatting helper ─── */
 function fmt(v: string | number): string {
@@ -82,6 +84,10 @@ interface TeamGroup {
 
 interface PageRow {
   pageName: string;
+  /** Meta Page ID from the mapping — what the name links through to. */
+  pageId: string | null;
+  /** Override for the link; normally null, since `pageId` resolves on its own. */
+  pageUrl: string | null;
   bonus: number;
   photo: number;
   reel: number;
@@ -229,11 +235,21 @@ function SingleLineTooltip({ active, payload, label, hoveredKey }: any) {
 /* ─── Build team groups from flat rows ─── */
 function buildTeamGroups(rows: RevenueMetricRow[]): TeamGroup[] {
   const map = new Map<string, Map<string, SourceTotals>>();
+  // Every daily row for a page repeats its identifiers, so one pass over the
+  // rows is enough to know where each page name links.
+  const identity = new Map<string, { pageId: string | null; pageUrl: string | null }>();
 
   for (const row of rows) {
     const team = row.team || "Unassigned";
     if (!map.has(team)) map.set(team, new Map());
     const pageMap = map.get(team)!;
+
+    if (!identity.has(row.pageName)) {
+      identity.set(row.pageName, {
+        pageId: row.pageId ?? null,
+        pageUrl: row.pageUrl ?? null,
+      });
+    }
 
     if (!pageMap.has(row.pageName)) {
       pageMap.set(row.pageName, { bonus: 0, photo: 0, reel: 0, story: 0, text: 0, total: 0 });
@@ -256,7 +272,13 @@ function buildTeamGroups(rows: RevenueMetricRow[]): TeamGroup[] {
       // Skip pages that earned nothing in the selected range — the table should
       // only surface pages with non-zero revenue.
       if ((Number(s.total) || 0) <= 0) continue;
-      pages.push({ pageName, ...s });
+      const ids = identity.get(pageName);
+      pages.push({
+        pageName,
+        pageId: ids?.pageId ?? null,
+        pageUrl: ids?.pageUrl ?? null,
+        ...s,
+      });
       totals.bonus += s.bonus;
       totals.photo += s.photo;
       totals.reel += s.reel;
@@ -1476,6 +1498,9 @@ function TeamSection({
   prevPageTotals: Map<string, number>;
   changeLoading: boolean;
 }) {
+  // Revenue rows carry a Meta Page ID, which is also the page's profile URL,
+  // so these names link with no mapping work at all.
+  const pageLinks = usePageLinks();
   return (
     <>
       {/* Team header row */}
@@ -1524,10 +1549,18 @@ function TeamSection({
         group.pages.map((page) => (
           <tr
             key={page.pageName}
-            className="border-b border-gray-50 hover:bg-gray-50/50 dark:border-gray-800/50 dark:hover:bg-gray-800/20 transition-colors"
+            className="group border-b border-gray-50 hover:bg-gray-50/50 dark:border-gray-800/50 dark:hover:bg-gray-800/20 transition-colors"
           >
             <td className="py-2.5 pl-12 pr-4 text-gray-600 dark:text-gray-400">
-              {page.pageName}
+              <PageNameLink
+                name={page.pageName}
+                href={pageLinks.resolve({
+                  platform: "facebook",
+                  id: page.pageId,
+                  name: page.pageName,
+                  explicitUrl: page.pageUrl,
+                })}
+              />
             </td>
             <td className="px-3 py-2.5 text-right text-gray-600 dark:text-gray-400">
               {fmt(page.bonus)}

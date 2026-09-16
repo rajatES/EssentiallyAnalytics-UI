@@ -5,19 +5,34 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchRevenueMappings,
   updateRevenueMapping,
+  updateRevenueMappingUrl,
   batchUpdateRevenueMappingTeam,
   RevenueMappingRow,
 } from "@/lib/api";
+import { usePageLinks } from "@/lib/page-links";
+import { PageUrlCell } from "@/components/ui/PageUrlCell";
 import { ArrowLeft, Plus, X, Tag, Users, ChevronDown, Search, Download } from "lucide-react";
 import Link from "next/link";
 import { downloadRowsCsv } from "@/lib/tableCsv";
 
 export default function RevenueMappingsPage() {
   const queryClient = useQueryClient();
+  const pageLinks = usePageLinks();
 
   const { data: mappings = [], isLoading } = useQuery({
     queryKey: ["revenue-mappings"],
     queryFn: fetchRevenueMappings,
+  });
+
+  // Only for the handful of pages whose Page ID no longer resolves — after a
+  // page merge, say. Everything else links straight from `pageId`.
+  const urlMutation = useMutation({
+    mutationFn: ({ id, pageUrl }: { id: number; pageUrl: string | null }) =>
+      updateRevenueMappingUrl(id, pageUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["revenue-mappings"] });
+      queryClient.invalidateQueries({ queryKey: ["page-directory"] });
+    },
   });
 
   const mutation = useMutation({
@@ -96,8 +111,13 @@ export default function RevenueMappingsPage() {
 
   const handleDownloadCsv = () => {
     downloadRowsCsv(
-      ["pageId", "pageName", "team"],
-      filteredMappings.map((m) => [m.pageId, m.pageName, m.team ?? ""]),
+      ["pageId", "pageName", "team", "pageUrl"],
+      filteredMappings.map((m) => [
+        m.pageId,
+        m.pageName,
+        m.team ?? "",
+        m.pageUrl ?? "",
+      ]),
       "revenue-page-mappings",
     );
   };
@@ -246,12 +266,15 @@ export default function RevenueMappingsPage() {
                 <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[180px]">
                   Team
                 </th>
+                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[220px]">
+                  Link
+                </th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={4} className="px-4 py-10 text-center text-gray-400">
                     <div className="flex items-center justify-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
                       Loading mappings...
@@ -260,13 +283,13 @@ export default function RevenueMappingsPage() {
                 </tr>
               ) : mappings.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={4} className="px-4 py-10 text-center text-gray-400">
                     No page mappings found. Revenue data will appear once pages are synced.
                   </td>
                 </tr>
               ) : filteredMappings.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={4} className="px-4 py-10 text-center text-gray-400">
                     No pages match &quot;{searchQuery}&quot;.
                   </td>
                 </tr>
@@ -288,6 +311,20 @@ export default function RevenueMappingsPage() {
                         teams={allTeams}
                         isPending={mutation.isPending}
                         onSelect={(team) => assignTeam(row.id, team)}
+                      />
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <PageUrlCell
+                        value={row.pageUrl}
+                        resolved={pageLinks.resolve({
+                          platform: "facebook",
+                          id: row.pageId,
+                          name: row.pageName,
+                          explicitUrl: row.pageUrl,
+                        })}
+                        onSave={(pageUrl) =>
+                          urlMutation.mutateAsync({ id: row.id, pageUrl })
+                        }
                       />
                     </td>
                   </tr>

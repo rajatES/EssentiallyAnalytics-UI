@@ -29,6 +29,12 @@ import { DeltaLabel } from "@/components/ui/DeltaLabel";
 import { downloadRowsCsv } from "@/lib/tableCsv";
 import { getPlatform, type TrafficPlatformKey } from "@/lib/traffic-platforms";
 import {
+  usePageLinks,
+  trafficPlatformToLinkPlatform,
+  type PageLinkPlatform,
+} from "@/lib/page-links";
+import { PageNameLink } from "@/components/ui/PageNameLink";
+import {
   useCompareData,
   type ComparedRow,
   type DateRange,
@@ -154,6 +160,7 @@ function ComparisonTable({
   labelHeader,
   showEngagement,
   csvName,
+  linkPlatform,
 }: {
   title: string;
   subtitle: string;
@@ -162,8 +169,11 @@ function ComparisonTable({
   labelHeader: string;
   showEngagement?: boolean;
   csvName: string;
+  /** Set when the row labels are account names, so they can link out. */
+  linkPlatform?: PageLinkPlatform | null;
 }) {
   const [limit, setLimit] = useState(25);
+  const pageLinks = usePageLinks();
   const shown = rows.slice(0, limit);
 
   // Column labels name the aggregation ("Total Sessions", not "Sessions"), the
@@ -245,12 +255,18 @@ function ComparisonTable({
                 <tr key={r.key} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10">
                   <td className="px-4 py-2 align-top">
                     <div className="max-w-[380px]">
-                      <div
-                        className="truncate text-gray-700 dark:text-gray-300"
-                        title={r.label}
-                      >
-                        {r.label}
-                      </div>
+                      <PageNameLink
+                        name={r.label}
+                        href={
+                          linkPlatform
+                            ? pageLinks.resolve({
+                                platform: linkPlatform,
+                                name: r.label,
+                              })
+                            : null
+                        }
+                        className="text-gray-700 dark:text-gray-300 max-w-full"
+                      />
                       {r.sublabel && (
                         <div className="text-[10px] text-gray-400 truncate">{r.sublabel}</div>
                       )}
@@ -468,6 +484,7 @@ export function CompareView({ platform }: { platform: TrafficPlatformKey }) {
           labelHeader="Category / Page Name"
           showEngagement
           csvName="compare-by-page"
+          linkPlatform={trafficPlatformToLinkPlatform(platform)}
         />
       </div>
     </div>

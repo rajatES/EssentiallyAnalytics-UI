@@ -20,6 +20,8 @@ import {
   ReportSportsMappingRow,
 } from "@/lib/api";
 import SportsMappingsModal from "./SportsMappingsModal";
+import { usePageLinks, toPageLinkPlatform } from "@/lib/page-links";
+import { PageNameLink } from "@/components/ui/PageNameLink";
 interface PageMetric {
   profileId: string;
   pageName: string;
@@ -139,6 +141,7 @@ export default function PageMetricsTable({
   activePlatform: string;
 }) {
   const queryClient = useQueryClient();
+  const pageLinks = usePageLinks();
   const [sortKey, setSortKey] = useState<SortKey>("impressions");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [showMappingsModal, setShowMappingsModal] = useState(false);
@@ -498,13 +501,25 @@ export default function PageMetricsTable({
 
   /* ─── Render helpers ─── */
 
+  /**
+   * A Facebook Page ID is also its profile URL, so these rows link with no
+   * setup at all. Instagram needs the handle from `social_profiles.username`,
+   * which the directory supplies — until it's backfilled, IG names stay plain.
+   */
+  const pageHref = (page: PageMetric) =>
+    pageLinks.resolve({
+      platform: toPageLinkPlatform(page.platform),
+      id: page.profileId,
+      name: page.pageName,
+    });
+
   const renderPageRow = (page: PageMetric) => (
     <tr
       key={page.profileId}
-      className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
+      className="group hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
     >
       <td className="px-4 py-3.5 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-        {page.pageName}
+        <PageNameLink name={page.pageName} href={pageHref(page)} />
       </td>
       <td className="px-4 py-3.5 text-right font-medium text-gray-700 dark:text-gray-300 tabular-nums">
         {page.followers.toLocaleString()}
@@ -781,10 +796,13 @@ export default function PageMetricsTable({
                           sortedGroupPages.map((page) => (
                             <tr
                               key={page.profileId}
-                              className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
+                              className="group hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
                             >
                               <td className="px-4 py-3.5 pl-10 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                                {page.pageName}
+                                <PageNameLink
+                                  name={page.pageName}
+                                  href={pageHref(page)}
+                                />
                               </td>
                               <td className="px-4 py-3.5 text-right font-medium text-gray-700 dark:text-gray-300 tabular-nums">
                                 {page.followers.toLocaleString()}

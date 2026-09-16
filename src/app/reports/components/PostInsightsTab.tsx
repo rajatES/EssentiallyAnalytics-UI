@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import DateRangePicker from "../../components/DateRangePicker";
 import { Profile } from "../types";
+import { usePageLinks, toPageLinkPlatform } from "@/lib/page-links";
+import { PageNameLink } from "@/components/ui/PageNameLink";
 interface PostData {
   postId: string;
   profileId: string;
@@ -88,6 +90,7 @@ export default function PostInsightsTab({
     return `${year}-${month}-${day}`;
   };
 
+  const pageLinks = usePageLinks();
   const [startDate, setStartDate] = useState(getLocalDateString(initStart));
   const [endDate, setEndDate] = useState(getLocalDateString(initEnd));
   const [preset, setPreset] = useState<string>("30");
@@ -264,6 +267,18 @@ export default function PostInsightsTab({
 
   const getProfileName = (id: string) =>
     profiles.find((p) => p.profileId === id)?.name || "Unknown Profile";
+
+  /** The account a post was published from, linked to the account itself. */
+  const getProfileHref = (id: string) => {
+    const profile = profiles.find((p) => p.profileId === id);
+    if (!profile) return null;
+    return pageLinks.resolve({
+      platform: toPageLinkPlatform(profile.platform),
+      id: profile.profileId,
+      handle: profile.username,
+      name: profile.name,
+    });
+  };
 
   const getTypeIcon = (type: string) => {
     if (type.includes("video") || type === "REELS")
@@ -743,12 +758,11 @@ export default function PostInsightsTab({
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 pr-6">
-                    <p
-                      className="text-sm font-bold text-gray-900 dark:text-white truncate"
-                      title={getProfileName(post.profileId)}
-                    >
-                      {getProfileName(post.profileId)}
-                    </p>
+                    <PageNameLink
+                      name={getProfileName(post.profileId)}
+                      href={getProfileHref(post.profileId)}
+                      className="text-sm font-bold text-gray-900 dark:text-white max-w-full"
+                    />
                     <a
                       href={post.permalink || "#"}
                       target="_blank"
@@ -965,9 +979,12 @@ export default function PostInsightsTab({
                           ) : (
                             <Instagram size={12} className="text-[#E1306C]" />
                           )}
-                          <span className="truncate w-32 block">
-                            {getProfileName(post.profileId)}
-                          </span>
+                          <PageNameLink
+                            name={getProfileName(post.profileId)}
+                            href={getProfileHref(post.profileId)}
+                            className="w-32"
+                            showIcon={false}
+                          />
                         </div>
                       </td>
                       <td className="px-4 py-3">
