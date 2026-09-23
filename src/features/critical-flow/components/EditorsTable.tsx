@@ -2,8 +2,10 @@
 
 import { useCallback } from "react";
 import type { EditorStats } from "../types";
-import { fmtDec, fmtHours, fmtInt, fmtPct, rateTone, AGE_TONE_CLASS } from "../format";
+import { csvHours, csvNum, fmtDec, fmtHours, fmtInt, fmtPct, rateTone, AGE_TONE_CLASS } from "../format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   data?: EditorStats[];
@@ -13,12 +15,28 @@ interface Props {
    * and never sends work back, so those columns would read zero on every row.
    */
   showSendBacks?: boolean;
+  csvPrefix?: string;
 }
+
+const CSV_COLUMNS: (CsvColumn<EditorStats> & { sendBack?: boolean })[] = [
+  { header: "Editor", value: (r) => r.editor },
+  { header: "Division", value: (r) => r.division },
+  { header: "Reviewed", value: (r) => r.handled },
+  { header: "Verified", value: (r) => r.verified },
+  { header: "Sent Back", value: (r) => r.sentBack, sendBack: true },
+  { header: "Send-Back Rate (%)", value: (r) => csvNum(r.sendBackRate), sendBack: true },
+  { header: "2nd Pass", value: (r) => r.secondPass, sendBack: true },
+  { header: "Median Review (h)", value: (r) => csvHours(r.medianReviewHours) },
+  { header: "Avg Review (h)", value: (r) => csvHours(r.avgReviewHours) },
+  { header: "Per Active Day", value: (r) => csvNum(r.perActiveDay, 2) },
+  { header: "Active Days", value: (r) => r.activeDays },
+];
 
 export default function EditorsTable({
   data,
   isLoading,
   showSendBacks = true,
+  csvPrefix = "critical-flow",
 }: Props) {
   const rows = data ?? [];
   const getValue = useCallback(
@@ -35,11 +53,20 @@ export default function EditorsTable({
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Editors</h2>
-      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">
-        Review latency is submission → first editorial pass; second pass counts post-send-back rechecks.
-        Per Day counts only days they actually handled something.
-      </p>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Editors</h2>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            Review latency is submission → first editorial pass; second pass counts post-send-back rechecks.
+            Per Day counts only days they actually handled something.
+          </p>
+        </div>
+        <ExportCsvButton
+          rows={sorted}
+          columns={showSendBacks ? CSV_COLUMNS : CSV_COLUMNS.filter((c) => !c.sendBack)}
+          filename={`${csvPrefix}-editors`}
+        />
+      </div>
 
       <div className="overflow-x-auto">
         <table className={`w-full ${showSendBacks ? "min-w-[1000px]" : "min-w-[820px]"} text-xs`}>

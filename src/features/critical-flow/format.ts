@@ -33,6 +33,27 @@ export function fmtDec(v: number | null | undefined, digits = 1): string {
   });
 }
 
+// CSV cells carry raw numbers rather than the display strings ("6.5h", "1,204")
+// so a spreadsheet can sum and sort them. Blank wherever the table shows "—".
+export function csvNum(v: number | null | undefined, digits = 1): number | null {
+  if (v == null || isNaN(v)) return null;
+  const f = 10 ** digits;
+  return Math.round(v * f) / f;
+}
+
+export function csvHours(h: number | null | undefined): number | null {
+  return h == null || h <= 0 ? null : csvNum(h);
+}
+
+/** "2026-09-23 14:05" in the viewer's zone — a form Excel reads as a date. */
+export function csvTimestamp(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export type AgeTone = "ok" | "warn" | "bad";
 
 /** Freshness tone for queued work: <24h fine, <72h warning, else alarming. */

@@ -2,8 +2,10 @@
 
 import { useCallback } from "react";
 import type { DivisionStats } from "../types";
-import { fmtHours, fmtInt, fmtPct, rateTone, AGE_TONE_CLASS } from "../format";
+import { csvHours, csvNum, fmtHours, fmtInt, fmtPct, rateTone, AGE_TONE_CLASS } from "../format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   data?: DivisionStats[];
@@ -13,12 +15,27 @@ interface Props {
    * and never sends work back, so those columns would read zero on every row.
    */
   showSendBacks?: boolean;
+  csvPrefix?: string;
 }
+
+const CSV_COLUMNS: (CsvColumn<DivisionStats> & { sendBack?: boolean })[] = [
+  { header: "Division", value: (r) => r.division },
+  { header: "Allotted", value: (r) => r.allotted },
+  { header: "Published", value: (r) => r.published },
+  { header: "Publish Rate (%)", value: (r) => csvNum(r.publishRate) },
+  { header: "Sent Back", value: (r) => r.sentBack, sendBack: true },
+  { header: "In Queue", value: (r) => r.pending },
+  { header: "Median TAT (h)", value: (r) => csvHours(r.medianTatHours) },
+  { header: "Avg TAT (h)", value: (r) => csvHours(r.avgTatHours) },
+  { header: "Writers", value: (r) => r.writers },
+  { header: "Editors", value: (r) => r.editors },
+];
 
 export default function DivisionTable({
   data,
   isLoading,
   showSendBacks = true,
+  csvPrefix = "critical-flow",
 }: Props) {
   const rows = data ?? [];
   const getValue = useCallback(
@@ -35,12 +52,21 @@ export default function DivisionTable({
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-        By Division
-      </h2>
-      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">
-        Volume, throughput and quality for each source workbook
-      </p>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            By Division
+          </h2>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            Volume, throughput and quality for each source workbook
+          </p>
+        </div>
+        <ExportCsvButton
+          rows={sorted}
+          columns={showSendBacks ? CSV_COLUMNS : CSV_COLUMNS.filter((c) => !c.sendBack)}
+          filename={`${csvPrefix}-divisions`}
+        />
+      </div>
 
       <div className="overflow-x-auto">
         <table className={`w-full ${showSendBacks ? "min-w-[860px]" : "min-w-[790px]"} text-xs`}>

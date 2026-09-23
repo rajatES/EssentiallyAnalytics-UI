@@ -3,8 +3,10 @@
 import { useCallback } from "react";
 import { ArrowRight } from "lucide-react";
 import type { ResourceBoardResult, ResourcePerson } from "@/features/critical-flow/types";
-import { fmtAgo } from "@/features/critical-flow/format";
+import { csvTimestamp, fmtAgo } from "@/features/critical-flow/format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 import StatusChip from "./StatusChip";
 
 interface Props {
@@ -25,6 +27,42 @@ const STATUS_RANK: Record<string, number> = {
   Free: 0, Available: 1, "At capacity": 2, Busy: 3, Overloaded: 4, Off: 5,
 };
 
+const flagLabel = (f: string) => (f === "unlisted" ? "not on the schedule" : f.replace("-", " "));
+
+function csvColumns(date: string): CsvColumn<ResourcePerson>[] {
+  const isEditor = (p: ResourcePerson) => p.roleGroup === "editor";
+  return [
+    { header: "Date", value: () => date },
+    { header: "Status", value: (p) => p.status },
+    { header: "Status Reason", value: (p) => p.statusReason },
+    { header: "Name", value: (p) => p.name },
+    { header: "Flags", value: (p) => p.flags.map(flagLabel).join("; ") },
+    { header: "Division", value: (p) => p.primaryDivision },
+    { header: "Sub-feed", value: (p) => p.subFeed },
+    { header: "Role", value: (p) => p.roleGroup },
+    { header: "Role Title", value: (p) => p.role },
+    { header: "Pod", value: (p) => p.pod },
+    { header: "Shift", value: (p) => p.shift },
+    { header: "Shift Hours", value: (p) => p.shiftClock },
+    { header: "Done Today", value: (p) => p.doneToday },
+    { header: "Quota", value: (p) => p.quota },
+    { header: "Done via Yahoo", value: (p) => p.doneYahoo },
+    { header: "Verified Today", value: (p) => (isEditor(p) ? p.verifiedToday : null) },
+    { header: "Undated Pieces", value: (p) => p.undatedPieces },
+    { header: "Load", value: (p) => (isEditor(p) ? p.queue : p.inFlight) },
+    { header: "Load Type", value: (p) => (isEditor(p) ? "to review" : "in flight") },
+    { header: "Load via Yahoo", value: (p) => p.loadYahoo },
+    { header: "Secondary Divisions", value: (p) => p.secondaryDivisions.join(", ") },
+    { header: "Worked Divisions", value: (p) => p.workedDivisions.map((w) => `${w.division} ×${w.pieces}`).join(", ") },
+    { header: "Off Today", value: (p) => (p.offToday ? "Yes" : "No") },
+    { header: "Off Reason", value: (p) => p.offReason },
+    { header: "Weekly Off", value: (p) => p.weekoff },
+    { header: "Covered By", value: (p) => p.coveredBy },
+    { header: "Backup", value: (p) => p.backup },
+    { header: "Last Active", value: (p) => csvTimestamp(p.lastActive) },
+  ];
+}
+
 export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
   const rows = data?.people ?? [];
   const getValue = useCallback((r: ResourcePerson, key: string) => {
@@ -43,14 +81,21 @@ export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Resource Board</h2>
           <p className="text-[11px] text-gray-400 dark:text-gray-500">
             Writers count submissions, editors count what they got published — Critical Flow and Yahoo together. Hover a status for the reason.
           </p>
         </div>
-        <span className="text-xs text-gray-400">{rows.length} people</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="text-xs text-gray-400">{rows.length} people</span>
+          <ExportCsvButton
+            rows={sorted}
+            columns={csvColumns(data.date)}
+            filename="cf-resources-board"
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -80,7 +125,7 @@ export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
                     <span className="font-medium text-gray-900 dark:text-white">{p.name}</span>
                     {p.flags.length > 0 && (
                       <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                        {p.flags.map((f) => (f === "unlisted" ? "not on the schedule" : f.replace("-", " "))).join(" · ")}
+                        {p.flags.map(flagLabel).join(" · ")}
                       </p>
                     )}
                   </td>

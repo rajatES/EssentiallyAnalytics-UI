@@ -2,8 +2,9 @@
 
 import { useCallback } from "react";
 import type { SendBackResult } from "../types";
-import { fmtInt, fmtPct, rateTone, AGE_TONE_CLASS } from "../format";
+import { csvNum, fmtInt, fmtPct, rateTone, AGE_TONE_CLASS } from "../format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
 
 interface Props {
   data?: SendBackResult;
@@ -23,11 +24,13 @@ function PersonTable({
   subtitle,
   baseLabel,
   rows,
+  csvName,
 }: {
   title: string;
   subtitle: string;
   baseLabel: string;
   rows: Row[];
+  csvName: string;
 }) {
   const getValue = useCallback(
     (r: Row, key: string) => r[key as keyof Row] as string | number,
@@ -37,8 +40,22 @@ function PersonTable({
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
-      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">{subtitle}</p>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">{subtitle}</p>
+        </div>
+        <ExportCsvButton
+          rows={sorted}
+          columns={[
+            { header: "Name", value: (r) => r.name },
+            { header: baseLabel, value: (r) => r.base },
+            { header: "Sent Back", value: (r) => r.sentBack },
+            { header: "Rate (%)", value: (r) => csvNum(r.rate) },
+          ]}
+          filename={csvName}
+        />
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-xs">
@@ -114,12 +131,14 @@ export default function SendBackByPerson({ data, isLoading }: Props) {
         subtitle="Share of what each editor reviewed that they sent back"
         baseLabel="Reviewed"
         rows={editors}
+        csvName="critical-flow-send-backs-by-editor"
       />
       <PersonTable
         title="Writers Getting Work Back"
         subtitle="Share of each writer's submissions that were returned"
         baseLabel="Submitted"
         rows={writers}
+        csvName="critical-flow-send-backs-by-writer"
       />
     </div>
   );

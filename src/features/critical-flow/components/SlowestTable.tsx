@@ -2,14 +2,26 @@
 
 import { ExternalLink } from "lucide-react";
 import type { TatResult } from "../types";
-import { fmtHours, ageTone, AGE_TONE_CLASS } from "../format";
+import { csvHours, fmtHours, ageTone, AGE_TONE_CLASS } from "../format";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   data?: TatResult;
   isLoading: boolean;
+  csvPrefix?: string;
 }
 
-export default function SlowestTable({ data, isLoading }: Props) {
+const CSV_COLUMNS: CsvColumn<TatResult["slowest"][number]>[] = [
+  { header: "Title", value: (r) => r.title },
+  { header: "Division", value: (r) => r.division },
+  { header: "Writer", value: (r) => r.writer },
+  { header: "Editor", value: (r) => r.editor },
+  { header: "TAT (h)", value: (r) => csvHours(r.tatHours) },
+  { header: "Staging Link", value: (r) => r.stagingLink },
+];
+
+export default function SlowestTable({ data, isLoading, csvPrefix = "critical-flow" }: Props) {
   if (isLoading || !data) {
     return (
       <div className="h-72 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
@@ -18,12 +30,17 @@ export default function SlowestTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-        Slowest Pieces
-      </h2>
-      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">
-        The longest turnarounds that still completed — worth a look for what held them up
-      </p>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Slowest Pieces
+          </h2>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            The longest turnarounds that still completed — worth a look for what held them up
+          </p>
+        </div>
+        <ExportCsvButton rows={data.slowest} columns={CSV_COLUMNS} filename={`${csvPrefix}-slowest-pieces`} />
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-xs">

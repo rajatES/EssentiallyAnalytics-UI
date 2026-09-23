@@ -2,8 +2,23 @@
 
 import { useCallback } from "react";
 import type { YpQuotaAttainment } from "../types";
-import { fmtDec, fmtInt } from "@/features/critical-flow/format";
+import { csvNum, fmtDec, fmtInt } from "@/features/critical-flow/format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
+
+const CSV_COLUMNS: CsvColumn<YpQuotaAttainment>[] = [
+  { header: "Division", value: (r) => r.quotaGroup },
+  { header: "Covers", value: (r) => r.divisions.join(" + ") },
+  { header: "Window", value: (r) => r.window },
+  { header: "PoC", value: (r) => r.poc },
+  { header: "Quota / Day", value: (r) => r.quota },
+  { header: "Allotted", value: (r) => r.allotted },
+  { header: "Published", value: (r) => r.published },
+  { header: "Per Active Day", value: (r) => csvNum(r.perDay, 2) },
+  { header: "Active Days", value: (r) => r.activeDays },
+  { header: "Attainment (%)", value: (r) => csvNum(r.attainment, 0) },
+];
 
 interface Props {
   data?: YpQuotaAttainment[];
@@ -43,15 +58,18 @@ export default function QuotaTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-      <div className="border-b border-gray-100 px-5 py-3 dark:border-gray-800">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Quota Attainment
-        </h2>
-        <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-          Published per active day against the recorded daily quota. Check the
-          shift window before reading a figure above 100% — a division running
-          both EMP and LNP may be holding the quota per shift rather than per day.
-        </p>
+      <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-3 dark:border-gray-800">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Quota Attainment
+          </h2>
+          <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+            Published per active day against the recorded daily quota. Check the
+            shift window before reading a figure above 100% — a division running
+            both EMP and LNP may be holding the quota per shift rather than per day.
+          </p>
+        </div>
+        <ExportCsvButton rows={sorted} columns={CSV_COLUMNS} filename="yahoo-quota-attainment" />
       </div>
 
       <div className="overflow-x-auto">

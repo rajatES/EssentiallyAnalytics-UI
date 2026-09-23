@@ -3,23 +3,37 @@
 import { useCallback, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import type { PendingItem } from "../types";
-import { fmtHours, fmtAgo, ageTone, AGE_TONE_CLASS, STAGE_CLASS } from "../format";
+import { csvHours, csvTimestamp, fmtHours, fmtAgo, ageTone, AGE_TONE_CLASS, STAGE_CLASS } from "../format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   items?: PendingItem[];
   isLoading: boolean;
   title?: string;
   subtitle?: string;
+  csvPrefix?: string;
 }
 
 const PAGE = 25;
+
+const CSV_COLUMNS: CsvColumn<PendingItem>[] = [
+  { header: "Stage", value: (r) => r.stage },
+  { header: "With", value: (r) => r.pendingWith },
+  { header: "Division", value: (r) => r.division },
+  { header: "Title", value: (r) => r.title },
+  { header: "Waiting (h)", value: (r) => csvHours(r.ageingHours) },
+  { header: "Waiting Since", value: (r) => csvTimestamp(r.waitingSince) },
+  { header: "Staging Link", value: (r) => r.stagingLink },
+];
 
 export default function PendingTable({
   items,
   isLoading,
   title = "Queue Detail",
   subtitle = "Everything still in flight, oldest first",
+  csvPrefix = "critical-flow",
 }: Props) {
   const [limit, setLimit] = useState(PAGE);
   const rows = items ?? [];
@@ -40,16 +54,23 @@ export default function PendingTable({
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
             {title}
           </h2>
           <p className="text-[11px] text-gray-400 dark:text-gray-500">{subtitle}</p>
         </div>
-        <span className="text-xs text-gray-400 dark:text-gray-500">
-          {rows.length} item{rows.length === 1 ? "" : "s"}
-        </span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {rows.length} item{rows.length === 1 ? "" : "s"}
+          </span>
+          <ExportCsvButton
+            rows={sorted}
+            columns={CSV_COLUMNS}
+            filename={`${csvPrefix}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
+          />
+        </div>
       </div>
 
       <div className="mt-3 overflow-x-auto">

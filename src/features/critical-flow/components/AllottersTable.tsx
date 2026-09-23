@@ -2,19 +2,32 @@
 
 import { useCallback } from "react";
 import type { AllotterStats } from "../types";
-import { fmtInt, fmtPct } from "../format";
+import { csvNum, fmtInt, fmtPct } from "../format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   data?: AllotterStats[];
   isLoading: boolean;
+  csvPrefix?: string;
 }
+
+const CSV_COLUMNS: CsvColumn<AllotterStats>[] = [
+  { header: "Allotter", value: (r) => r.allotter },
+  { header: "Division", value: (r) => r.division },
+  { header: "Allotted", value: (r) => r.allotted },
+  { header: "Submitted", value: (r) => r.submitted },
+  { header: "Published", value: (r) => r.published },
+  { header: "Start Rate (%)", value: (r) => csvNum(r.submissionRate) },
+  { header: "Never Started", value: (r) => r.neverPicked },
+];
 
 /**
  * Who is handing work out, and how much of it actually gets written. A high
  * "never started" count points at over-allotment rather than at the writers.
  */
-export default function AllottersTable({ data, isLoading }: Props) {
+export default function AllottersTable({ data, isLoading, csvPrefix = "critical-flow" }: Props) {
   const rows = data ?? [];
   const getValue = useCallback(
     (r: AllotterStats, key: string) => r[key as keyof AllotterStats] as string | number,
@@ -30,10 +43,15 @@ export default function AllottersTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Allotters</h2>
-      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">
-        Work handed out, and how much of it reached submission
-      </p>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Allotters</h2>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            Work handed out, and how much of it reached submission
+          </p>
+        </div>
+        <ExportCsvButton rows={sorted} columns={CSV_COLUMNS} filename={`${csvPrefix}-allotters`} />
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-xs">

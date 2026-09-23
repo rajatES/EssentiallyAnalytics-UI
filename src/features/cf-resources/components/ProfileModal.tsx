@@ -6,6 +6,15 @@ import { X, Save, Loader2 } from "lucide-react";
 import { updateResourceProfiles } from "@/lib/api";
 import { useResourceProfiles } from "@/features/critical-flow/hooks/useCriticalFlowData";
 import type { ResourceProfile } from "@/features/critical-flow/types";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
+
+const CSV_COLUMNS: CsvColumn<ResourceProfile>[] = [
+  { header: "Name", value: (r) => r.name },
+  { header: "Division", value: (r) => r.division },
+  { header: "Daily Quota", value: (r) => r.dailyQuota },
+  { header: "Notes", value: (r) => r.notes },
+];
 
 interface Props {
   open: boolean;
@@ -79,6 +88,7 @@ export default function ProfileModal({ open, onClose }: Props) {
               placeholder="Filter"
               className={`${inputClass} w-32`}
             />
+            <ExportCsvButton rows={rows} columns={CSV_COLUMNS} filename="cf-resources-daily-quotas" />
             <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
               <X size={16} />
             </button>

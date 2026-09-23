@@ -2,18 +2,28 @@
 
 import { Copy } from "lucide-react";
 import type { InsightsResult } from "../types";
+import ExportCsvButton from "@/components/ui/ExportCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   data?: InsightsResult;
   isLoading: boolean;
+  csvPrefix?: string;
 }
+
+const CSV_COLUMNS: CsvColumn<InsightsResult["duplicates"][number]>[] = [
+  { header: "Title", value: (r) => r.title },
+  { header: "Divisions", value: (r) => r.divisions.join(", ") },
+  { header: "Writers", value: (r) => r.writers.join(", ") },
+  { header: "Copies", value: (r) => r.count },
+];
 
 /**
  * Same headline allotted more than once. Within a division that usually means a
  * duplicate allotment; across divisions it is often deliberate (two feeds
  * covering one story), so the division list matters more than the count.
  */
-export default function DuplicatesTable({ data, isLoading }: Props) {
+export default function DuplicatesTable({ data, isLoading, csvPrefix = "critical-flow" }: Props) {
   if (isLoading || !data) {
     return (
       <div className="h-72 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
@@ -22,13 +32,18 @@ export default function DuplicatesTable({ data, isLoading }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
-        <Copy size={14} className="text-indigo-500" />
-        Repeated Titles
-      </h2>
-      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">
-        Matched on the headline with punctuation and quote styles stripped
-      </p>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
+            <Copy size={14} className="text-indigo-500" />
+            Repeated Titles
+          </h2>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            Matched on the headline with punctuation and quote styles stripped
+          </p>
+        </div>
+        <ExportCsvButton rows={data.duplicates} columns={CSV_COLUMNS} filename={`${csvPrefix}-repeated-titles`} />
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-xs">

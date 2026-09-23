@@ -188,6 +188,7 @@ export default function YahooProductionPage() {
             data={divisionStats.data}
             isLoading={divisionStats.isLoading}
             showSendBacks={false}
+            csvPrefix="yahoo"
           />
         </>
       )}
@@ -203,7 +204,7 @@ export default function YahooProductionPage() {
             <FunnelChart data={funnel.data} isLoading={funnel.isLoading} />
             <AgeBandChart data={pending.data} isLoading={pending.isLoading} />
           </div>
-          <PendingTable items={pending.data?.items} isLoading={pending.isLoading} />
+          <PendingTable items={pending.data?.items} isLoading={pending.isLoading} csvPrefix="yahoo" />
         </>
       )}
 
@@ -214,6 +215,7 @@ export default function YahooProductionPage() {
             data={divisionStats.data}
             isLoading={divisionStats.isLoading}
             showSendBacks={false}
+            csvPrefix="yahoo"
           />
         </>
       )}
@@ -249,7 +251,7 @@ export default function YahooProductionPage() {
               isLoading={tat.isLoading}
             />
           </div>
-          <SlowestTable data={tat.data} isLoading={tat.isLoading} />
+          <SlowestTable data={tat.data} isLoading={tat.isLoading} csvPrefix="yahoo" />
         </>
       )}
 
@@ -259,13 +261,15 @@ export default function YahooProductionPage() {
             data={writers.data}
             isLoading={writers.isLoading}
             showSendBacks={false}
+            csvPrefix="yahoo"
           />
           <EditorsTable
             data={editors.data}
             isLoading={editors.isLoading}
             showSendBacks={false}
+            csvPrefix="yahoo"
           />
-          <AllottersTable data={allotters.data} isLoading={allotters.isLoading} />
+          <AllottersTable data={allotters.data} isLoading={allotters.isLoading} csvPrefix="yahoo" />
           <RosterBoard data={roster.data} isLoading={roster.isLoading} />
         </>
       )}
@@ -281,9 +285,10 @@ export default function YahooProductionPage() {
             isLoading={insights.isLoading}
             title="Stalled Work"
             subtitle="In queue for more than 48 hours"
+            csvPrefix="yahoo"
           />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <DuplicatesTable data={insights.data} isLoading={insights.isLoading} />
+            <DuplicatesTable data={insights.data} isLoading={insights.isLoading} csvPrefix="yahoo" />
             <DataQualityCard data={insights.data} isLoading={insights.isLoading} />
           </div>
         </>
