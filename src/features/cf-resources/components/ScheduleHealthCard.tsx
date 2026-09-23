@@ -18,6 +18,8 @@ export default function ScheduleHealthCard({ data, isLoading }: Props) {
     return <div className="h-40 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />;
   }
 
+  const empty = data.sheetConfigured && data.people === 0;
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-baseline justify-between">
@@ -26,15 +28,26 @@ export default function ScheduleHealthCard({ data, isLoading }: Props) {
           Schedule Sheet Health
         </h2>
         <span className="text-[11px] text-gray-400">
-          {data.scheduleSheetConfigured
+          {data.sheetConfigured
             ? `${data.people} people · ${data.leaves} leave records · ${data.quotas} quota rows`
-            : "schedule sheet not configured"}
+            : "resources sheet not configured"}
         </span>
       </div>
 
-      {!data.scheduleSheetConfigured && (
+      {!data.sheetConfigured && (
         <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-          <code>CF_SCHEDULE_SHEET_ID</code> is not set, so leave, backups, shifts and division quotas are unavailable — the board is running on the per-division rosters alone.
+          Neither <code>RESOURCES_SHEET_ID</code> nor <code>CF_SHEET_ID</code> is set, so there is no People / Leaves / Quotas tab to read — the board can only list people found in the content.
+        </p>
+      )}
+      {empty && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+          No people synced yet. The n8n Critical Flow workflow fills the People, Leaves and Quotas tabs from the Dynamic Schedule — check its Resources Log tab.
+        </p>
+      )}
+      {data.syncError && (
+        <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
+          Last sync failed: {data.syncError}
+          {data.lastSyncTime ? " — showing the data from the previous good sync." : ""}
         </p>
       )}
 
@@ -57,7 +70,7 @@ export default function ScheduleHealthCard({ data, isLoading }: Props) {
             </div>
           </div>
         ))}
-        {data.flags.length === 0 && data.scheduleSheetConfigured && (
+        {data.flags.length === 0 && data.sheetConfigured && !empty && (
           <p className="py-4 text-center text-xs text-gray-400">The schedule sheet and the content agree</p>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import type { ResourcePerson } from "@/features/critical-flow/types";
-import { useCfResourceSuggest } from "@/features/critical-flow/hooks/useCriticalFlowData";
+import { useResourceSuggest } from "@/features/critical-flow/hooks/useCriticalFlowData";
 import StatusChip from "./StatusChip";
 
 interface Props {
@@ -25,7 +25,7 @@ export default function FindResourcePanel({
   const [role, setRole] = useState<"all" | "writer" | "editor">(initialRole ?? "all");
   const [forPerson, setForPerson] = useState(initialForPerson ?? "");
 
-  const suggest = useCfResourceSuggest(
+  const suggest = useResourceSuggest(
     { division, role, forPerson: forPerson || undefined, date },
     open,
   );

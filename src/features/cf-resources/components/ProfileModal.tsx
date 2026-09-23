@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Save, Loader2 } from "lucide-react";
-import { updateCfResourceProfiles } from "@/lib/api";
-import { useCfResourceProfiles } from "@/features/critical-flow/hooks/useCriticalFlowData";
+import { updateResourceProfiles } from "@/lib/api";
+import { useResourceProfiles } from "@/features/critical-flow/hooks/useCriticalFlowData";
 import type { ResourceProfile } from "@/features/critical-flow/types";
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
  */
 export default function ProfileModal({ open, onClose }: Props) {
   const qc = useQueryClient();
-  const { data, isLoading } = useCfResourceProfiles(open);
+  const { data, isLoading } = useResourceProfiles(open);
   const [draft, setDraft] = useState<Record<string, ResourceProfile>>({});
   const [filter, setFilter] = useState("");
 
@@ -32,7 +32,7 @@ export default function ProfileModal({ open, onClose }: Props) {
 
   const mutation = useMutation({
     mutationFn: (profiles: ResourceProfile[]) =>
-      updateCfResourceProfiles(profiles.map((p) => ({ key: p.key, dailyQuota: p.dailyQuota, notes: p.notes }))),
+      updateResourceProfiles(profiles.map((p) => ({ key: p.key, dailyQuota: p.dailyQuota, notes: p.notes }))),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cf-resource-profiles"] });
       qc.invalidateQueries({ queryKey: ["cf-resource-board"] });

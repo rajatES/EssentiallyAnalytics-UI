@@ -43,7 +43,7 @@ export default function ArticleTypeCards({ data, isLoading }: Props) {
               <div className="h-full bg-indigo-500" style={{ width: `${t.share}%` }} />
             </div>
             <p className="mt-1.5 text-[10px] text-gray-400">
-              {fmtHours(t.medianTatHours)} median · {fmtInt(t.published)} published
+              {fmtHours(t.medianTatHours)} med · {fmtHours(t.avgTatHours)} avg · {fmtInt(t.published)} published
               {t.sentBack > 0 && ` · ${t.sentBack} back`}
             </p>
           </div>

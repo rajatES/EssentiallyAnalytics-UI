@@ -1,27 +1,32 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { triggerCfSync } from "@/lib/api";
-import type { CfFilterParams } from "@/features/critical-flow/types";
+import { triggerYpSync } from "@/lib/api";
+import type { CfFilterParams } from "@/features/yahoo-production/types";
 import {
-  useCfSyncStatus,
-  useCfFilters,
-  useCfOverview,
-  useCfTimeseries,
-  useCfFunnel,
-  useCfPending,
-  useCfWriters,
-  useCfEditors,
-  useCfAllotters,
-  useCfSendBacks,
-  useCfTat,
-  useCfDivisions,
-  useCfArticleTypes,
-  useCfRoster,
-  useCfInsights,
-} from "@/features/critical-flow/hooks/useCriticalFlowData";
+  useYpSyncStatus,
+  useYpFilters,
+  useYpOverview,
+  useYpTimeseries,
+  useYpFunnel,
+  useYpPending,
+  useYpWriters,
+  useYpEditors,
+  useYpAllotters,
+  useYpTat,
+  useYpDivisions,
+  useYpQuotas,
+  useYpArticleTypes,
+  useYpRoster,
+  useYpInsights,
+} from "@/features/yahoo-production/hooks/useYahooData";
 
+// Yahoo is the same lifecycle as Critical Flow over a different source sheet,
+// so it renders with the same components rather than a second set kept in step
+// by hand. What differs is passed as props: no send-back columns, and a quota
+// tab where Critical Flow has send-backs.
 import CfHeader, {
+  TAB_SETS,
   type CfTab,
   type RangeKey,
 } from "@/features/critical-flow/components/CfHeader";
@@ -34,8 +39,6 @@ import ArticleTypeCards from "@/features/critical-flow/components/ArticleTypeCar
 import FunnelChart from "@/features/critical-flow/components/FunnelChart";
 import AgeBandChart from "@/features/critical-flow/components/AgeBandChart";
 import PendingTable from "@/features/critical-flow/components/PendingTable";
-import SendBackOverview from "@/features/critical-flow/components/SendBackOverview";
-import SendBackByPerson from "@/features/critical-flow/components/SendBackByPerson";
 import TatOverview from "@/features/critical-flow/components/TatOverview";
 import TatBreakdown from "@/features/critical-flow/components/TatBreakdown";
 import SlowestTable from "@/features/critical-flow/components/SlowestTable";
@@ -47,6 +50,7 @@ import WeekdayRhythm from "@/features/critical-flow/components/WeekdayRhythm";
 import SubmissionHeatmap from "@/features/critical-flow/components/SubmissionHeatmap";
 import DuplicatesTable from "@/features/critical-flow/components/DuplicatesTable";
 import DataQualityCard from "@/features/critical-flow/components/DataQualityCard";
+import QuotaTable from "@/features/yahoo-production/components/QuotaTable";
 import { useRole } from "@/hooks/useRole";
 
 const RANGE_DAYS: Record<Exclude<RangeKey, "custom">, number | null> = {
@@ -57,7 +61,7 @@ const RANGE_DAYS: Record<Exclude<RangeKey, "custom">, number | null> = {
   all: null,
 };
 
-export default function CriticalFlowPage() {
+export default function YahooProductionPage() {
   const { canAccess } = useRole();
 
   const [tab, setTab] = useState<CfTab>("overview");
@@ -87,38 +91,38 @@ export default function CriticalFlowPage() {
     };
   }, [range, divisions, customStart, customEnd]);
 
-  const syncStatus = useCfSyncStatus();
-  const filterOptions = useCfFilters();
+  const syncStatus = useYpSyncStatus();
+  const filterOptions = useYpFilters();
 
   // Overview
-  const overview = useCfOverview(filters);
-  const pending = useCfPending(filters);
-  const timeseries = useCfTimeseries(filters, granularity);
-  const divisionStats = useCfDivisions(filters);
-  const articleTypes = useCfArticleTypes(filters);
+  const overview = useYpOverview(filters);
+  const pending = useYpPending(filters);
+  const timeseries = useYpTimeseries(filters, granularity);
+  const divisionStats = useYpDivisions(filters);
+  const articleTypes = useYpArticleTypes(filters);
 
   // Pipeline
-  const funnel = useCfFunnel(filters);
+  const funnel = useYpFunnel(filters);
 
-  // Send-backs
-  const sendBacks = useCfSendBacks(filters);
+  // Quotas
+  const quotas = useYpQuotas(filters);
 
   // Turnaround
-  const tat = useCfTat(filters);
+  const tat = useYpTat(filters);
 
   // People
-  const writers = useCfWriters(filters);
-  const editors = useCfEditors(filters);
-  const allotters = useCfAllotters(filters);
-  const roster = useCfRoster(filters);
+  const writers = useYpWriters(filters);
+  const editors = useYpEditors(filters);
+  const allotters = useYpAllotters(filters);
+  const roster = useYpRoster(filters);
 
   // Insights
-  const insights = useCfInsights(filters);
+  const insights = useYpInsights(filters);
 
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
-      await triggerCfSync();
+      await triggerYpSync();
       await Promise.all([syncStatus.refetch(), overview.refetch()]);
     } finally {
       setIsSyncing(false);
@@ -145,6 +149,7 @@ export default function CriticalFlowPage() {
       <CfHeader
         tab={tab}
         onTab={setTab}
+        tabs={TAB_SETS.yahoo}
         range={range}
         onRange={setRange}
         customStart={customStart}
@@ -162,8 +167,16 @@ export default function CriticalFlowPage() {
 
       {tab === "overview" && (
         <>
-          <KpiHero overview={overview.data} isLoading={overview.isLoading} />
-          <PendingBoard data={pending.data} isLoading={pending.isLoading} />
+          <KpiHero
+            overview={overview.data}
+            isLoading={overview.isLoading}
+            showSendBacks={false}
+          />
+          <PendingBoard
+            data={pending.data}
+            isLoading={pending.isLoading}
+            showSendBacks={false}
+          />
           <ThroughputChart
             data={timeseries.data}
             isLoading={timeseries.isLoading}
@@ -171,13 +184,21 @@ export default function CriticalFlowPage() {
             onGranularityChange={setGranularity}
           />
           <ArticleTypeCards data={articleTypes.data} isLoading={articleTypes.isLoading} />
-          <DivisionTable data={divisionStats.data} isLoading={divisionStats.isLoading} />
+          <DivisionTable
+            data={divisionStats.data}
+            isLoading={divisionStats.isLoading}
+            showSendBacks={false}
+          />
         </>
       )}
 
       {tab === "pipeline" && (
         <>
-          <PendingBoard data={pending.data} isLoading={pending.isLoading} />
+          <PendingBoard
+            data={pending.data}
+            isLoading={pending.isLoading}
+            showSendBacks={false}
+          />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <FunnelChart data={funnel.data} isLoading={funnel.isLoading} />
             <AgeBandChart data={pending.data} isLoading={pending.isLoading} />
@@ -188,13 +209,11 @@ export default function CriticalFlowPage() {
 
       {tab === "quality" && (
         <>
-          <SendBackOverview data={sendBacks.data} isLoading={sendBacks.isLoading} />
-          <SendBackByPerson data={sendBacks.data} isLoading={sendBacks.isLoading} />
-          <PendingTable
-            items={sendBacks.data?.openSendBacks}
-            isLoading={sendBacks.isLoading}
-            title="Open Send-Backs"
-            subtitle="Returned to the writer and not yet re-verified"
+          <QuotaTable data={quotas.data} isLoading={quotas.isLoading} />
+          <DivisionTable
+            data={divisionStats.data}
+            isLoading={divisionStats.isLoading}
+            showSendBacks={false}
           />
         </>
       )}
@@ -236,8 +255,16 @@ export default function CriticalFlowPage() {
 
       {tab === "people" && (
         <>
-          <WritersTable data={writers.data} isLoading={writers.isLoading} />
-          <EditorsTable data={editors.data} isLoading={editors.isLoading} />
+          <WritersTable
+            data={writers.data}
+            isLoading={writers.isLoading}
+            showSendBacks={false}
+          />
+          <EditorsTable
+            data={editors.data}
+            isLoading={editors.isLoading}
+            showSendBacks={false}
+          />
           <AllottersTable data={allotters.data} isLoading={allotters.isLoading} />
           <RosterBoard data={roster.data} isLoading={roster.isLoading} />
         </>

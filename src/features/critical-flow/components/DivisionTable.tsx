@@ -8,9 +8,18 @@ import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
 interface Props {
   data?: DivisionStats[];
   isLoading: boolean;
+  /**
+   * Whether this pipeline has a send-back loop. Yahoo runs one editorial pass
+   * and never sends work back, so those columns would read zero on every row.
+   */
+  showSendBacks?: boolean;
 }
 
-export default function DivisionTable({ data, isLoading }: Props) {
+export default function DivisionTable({
+  data,
+  isLoading,
+  showSendBacks = true,
+}: Props) {
   const rows = data ?? [];
   const getValue = useCallback(
     (r: DivisionStats, key: string) => r[key as keyof DivisionStats] as string | number,
@@ -34,17 +43,19 @@ export default function DivisionTable({ data, isLoading }: Props) {
       </p>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-xs">
+        <table className={`w-full ${showSendBacks ? "min-w-[860px]" : "min-w-[790px]"} text-xs`}>
           <thead className="text-gray-400 dark:text-gray-500">
             <tr className="border-b border-gray-100 dark:border-gray-800">
               <SortableTh label="Division" colKey="division" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <SortableTh label="Allotted" colKey="allotted" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <SortableTh label="Published" colKey="published" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <SortableTh label="Rate" colKey="publishRate" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-              <SortableTh label="Sent Back" colKey="sentBack" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+              {showSendBacks && (
+                <SortableTh label="Sent Back" colKey="sentBack" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+              )}
               <SortableTh label="In Queue" colKey="pending" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <SortableTh label="Med TAT" colKey="medianTatHours" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-              <SortableTh label="Yahoo" colKey="yahooShare" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+              <SortableTh label="Avg TAT" colKey="avgTatHours" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <SortableTh label="People" colKey="writers" align="right" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
             </tr>
           </thead>
@@ -68,13 +79,15 @@ export default function DivisionTable({ data, isLoading }: Props) {
                   <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
                     {fmtPct(r.publishRate)}
                   </td>
-                  <td className="px-3 py-2 text-right">
-                    <span
-                      className={`rounded px-1.5 py-0.5 tabular-nums ${AGE_TONE_CLASS[rateTone(sbRate)]}`}
-                    >
-                      {fmtInt(r.sentBack)}
-                    </span>
-                  </td>
+                  {showSendBacks && (
+                    <td className="px-3 py-2 text-right">
+                      <span
+                        className={`rounded px-1.5 py-0.5 tabular-nums ${AGE_TONE_CLASS[rateTone(sbRate)]}`}
+                      >
+                        {fmtInt(r.sentBack)}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
                     {fmtInt(r.pending)}
                   </td>
@@ -82,7 +95,7 @@ export default function DivisionTable({ data, isLoading }: Props) {
                     {fmtHours(r.medianTatHours)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                    {fmtPct(r.yahooShare)}
+                    {fmtHours(r.avgTatHours)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-gray-500 dark:text-gray-400">
                     {r.writers}w / {r.editors}e
@@ -92,7 +105,7 @@ export default function DivisionTable({ data, isLoading }: Props) {
             })}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-gray-400">
+                <td colSpan={showSendBacks ? 9 : 8} className="px-3 py-8 text-center text-gray-400">
                   No pieces in this period
                 </td>
               </tr>

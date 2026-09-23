@@ -52,6 +52,7 @@ export default function TatOverview({ data, isLoading }: Props) {
         <div className="flex gap-6">
           {[
             ["Median", overall.median],
+            ["Average", overall.avg],
             ["p90", overall.p90],
             ["Slowest", overall.max],
           ].map(([label, value]) => (
@@ -114,8 +115,9 @@ export default function TatOverview({ data, isLoading }: Props) {
                     {fmtHours(s.median)}
                   </p>
                   <p className="text-[10px] text-gray-400">
-                    p90 {fmtHours(s.p90)} · {fmtInt(s.count)} pieces
+                    avg {fmtHours(s.avg)} · p90 {fmtHours(s.p90)}
                   </p>
+                  <p className="text-[10px] text-gray-400">{fmtInt(s.count)} pieces</p>
                 </>
               )}
             </div>

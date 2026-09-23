@@ -10,8 +10,6 @@ export interface CfFilterParams {
   articleTypes?: string[];
   statuses?: string[];
   allotters?: string[];
-  /** 'yahoo' | 'non-yahoo' | undefined (both) */
-  yahoo?: string;
 }
 
 export interface SyncStatus {
@@ -50,9 +48,9 @@ export interface KpiOverview {
   /** pieces sent back at least once, as a share of those that reached editorial */
   sendBackRate: number;
   medianTatHours: number;
+  /** Mean turnaround. Diverges from the median when a few pieces run long. */
+  avgTatHours: number;
   p90TatHours: number;
-  yahooCount: number;
-  yahooShare: number;
   pendingCount: number;
   activeWriters: number;
   activeEditors: number;
@@ -69,9 +67,8 @@ export interface TimeseriesBucket {
   verified: number;
   published: number;
   sentBack: number;
-  yahoo: number;
-  nonYahoo: number;
   medianTatHours: number;
+  avgTatHours: number;
 }
 
 export interface FunnelStage {
@@ -116,13 +113,16 @@ export interface WriterStats {
   published: number;
   sentBack: number;
   sendBackRate: number;
-  yahoo: number;
-  nonYahoo: number;
   medianTatHours: number;
+  avgTatHours: number;
   /** Null where allotment carries no clock time, making the leg unmeasurable. */
   medianWriteHours: number | null;
   submissionRate: number;
   pending: number;
+  /** Distinct days in the period on which they submitted anything. */
+  activeDays: number;
+  /** Submissions per active day — days off and leave are excluded. */
+  perActiveDay: number;
 }
 
 export interface EditorStats {
@@ -133,9 +133,12 @@ export interface EditorStats {
   sentBack: number;
   sendBackRate: number;
   secondPass: number;
-  yahoo: number;
-  nonYahoo: number;
   medianReviewHours: number | null;
+  avgReviewHours: number | null;
+  /** Distinct days in the period on which they handled anything. */
+  activeDays: number;
+  /** Pieces handled per active day. */
+  perActiveDay: number;
 }
 
 export interface AllotterStats {
@@ -171,6 +174,7 @@ export interface TatStat {
   label: string;
   count: number;
   median: number;
+  avg: number;
   p90: number;
   max: number;
 }
@@ -182,8 +186,14 @@ export interface TatResult {
   byArticleType: TatStat[];
   byWriter: TatStat[];
   byEditor: TatStat[];
-  /** Median hours in each leg; null where the source lacks the timestamps. */
-  stages: { stage: string; median: number | null; p90: number | null; count: number }[];
+  /** Median and mean hours in each leg; null where the source lacks the timestamps. */
+  stages: {
+    stage: string;
+    median: number | null;
+    avg: number | null;
+    p90: number | null;
+    count: number;
+  }[];
   slowest: {
     id: string;
     division: string;
@@ -203,10 +213,9 @@ export interface DivisionStats {
   published: number;
   sentBack: number;
   pending: number;
-  yahoo: number;
-  yahooShare: number;
   publishRate: number;
   medianTatHours: number;
+  avgTatHours: number;
   writers: number;
   editors: number;
 }
@@ -218,15 +227,7 @@ export interface ArticleTypeEntry {
   published: number;
   sentBack: number;
   medianTatHours: number;
-  yahoo: number;
-}
-
-export interface YahooSplitResult {
-  yahoo: { count: number; published: number; medianTatHours: number; sendBackRate: number };
-  nonYahoo: { count: number; published: number; medianTatHours: number; sendBackRate: number };
-  unset: number;
-  byDivision: { division: string; yahoo: number; nonYahoo: number; unset: number; yahooShare: number }[];
-  trend: { bucket: string; yahoo: number; nonYahoo: number }[];
+  avgTatHours: number;
 }
 
 export interface RosterEntry {
@@ -258,7 +259,14 @@ export interface RosterResult {
 }
 
 export interface InsightsResult {
-  weekdayRhythm: { weekday: string; allotted: number; submitted: number; published: number; medianTatHours: number }[];
+  weekdayRhythm: {
+    weekday: string;
+    allotted: number;
+    submitted: number;
+    published: number;
+    medianTatHours: number;
+    avgTatHours: number;
+  }[];
   submissionHeatmap: { weekday: number; hour: number; count: number }[];
   stuck: PendingItem[];
   duplicates: {
@@ -273,6 +281,8 @@ export interface InsightsResult {
 }
 
 // ── Resources page ──
+// People come from the Dynamic Schedule; their work is counted across
+// Critical Flow and Yahoo. Mirrors ES_Studio_API/src/modules/resources/types.ts.
 
 export type ResourceStatus =
   | 'Off'
@@ -314,8 +324,10 @@ export interface ResourcePerson {
   coveredBy: string;
   /** Standing backup from Editor Info. */
   backup: string;
-  /** Writers: submitted today. Editors: published today. */
+  /** Writers: submitted today. Editors: published today. Both pipelines. */
   doneToday: number;
+  /** The part of doneToday that went through the Yahoo sheet. */
+  doneYahoo: number;
   /** Editors only: pieces they verified today, as a secondary output signal. */
   verifiedToday: number;
   quota: number | null;
@@ -323,15 +335,18 @@ export interface ResourcePerson {
   inFlight: number;
   /** Editors: pieces awaiting their editorial pass. */
   queue: number;
+  /** The part of inFlight (writers) or queue (editors) on the Yahoo sheet. */
+  loadYahoo: number;
   /** quota − done − inFlight, or null without a quota. */
   remaining: number | null;
   /** Pieces with no timestamps at all — output that cannot be dated. */
   undatedPieces: number;
   lastActive: string | null;
-  email: string;
-  /** Which sheets list this person: schedule | roster | content. */
+  /** schedule | content */
   sources: string[];
   flags: string[];
+  /** Active | On notice | Exited | '' from Roles & Contact. */
+  employment: string;
   notes: string;
 }
 
@@ -360,6 +375,7 @@ export interface DivisionResourceSummary {
   quotaMissing: boolean;
   /** Editorial Chart figure when it disagrees with DailyDynamics, else null. */
   quotaConflict: number | null;
+  /** Critical Flow submissions, measured against the DailyDynamics quota. */
   submittedEmp: number;
   submittedLnp: number;
   submittedTotal: number;
@@ -368,6 +384,11 @@ export interface DivisionResourceSummary {
   gapCurrentShift: number;
   /** Shortfall against the whole day. */
   gapDay: number;
+  /** Yahoo's own daily quota for this division, when its sheet sets one. */
+  yahooQuota: number | null;
+  yahooSubmitted: number;
+  yahooPublished: number;
+  /** Both pipelines. */
   awaitingEditorial: number;
   awaitingSubmission: number;
   unassignedEditorial: number;
@@ -393,6 +414,7 @@ export interface ResourceSummaryResult {
     submitted: number;
     published: number;
     gapDay: number;
+    yahooPublished: number;
     awaitingEditorial: number;
     writersFree: number;
     editorsFree: number;
@@ -431,7 +453,10 @@ export interface ScheduleHealthFlag {
 }
 
 export interface ScheduleHealthResult {
-  scheduleSheetConfigured: boolean;
+  /** A spreadsheet id is configured for the People / Leaves / Quotas tabs. */
+  sheetConfigured: boolean;
+  lastSyncTime: string | null;
+  syncError: string | null;
   people: number;
   leaves: number;
   quotas: number;

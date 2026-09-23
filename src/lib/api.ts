@@ -48,6 +48,53 @@ export async function logoutUser() {
   return response.data;
 }
 
+// ── Sign-up / password reset by emailed code ──
+
+export type CodePurpose = "signup" | "reset";
+
+export async function requestAccessCode(email: string, purpose: CodePurpose): Promise<{ message: string }> {
+  const response = await apiClient.post("/api/auth/code", { email, purpose });
+  return response.data;
+}
+
+export async function verifyAccessCode(
+  email: string,
+  code: string,
+): Promise<{ setupToken: string; hasAccount: boolean }> {
+  const response = await apiClient.post("/api/auth/code/verify", { email, code });
+  return response.data;
+}
+
+export async function setAccountPassword(
+  email: string,
+  setupToken: string,
+  password: string,
+): Promise<{ email: string; role: string; created: boolean }> {
+  const response = await apiClient.post("/api/auth/password", { email, setupToken, password });
+  return response.data;
+}
+
+// ── Access management (superadmin) ──
+
+export interface AppUser {
+  id: string;
+  email: string;
+  role: "superadmin" | "admin" | "management" | "user";
+  createdAt: string;
+  lastLoginAt: string | null;
+  passwordUpdatedAt: string | null;
+}
+
+export async function fetchUsers(): Promise<AppUser[]> {
+  const response = await apiClient.get("/api/users");
+  return response.data;
+}
+
+export async function updateUserRole(id: string, role: AppUser["role"]): Promise<AppUser> {
+  const response = await apiClient.patch(`/api/users/${id}/role`, { role });
+  return response.data;
+}
+
 export async function fetchPageMappings(): Promise<MappingEntry[]> {
   try {
     const response = await apiClient.get(MAPPINGS_URL);
@@ -872,10 +919,6 @@ export async function fetchCfArticleTypes(params: Record<string, any>) {
   return cfGet('article-types', params);
 }
 
-export async function fetchCfYahooSplit(params: Record<string, any>) {
-  return cfGet('yahoo-split', params);
-}
-
 export async function fetchCfRoster(params: Record<string, any>) {
   return cfGet('roster', params);
 }
@@ -884,29 +927,117 @@ export async function fetchCfInsights(params: Record<string, any>) {
   return cfGet('insights', params);
 }
 
-// ── Critical Flow resources ──
+// ── Resources (people shared by Critical Flow and Yahoo) ──
 
-export async function fetchCfResourceSummary(params: Record<string, any>) {
-  return cfGet('resources/summary', params);
-}
+const RES_URL = '/v1/resources';
 
-export async function fetchCfResourceBoard(params: Record<string, any>) {
-  return cfGet('resources/board', params);
-}
-
-export async function fetchCfResourceSuggest(params: Record<string, any>) {
-  return cfGet('resources/suggest', params);
-}
-
-export async function fetchCfResourceHealth() {
-  return cfGet('resources/health');
-}
-
-export async function fetchCfResourceProfiles() {
-  return cfGet('resources/profiles');
-}
-
-export async function updateCfResourceProfiles(profiles: unknown[]) {
-  const res = await apiClient.put(`${CF_URL}/resources/profiles`, { profiles });
+async function resGet(path: string, params?: Record<string, any>) {
+  const res = await apiClient.get(`${RES_URL}/${path}`, {
+    params: params ? cfParams(params) : undefined,
+  });
   return res.data;
+}
+
+export async function fetchResourceSummary(params: Record<string, any>) {
+  return resGet('summary', params);
+}
+
+export async function fetchResourceBoard(params: Record<string, any>) {
+  return resGet('board', params);
+}
+
+export async function fetchResourceSuggest(params: Record<string, any>) {
+  return resGet('suggest', params);
+}
+
+export async function fetchResourceHealth() {
+  return resGet('health');
+}
+
+export async function fetchResourceProfiles() {
+  return resGet('profiles');
+}
+
+export async function updateResourceProfiles(profiles: unknown[]) {
+  const res = await apiClient.put(`${RES_URL}/profiles`, { profiles });
+  return res.data;
+}
+
+// ─── Yahoo Production ────────────────────────────────────────────────────────
+//
+// Same analytics as Critical Flow over a separate pipeline, so the query shape
+// is identical — only the base path and the send-back surfaces differ.
+
+const YP_URL = '/v1/yahoo-production';
+
+async function ypGet(path: string, params?: Record<string, any>) {
+  const res = await apiClient.get(`${YP_URL}/${path}`, {
+    params: params ? cfParams(params) : undefined,
+  });
+  return res.data;
+}
+
+export async function fetchYpSyncStatus() {
+  return ypGet('sync-status');
+}
+
+export async function triggerYpSync() {
+  const res = await apiClient.post(`${YP_URL}/sync`);
+  return res.data;
+}
+
+export async function fetchYpFilters() {
+  return ypGet('filters');
+}
+
+export async function fetchYpOverview(params: Record<string, any>) {
+  return ypGet('overview', params);
+}
+
+export async function fetchYpTimeseries(params: Record<string, any>) {
+  return ypGet('timeseries', params);
+}
+
+export async function fetchYpFunnel(params: Record<string, any>) {
+  return ypGet('funnel', params);
+}
+
+export async function fetchYpPending(params: Record<string, any>) {
+  return ypGet('pending', params);
+}
+
+export async function fetchYpWriters(params: Record<string, any>) {
+  return ypGet('writers', params);
+}
+
+export async function fetchYpEditors(params: Record<string, any>) {
+  return ypGet('editors', params);
+}
+
+export async function fetchYpAllotters(params: Record<string, any>) {
+  return ypGet('allotters', params);
+}
+
+export async function fetchYpTat(params: Record<string, any>) {
+  return ypGet('tat', params);
+}
+
+export async function fetchYpDivisions(params: Record<string, any>) {
+  return ypGet('divisions', params);
+}
+
+export async function fetchYpQuotas(params: Record<string, any>) {
+  return ypGet('quotas', params);
+}
+
+export async function fetchYpArticleTypes(params: Record<string, any>) {
+  return ypGet('article-types', params);
+}
+
+export async function fetchYpRoster(params: Record<string, any>) {
+  return ypGet('roster', params);
+}
+
+export async function fetchYpInsights(params: Record<string, any>) {
+  return ypGet('insights', params);
 }

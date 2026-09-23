@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Calendar,
   Check,
+  Target,
 } from "lucide-react";
 import type { SyncStatus } from "../types";
 
@@ -23,7 +24,6 @@ export type CfTab =
   | "people"
   | "insights";
 export type RangeKey = "7d" | "14d" | "30d" | "90d" | "all" | "custom";
-export type YahooFilter = "" | "yahoo" | "non-yahoo";
 
 const TABS = [
   { key: "overview" as CfTab, label: "Overview", icon: LayoutDashboard },
@@ -34,18 +34,28 @@ const TABS = [
   { key: "insights" as CfTab, label: "Insights", icon: Sparkles },
 ];
 
+/**
+ * Yahoo runs a single editorial pass with no send-back loop, so that tab would
+ * be a page of zeroes; a quota tab takes its place, since Yahoo is the pipeline
+ * with per-division daily targets recorded.
+ */
+const YAHOO_TABS = [
+  { key: "overview" as CfTab, label: "Overview", icon: LayoutDashboard },
+  { key: "pipeline" as CfTab, label: "Pipeline", icon: GitBranch },
+  { key: "quality" as CfTab, label: "Quotas", icon: Target },
+  { key: "speed" as CfTab, label: "Turnaround", icon: Timer },
+  { key: "people" as CfTab, label: "People", icon: Users },
+  { key: "insights" as CfTab, label: "Insights", icon: Sparkles },
+];
+
+export const TAB_SETS = { critical: TABS, yahoo: YAHOO_TABS };
+
 const RANGE_PRESETS: { key: RangeKey; label: string }[] = [
   { key: "7d", label: "7D" },
   { key: "14d", label: "14D" },
   { key: "30d", label: "30D" },
   { key: "90d", label: "90D" },
   { key: "all", label: "All" },
-];
-
-const YAHOO_OPTIONS: { key: YahooFilter; label: string }[] = [
-  { key: "", label: "All" },
-  { key: "yahoo", label: "Yahoo" },
-  { key: "non-yahoo", label: "Non-Yahoo" },
 ];
 
 interface Props {
@@ -60,12 +70,12 @@ interface Props {
   selectedDivisions: string[];
   onToggleDivision: (d: string) => void;
   onClearDivisions: () => void;
-  yahoo: YahooFilter;
-  onYahoo: (y: YahooFilter) => void;
   syncStatus?: SyncStatus;
   onSync: () => void;
   isSyncing: boolean;
   showSync: boolean;
+  /** Which tab set to render; defaults to Critical Flow's. */
+  tabs?: typeof TABS;
 }
 
 function lastSyncLabel(iso: string | null | undefined): string {
@@ -251,19 +261,18 @@ export default function CfHeader({
   selectedDivisions,
   onToggleDivision,
   onClearDivisions,
-  yahoo,
-  onYahoo,
   syncStatus,
   onSync,
   isSyncing,
   showSync,
+  tabs,
 }: Props) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Tabs */}
         <div className="flex flex-wrap gap-1">
-          {TABS.map(({ key, label, icon: Icon }) => {
+          {(tabs ?? TABS).map(({ key, label, icon: Icon }) => {
             const active = tab === key;
             return (
               <button
@@ -291,21 +300,6 @@ export default function CfHeader({
             onClear={onClearDivisions}
           />
 
-          <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">
-            {YAHOO_OPTIONS.map(({ key, label }) => (
-              <button
-                key={key || "all"}
-                onClick={() => onYahoo(key)}
-                className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                  yahoo === key
-                    ? "bg-indigo-600 text-white"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
 
           <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">
             {RANGE_PRESETS.map(({ key, label }) => (

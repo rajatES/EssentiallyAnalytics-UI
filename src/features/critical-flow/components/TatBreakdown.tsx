@@ -59,6 +59,12 @@ export default function TatBreakdown({
             <span className="w-14 shrink-0 text-right text-[11px] tabular-nums text-gray-700 dark:text-gray-300">
               {fmtHours(r.median)}
             </span>
+            <span
+              className="w-14 shrink-0 text-right text-[11px] tabular-nums text-gray-400"
+              title="Mean — above the median means a few pieces ran long"
+            >
+              {fmtHours(r.avg)}
+            </span>
             <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-gray-400">
               {fmtInt(r.count)}
             </span>
@@ -71,7 +77,7 @@ export default function TatBreakdown({
 
       {visible.length > 0 && (
         <p className="pt-2 text-right text-[10px] text-gray-400">
-          bar = median · amber tick = p90 · right column = pieces
+          bar = median · amber tick = p90 · then median, average, pieces
         </p>
       )}
     </div>

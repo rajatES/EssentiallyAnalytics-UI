@@ -15,6 +15,7 @@ import {
   // Newspaper,
   // FileBarChart,
   Settings,
+  ShieldCheck,
   Sparkles,
   ChevronDown,
   ChevronLeft,
@@ -69,9 +70,11 @@ const nav: NavEntry[] = [
     icon: Workflow,
     children: [
       link("Production", "/critical-flow", GaugeCircle),
+      link("Yahoo Production", "/yahoo-production", GaugeCircle),
       link("Resources", "/cf-resources", Users),
     ],
   },
+  link("Access", "/users", ShieldCheck, "superadmin"),
   link("Settings", "/settings", Settings),
 ];
 

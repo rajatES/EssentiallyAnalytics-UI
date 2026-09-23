@@ -6,6 +6,8 @@ import { fmtHours, fmtInt, STAGE_COLOR, ageTone, AGE_TONE_CLASS } from "../forma
 interface Props {
   data?: PendingResult;
   isLoading: boolean;
+  /** Pipelines without a send-back loop drop that queue rather than show a 0. */
+  showSendBacks?: boolean;
 }
 
 /** The four queues a piece can sit in, in pipeline order. */
@@ -16,7 +18,11 @@ const STAGE_ORDER = [
   "Awaiting Live",
 ];
 
-export default function PendingBoard({ data, isLoading }: Props) {
+export default function PendingBoard({
+  data,
+  isLoading,
+  showSendBacks = true,
+}: Props) {
   if (isLoading || !data) {
     return (
       <div className="h-44 animate-pulse rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50" />
@@ -43,7 +49,7 @@ export default function PendingBoard({ data, isLoading }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {STAGE_ORDER.map((stage) => {
+        {STAGE_ORDER.filter((s) => showSendBacks || s !== "Sent Back").map((stage) => {
           const b = byStage.get(stage);
           const count = b?.count ?? 0;
           const oldest = b?.oldestAgeHours ?? 0;

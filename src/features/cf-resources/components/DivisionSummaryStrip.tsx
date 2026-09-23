@@ -94,6 +94,17 @@ function Card({ d, shift, selected, onPick }: { d: DivisionResourceSummary; shif
             {s.subFeed}: {s.submitted}/{s.quota}
           </p>
         ))}
+        {(d.yahooQuota != null || d.yahooPublished > 0 || d.yahooSubmitted > 0) && (
+          <p
+            className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400"
+            title={`Yahoo sheet: ${d.yahooSubmitted} submitted, ${d.yahooPublished} published today${d.yahooQuota != null ? ` against Yahoo's quota of ${d.yahooQuota}` : ""}`}
+          >
+            <span className="w-7 shrink-0 font-medium text-gray-400">YHO</span>
+            <span className="tabular-nums">
+              {d.yahooPublished}/{d.yahooQuota ?? "—"} published
+            </span>
+          </p>
+        )}
       </div>
 
       <div className="mt-2 grid grid-cols-3 gap-1 text-center">
@@ -153,7 +164,8 @@ export default function DivisionSummaryStrip({ data, isLoading, selectedDivision
         <p className="text-[11px] text-gray-500 dark:text-gray-400">
           <span className="font-semibold text-gray-900 dark:text-white">{fmtInt(t.submitted)}</span> submitted of{" "}
           <span className="font-semibold text-gray-900 dark:text-white">{fmtInt(t.quota)}</span> today ·{" "}
-          {fmtInt(t.gapDay)} to go · {fmtInt(t.awaitingEditorial)} waiting for an editor
+          {fmtInt(t.gapDay)} to go · {fmtInt(t.yahooPublished)} published on Yahoo ·{" "}
+          {fmtInt(t.awaitingEditorial)} waiting for an editor
         </p>
         <p className="text-[11px] text-gray-500 dark:text-gray-400">
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">{t.writersFree}</span> writers free ·{" "}

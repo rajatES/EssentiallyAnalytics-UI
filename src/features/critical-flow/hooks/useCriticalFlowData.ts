@@ -13,14 +13,13 @@ import {
   fetchCfTat,
   fetchCfDivisions,
   fetchCfArticleTypes,
-  fetchCfYahooSplit,
   fetchCfRoster,
   fetchCfInsights,
-  fetchCfResourceSummary,
-  fetchCfResourceBoard,
-  fetchCfResourceSuggest,
-  fetchCfResourceHealth,
-  fetchCfResourceProfiles,
+  fetchResourceSummary,
+  fetchResourceBoard,
+  fetchResourceSuggest,
+  fetchResourceHealth,
+  fetchResourceProfiles,
 } from "@/lib/api";
 import type {
   CfFilterParams,
@@ -37,7 +36,6 @@ import type {
   TatResult,
   DivisionStats,
   ArticleTypeEntry,
-  YahooSplitResult,
   RosterResult,
   InsightsResult,
   ResourceSummaryResult,
@@ -58,7 +56,6 @@ function toParams(f: CfFilterParams, extra?: Record<string, string>) {
   if (f.articleTypes?.length) p.articleTypes = f.articleTypes;
   if (f.statuses?.length) p.statuses = f.statuses;
   if (f.allotters?.length) p.allotters = f.allotters;
-  if (f.yahoo) p.yahoo = f.yahoo;
   return { ...p, ...extra };
 }
 
@@ -169,14 +166,6 @@ export function useCfArticleTypes(filters: CfFilterParams) {
   });
 }
 
-export function useCfYahooSplit(filters: CfFilterParams) {
-  return useQuery<YahooSplitResult>({
-    queryKey: ["cf-yahoo-split", filters],
-    queryFn: () => fetchCfYahooSplit(toParams(filters)),
-    staleTime: STALE,
-  });
-}
-
 export function useCfRoster(filters: CfFilterParams) {
   return useQuery<RosterResult>({
     queryKey: ["cf-roster", filters],
@@ -214,46 +203,46 @@ function boardParams(p: ResourceBoardParams) {
 }
 
 /** Live views — a manager is looking for someone right now, so refresh on a timer. */
-export function useCfResourceSummary(date?: string) {
+export function useResourceSummary(date?: string) {
   return useQuery<ResourceSummaryResult>({
     queryKey: ["cf-resource-summary", date ?? "today"],
-    queryFn: () => fetchCfResourceSummary(date ? { date } : {}),
+    queryFn: () => fetchResourceSummary(date ? { date } : {}),
     refetchInterval: 60000,
   });
 }
 
-export function useCfResourceBoard(params: ResourceBoardParams) {
+export function useResourceBoard(params: ResourceBoardParams) {
   return useQuery<ResourceBoardResult>({
     queryKey: ["cf-resource-board", params],
-    queryFn: () => fetchCfResourceBoard(boardParams(params)),
+    queryFn: () => fetchResourceBoard(boardParams(params)),
     refetchInterval: 60000,
   });
 }
 
-export function useCfResourceSuggest(
+export function useResourceSuggest(
   params: { division: string; role?: string; forPerson?: string; date?: string },
   enabled: boolean,
 ) {
   return useQuery<SuggestResult>({
     queryKey: ["cf-resource-suggest", params],
-    queryFn: () => fetchCfResourceSuggest(params),
+    queryFn: () => fetchResourceSuggest(params),
     enabled: enabled && !!params.division,
     staleTime: 30000,
   });
 }
 
-export function useCfResourceHealth() {
+export function useResourceHealth() {
   return useQuery<ScheduleHealthResult>({
     queryKey: ["cf-resource-health"],
-    queryFn: fetchCfResourceHealth,
+    queryFn: fetchResourceHealth,
     staleTime: STALE,
   });
 }
 
-export function useCfResourceProfiles(enabled: boolean) {
+export function useResourceProfiles(enabled: boolean) {
   return useQuery<ResourceProfile[]>({
     queryKey: ["cf-resource-profiles"],
-    queryFn: fetchCfResourceProfiles,
+    queryFn: fetchResourceProfiles,
     enabled,
   });
 }

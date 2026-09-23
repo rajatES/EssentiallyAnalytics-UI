@@ -52,11 +52,21 @@ export default function WeekdayRhythm({ data, isLoading }: Props) {
           />
           <Tooltip
             contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
-            formatter={(v, n) => (n === "Median TAT" ? fmtHours(v as number) : (v ?? 0))}
+            formatter={(v, n) => (/TAT/.test(n as string) ? fmtHours(v as number) : (v ?? 0))}
           />
           <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
           <Bar dataKey="allotted" name="Allotted" fill="#c7d2fe" radius={[3, 3, 0, 0]} />
           <Bar dataKey="published" name="Published" fill="#6366f1" radius={[3, 3, 0, 0]} />
+          <Line
+            yAxisId="tat"
+            type="monotone"
+            dataKey="avgTatHours"
+            name="Avg TAT"
+            stroke="transparent"
+            dot={false}
+            activeDot={false}
+            legendType="none"
+          />
           <Line
             yAxisId="tat"
             type="monotone"

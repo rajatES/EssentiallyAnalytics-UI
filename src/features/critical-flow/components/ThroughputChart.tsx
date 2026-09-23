@@ -98,13 +98,26 @@ export default function ThroughputChart({
               fontSize: 12,
             }}
             formatter={(value, name) =>
-              name === "Median TAT" ? fmtHours(value as number) : (value ?? 0)
+              /TAT/.test(name as string) ? fmtHours(value as number) : (value ?? 0)
             }
           />
           <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
           <Bar yAxisId="left" dataKey="allotted" name="Allotted" fill="#c7d2fe" radius={[3, 3, 0, 0]} />
           <Bar yAxisId="left" dataKey="published" name="Published" fill="#6366f1" radius={[3, 3, 0, 0]} />
           <Bar yAxisId="left" dataKey="sentBack" name="Sent Back" fill="#f43f5e" radius={[3, 3, 0, 0]} />
+          {/* Average rides in the tooltip rather than as a second line — the
+              gap between it and the median is the signal, and two lines
+              here would double the ink for it. */}
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="avgTatHours"
+            name="Avg TAT"
+            stroke="transparent"
+            dot={false}
+            activeDot={false}
+            legendType="none"
+          />
           <Line
             yAxisId="right"
             type="monotone"

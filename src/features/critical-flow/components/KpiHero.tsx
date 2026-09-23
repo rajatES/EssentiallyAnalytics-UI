@@ -2,9 +2,16 @@
 
 import { TrendingUp, TrendingDown } from "lucide-react";
 import type { KpiOverview, KpiDelta } from "../types";
-import { fmtHours, fmtInt, fmtPct } from "../format";
+import { fmtDec, fmtHours, fmtInt, fmtPct } from "../format";
 
 interface Props {
+  /**
+   * Whether this pipeline has a send-back loop. Yahoo runs one editorial pass
+   * and never sends work back, so the send-back tile would read 0% forever;
+   * verified output takes its place.
+   */
+  showSendBacks?: boolean;
+
   overview?: KpiOverview;
   isLoading: boolean;
 }
@@ -63,7 +70,11 @@ function Cell({
   );
 }
 
-export default function KpiHero({ overview, isLoading }: Props) {
+export default function KpiHero({
+  overview,
+  isLoading,
+  showSendBacks = true,
+}: Props) {
   if (isLoading || !overview) {
     return (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -98,15 +109,24 @@ export default function KpiHero({ overview, isLoading }: Props) {
         value={fmtHours(overview.medianTatHours)}
         delta={d.medianTatHours}
         invert
-        sub={`p90 ${fmtHours(overview.p90TatHours)}`}
+        sub={`avg ${fmtHours(overview.avgTatHours)} · p90 ${fmtHours(overview.p90TatHours)}`}
       />
-      <Cell
-        label="Send-Back Rate"
-        value={fmtPct(overview.sendBackRate)}
-        delta={d.sendBackRate}
-        invert
-        sub="of pieces reaching editorial"
-      />
+      {showSendBacks ? (
+        <Cell
+          label="Send-Back Rate"
+          value={fmtPct(overview.sendBackRate)}
+          delta={d.sendBackRate}
+          invert
+          sub="of pieces reaching editorial"
+        />
+      ) : (
+        <Cell
+          label="Verified"
+          value={fmtInt(overview.verified)}
+          delta={d.verified}
+          sub={`${fmtInt(overview.activeEditors)} editors active`}
+        />
+      )}
       <Cell
         label="In Queue"
         value={fmtInt(overview.pendingCount)}
@@ -115,10 +135,10 @@ export default function KpiHero({ overview, isLoading }: Props) {
         sub="not yet published"
       />
       <Cell
-        label="Yahoo Share"
-        value={fmtPct(overview.yahooShare)}
-        delta={d.yahooShare}
-        sub={`${fmtInt(overview.yahooCount)} flagged pieces`}
+        label="Per Writer / Day"
+        value={fmtDec(overview.perWriterPerDay, 2)}
+        delta={d.perWriterPerDay}
+        sub={`${fmtInt(overview.activeWriters)} writers active`}
       />
     </div>
   );

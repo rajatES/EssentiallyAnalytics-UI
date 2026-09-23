@@ -8,6 +8,7 @@
  */
 export const PUBLIC_ROUTES = [
   "/login",
+  "/signup",
   "/privacy",
   "/terms",
   "/data-deletion",

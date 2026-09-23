@@ -3,9 +3,9 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ResourcePerson, ResourceStatus } from "@/features/critical-flow/types";
 import {
-  useCfResourceBoard,
-  useCfResourceHealth,
-  useCfResourceSummary,
+  useResourceBoard,
+  useResourceHealth,
+  useResourceSummary,
 } from "@/features/critical-flow/hooks/useCriticalFlowData";
 import ResourcesHeader, { type RoleFilter } from "@/features/cf-resources/components/ResourcesHeader";
 import DivisionSummaryStrip from "@/features/cf-resources/components/DivisionSummaryStrip";
@@ -49,9 +49,9 @@ export default function CfResourcesPage() {
   const [profilesOpen, setProfilesOpen] = useState(false);
 
   const dateParam = date || undefined;
-  const summary = useCfResourceSummary(dateParam);
-  const board = useCfResourceBoard({ date: dateParam, divisions, role, statuses, q: query });
-  const health = useCfResourceHealth();
+  const summary = useResourceSummary(dateParam);
+  const board = useResourceBoard({ date: dateParam, divisions, role, statuses, q: query });
+  const health = useResourceHealth();
 
   // Every division anyone belongs to, plus Associate for the float pool.
   const allDivisions = useMemo(() => {

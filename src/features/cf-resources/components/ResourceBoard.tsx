@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { ResourceBoardResult, ResourcePerson } from "@/features/critical-flow/types";
 import { fmtAgo } from "@/features/critical-flow/format";
 import { useTableSort, SortableTh } from "@/components/ui/SortableTable";
@@ -47,7 +47,7 @@ export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Resource Board</h2>
           <p className="text-[11px] text-gray-400 dark:text-gray-500">
-            Writers count submissions, editors count what they got published. Hover a status for the reason.
+            Writers count submissions, editors count what they got published — Critical Flow and Yahoo together. Hover a status for the reason.
           </p>
         </div>
         <span className="text-xs text-gray-400">{rows.length} people</span>
@@ -77,17 +77,10 @@ export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
                 <tr key={p.key} className={`border-b border-gray-50 last:border-0 dark:border-gray-800/50 ${p.offToday ? "opacity-60" : ""}`}>
                   <td className="px-3 py-2"><StatusChip status={p.status} reason={p.statusReason} /></td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-gray-900 dark:text-white">{p.name}</span>
-                      {p.email && (
-                        <a href={`mailto:${p.email}`} className="text-gray-300 hover:text-indigo-500 dark:text-gray-600" title={p.email}>
-                          <Mail size={11} />
-                        </a>
-                      )}
-                    </div>
+                    <span className="font-medium text-gray-900 dark:text-white">{p.name}</span>
                     {p.flags.length > 0 && (
                       <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                        {p.flags.map((f) => (f === "unlisted" ? "not on any sheet" : f.replace("-", " "))).join(" · ")}
+                        {p.flags.map((f) => (f === "unlisted" ? "not on the schedule" : f.replace("-", " "))).join(" · ")}
                       </p>
                     )}
                   </td>
@@ -107,6 +100,11 @@ export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
                   <td className="px-3 py-2 text-right tabular-nums">
                     <span className="font-semibold text-gray-900 dark:text-white">{p.doneToday}</span>
                     <span className="text-gray-400">/{p.quota ?? "—"}</span>
+                    {p.doneYahoo > 0 && (
+                      <span className="block text-[10px] text-gray-400" title="Of today's count, pieces on the Yahoo sheet">
+                        {p.doneYahoo} via Yahoo
+                      </span>
+                    )}
                     {isEditor && p.verifiedToday > 0 && (
                       <span className="block text-[10px] text-gray-400">{p.verifiedToday} verified</span>
                     )}
@@ -116,7 +114,10 @@ export default function ResourceBoard({ data, isLoading, onFindCover }: Props) {
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
                     {isEditor ? p.queue : p.inFlight}
-                    <span className="block text-[10px] text-gray-400">{isEditor ? "to review" : "in flight"}</span>
+                    <span className="block text-[10px] text-gray-400">
+                      {isEditor ? "to review" : "in flight"}
+                      {p.loadYahoo > 0 && ` · ${p.loadYahoo} Yahoo`}
+                    </span>
                   </td>
                   <td className="max-w-[200px] px-3 py-2 text-[11px] text-gray-500 dark:text-gray-400">
                     {p.secondaryDivisions.length > 0 && (

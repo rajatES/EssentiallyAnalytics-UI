@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loginUser } from "@/lib/api";
 import { Lock, Mail, Loader2 } from "lucide-react";
@@ -54,7 +55,7 @@ export default function LoginPage() {
                 type="email"
                 required
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                placeholder="admin@example.com"
+                placeholder="you@essentiallysports.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -62,7 +63,12 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <div className="mb-1 flex items-baseline justify-between">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <Link href="/signup?mode=reset" className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -84,6 +90,14 @@ export default function LoginPage() {
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-gray-500">
+          New here?{" "}
+          <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">
+            Create an account
+          </Link>{" "}
+          with your ES email.
+        </p>
       </div>
     </div>
   );
