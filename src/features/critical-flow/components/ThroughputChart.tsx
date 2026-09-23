@@ -105,18 +105,18 @@ export default function ThroughputChart({
           <Bar yAxisId="left" dataKey="allotted" name="Allotted" fill="#c7d2fe" radius={[3, 3, 0, 0]} />
           <Bar yAxisId="left" dataKey="published" name="Published" fill="#6366f1" radius={[3, 3, 0, 0]} />
           <Bar yAxisId="left" dataKey="sentBack" name="Sent Back" fill="#f43f5e" radius={[3, 3, 0, 0]} />
-          {/* Average rides in the tooltip rather than as a second line — the
-              gap between it and the median is the signal, and two lines
-              here would double the ink for it. */}
+          {/* Dashed and paler than the median, because the gap between the two
+              is the point: where they track together the day was uniform, and
+              where the dashed line lifts away a few pieces ran long. */}
           <Line
             yAxisId="right"
             type="monotone"
             dataKey="avgTatHours"
             name="Avg TAT"
-            stroke="transparent"
+            stroke="#fbbf24"
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
             dot={false}
-            activeDot={false}
-            legendType="none"
           />
           <Line
             yAxisId="right"

@@ -42,26 +42,45 @@ function Delta({ delta, invert = false }: { delta?: KpiDelta; invert?: boolean }
 function Cell({
   label,
   value,
+  second,
   sub,
   delta,
   invert,
+  deltaHint,
 }: {
   label: string;
   value: string;
+  /**
+   * A companion figure shown at the same size. Median and mean only differ
+   * when a few pieces ran very long, and that gap is the thing worth seeing —
+   * so where both exist neither is demoted to small print.
+   */
+  second?: string;
   sub?: string;
   delta?: KpiDelta;
   invert?: boolean;
+  deltaHint?: string;
 }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
         {label}
       </p>
-      <div className="mt-1.5 flex items-baseline gap-2">
+      <div className="mt-1.5 flex items-baseline gap-1.5">
         <span className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
           {value}
         </span>
-        <Delta delta={delta} invert={invert} />
+        {second && (
+          <>
+            <span className="text-lg font-light text-gray-400 dark:text-gray-500">/</span>
+            <span className="text-2xl font-semibold tabular-nums text-gray-500 dark:text-gray-400">
+              {second}
+            </span>
+          </>
+        )}
+        <span className="ml-0.5" title={deltaHint}>
+          <Delta delta={delta} invert={invert} />
+        </span>
       </div>
       {sub && (
         <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">{sub}</p>
@@ -105,11 +124,13 @@ export default function KpiHero({
         sub={`${fmtPct(overview.publishRate)} of allotted`}
       />
       <Cell
-        label="Median TAT"
+        label="Median / Avg TAT"
         value={fmtHours(overview.medianTatHours)}
+        second={fmtHours(overview.avgTatHours)}
         delta={d.medianTatHours}
         invert
-        sub={`avg ${fmtHours(overview.avgTatHours)} · p90 ${fmtHours(overview.p90TatHours)}`}
+        deltaHint="Change in the median against the previous period"
+        sub={`typical / mean · p90 ${fmtHours(overview.p90TatHours)}`}
       />
       {showSendBacks ? (
         <Cell
