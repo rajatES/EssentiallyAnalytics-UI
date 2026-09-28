@@ -375,7 +375,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
 
   const handleDownloadCsv = () => {
     downloadRowsCsv(
-      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums"],
+      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "utmCampaign", "utmTerm", "pageUrl"],
       exportRows.map((m) => [
         m.id ?? "",
         m.category,
@@ -384,6 +384,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
         m.pageName,
         m.utmSource,
         (m.utmMediums || []).join(", "),
+        m.utmCampaign || "",
+        m.utmTerm || "",
+        m.pageUrl ?? "",
       ]),
       "traffic-page-mappings",
     );
@@ -572,7 +575,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                 Mappings
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 flex-1">
-                Import a CSV to bulk-add page mapping configurations.
+                Import a CSV to bulk-add page mapping configurations. Columns
+                match Download CSV: category, team, platform, pageName,
+                utmSource, utmMediums, utmCampaign, utmTerm, pageUrl.
               </p>
               <input
                 type="file"

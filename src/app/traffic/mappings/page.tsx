@@ -238,7 +238,7 @@ export default function PageMappingsSettings() {
   // round-trips cleanly back through "Upload Page Mappings".
   const handleDownloadCsv = () => {
     downloadRowsCsv(
-      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "utmCampaign", "pageUrl"],
+      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "utmCampaign", "utmTerm", "pageUrl"],
       filteredMappings.map((m) => [
         m.id ?? "",
         m.category,
@@ -248,6 +248,7 @@ export default function PageMappingsSettings() {
         m.utmSource,
         (m.utmMediums || []).join(", "),
         m.utmCampaign || "",
+        m.utmTerm || "",
         m.pageUrl ?? "",
       ]),
       "traffic-page-mappings",
@@ -308,7 +309,7 @@ export default function PageMappingsSettings() {
               <UploadCloud className="w-5 h-5 text-blue-500" /> Upload Page Mappings
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Import a CSV to bulk-add page mapping configurations. (category, team, platform, pageName, utmSource, utmMediums, pageUrl)
+              Import a CSV to bulk-add page mapping configurations. (category, team, platform, pageName, utmSource, utmMediums, utmCampaign, utmTerm, pageUrl)
             </p>
             <input
               type="file"
