@@ -12,6 +12,12 @@ export interface MappingEntry {
    */
   utmCampaign?: string | null;
   /**
+   * The link's utm_term, e.g. 'autopost' for automated posts. Shown on the
+   * mappings screen so normal and automated rows can be told apart; nothing
+   * matches on it.
+   */
+  utmTerm?: string | null;
+  /**
    * Click-through URL for the page name, entered by hand.
    *
    * Traffic rows carry no platform identifier, so this is the only way to link

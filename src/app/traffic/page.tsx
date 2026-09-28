@@ -87,15 +87,16 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   const [teamFilter, setTeamFilter] = useState("");
   const [isDeletingAll, setIsDeletingAll] = useState(false);
 
-  // Inline row editing, keyed by pageName (a "row" is all UTM-medium mappings
-  // sharing that page). Edits cascade to every underlying id so the page's
-  // category/team/platform/name stay consistent.
+  // Inline row editing, keyed by the deduped row key (a "row" is all UTM-medium
+  // mappings sharing that page and utm_term). Edits cascade to every underlying
+  // id so the row's category/team/platform/name stay consistent.
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     category: "",
     team: "",
     platform: "Facebook",
     pageName: "",
+    utmTerm: "",
   });
 
   // New Mapping State
@@ -104,6 +105,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   const [newPlatform, setNewPlatform] = useState("Facebook");
   const [newPageName, setNewPageName] = useState("");
   const [newMediums, setNewMediums] = useState("");
+  const [newTerm, setNewTerm] = useState("");
 
   // Upload States
   const [isUploadingMapping, setIsUploadingMapping] = useState(false);
@@ -145,6 +147,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       // no utmSource field in this form.
       utmSource: platformKeyFromLabel(newPlatform) ?? DEFAULT_PLATFORM_KEY,
       utmMediums: mediumsArray,
+      utmTerm: newTerm.trim() || null,
     };
 
     try {
@@ -152,6 +155,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       setNewPageName("");
       setNewMediums("");
       setNewTeam("");
+      setNewTerm("");
       loadMappings();
     } catch (err) {
       console.error("Failed to add mapping", err);
@@ -252,8 +256,13 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   // Dedupe the flat directory list by pageName. Multiple mapping rows for the
   // same page (one per utmMedium group) are merged into a single row whose
   // UTM Mediums chip list is the union of all rows' mediums.
+  //
+  // utm_term is part of the key: a page's normal and autoposted rows share the
+  // same mediums, so merging them would hide exactly the difference the term
+  // column exists to show.
   const dedupedMappings = useMemo(() => {
     const byName = new Map<string, {
+      key: string;
       ids: number[];
       category: string;
       team: string | null | undefined;
@@ -261,9 +270,10 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       pageName: string;
       utmSource: string;
       utmMediums: string[];
+      utmTerm: string | null;
     }>();
     mappings.forEach((m) => {
-      const key = m.pageName;
+      const key = `${m.pageName}\u0000${(m.utmTerm || "").trim().toLowerCase()}`;
       const existing = byName.get(key);
       if (existing) {
         if (m.id != null) existing.ids.push(m.id);
@@ -273,6 +283,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
         }
       } else {
         byName.set(key, {
+          key,
           ids: m.id != null ? [m.id] : [],
           category: m.category,
           team: m.team,
@@ -280,6 +291,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
           pageName: m.pageName,
           utmSource: m.utmSource,
           utmMediums: [...(m.utmMediums || [])],
+          utmTerm: m.utmTerm?.trim() || null,
         });
       }
     });
@@ -301,6 +313,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       utmSource?: string | null;
       pageName: string;
       utmMediums?: string[];
+      utmTerm?: string | null;
     }) => {
       if (platformFilter && !platformKeysForMapping(m).includes(platformFilter)) {
         return false;
@@ -317,7 +330,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
 
       const q = searchQuery.trim().toLowerCase();
       if (!q) return true;
-      return [m.category, m.team, m.platform, m.pageName, ...(m.utmMediums || [])]
+      return [m.category, m.team, m.platform, m.pageName, m.utmTerm, ...(m.utmMediums || [])]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     },
@@ -419,17 +432,20 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   };
 
   const startEdit = (m: {
+    key: string;
     pageName: string;
     category: string;
     team: string | null | undefined;
     platform: string;
+    utmTerm: string | null;
   }) => {
-    setEditingKey(m.pageName);
+    setEditingKey(m.key);
     setEditForm({
       category: m.category || "",
       team: m.team || "",
       platform: m.platform || "Facebook",
       pageName: m.pageName || "",
+      utmTerm: m.utmTerm || "",
     });
   };
 
@@ -442,6 +458,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       team: editForm.team.trim() || null,
       platform: editForm.platform,
       pageName: editForm.pageName.trim(),
+      utmTerm: editForm.utmTerm.trim() || null,
       // Keep utmSource in step with the platform, otherwise switching a page's
       // platform leaves it resolving on its old tab.
       ...(platformKey ? { utmSource: platformKey } : {}),
@@ -617,7 +634,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
             </h2>
             <form
               onSubmit={handleAdd}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 items-end"
             >
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-gray-500">
@@ -677,7 +694,21 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   placeholder="uss_page_1, uss_page_2"
                 />
               </div>
-              <div className="sm:col-span-2 lg:col-span-6 flex justify-end mt-2">
+              <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+                <label
+                  className="text-xs font-bold uppercase text-gray-500"
+                  title="Blank for normal posts, autopost for automated posts"
+                >
+                  UTM Term
+                </label>
+                <input
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  value={newTerm}
+                  onChange={(e) => setNewTerm(e.target.value)}
+                  placeholder="e.g. autopost"
+                />
+              </div>
+              <div className="sm:col-span-2 lg:col-span-7 flex justify-end mt-2">
                 <button
                   type="submit"
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors"
@@ -804,6 +835,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     <th className="px-4 py-2.5">Platform</th>
                     <th className="px-4 py-2.5">Page Name</th>
                     <th className="px-4 py-2.5">UTM Mediums</th>
+                    <th className="px-4 py-2.5">UTM Term</th>
                     <th className="px-4 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -811,7 +843,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-4 py-8 text-center text-gray-500"
                       >
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-blue-500" />
@@ -821,7 +853,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   ) : dedupedMappings.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-4 py-8 text-center text-gray-500"
                       >
                         No mappings found. Add one above or upload a CSV.
@@ -830,7 +862,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   ) : filteredMappings.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-4 py-8 text-center text-gray-500"
                       >
                         No mappings match the current filters.
@@ -844,12 +876,12 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                     </tr>
                   ) : (
                     filteredMappings.map((m) => {
-                      const isEditing = editingKey === m.pageName;
+                      const isEditing = editingKey === m.key;
                       const inputClass =
                         "w-full p-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none";
                       return (
                         <tr
-                          key={m.pageName}
+                          key={m.key}
                           className="hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-800 dark:text-gray-200 transition-colors"
                         >
                           {isEditing ? (
@@ -911,6 +943,16 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                   ))}
                                 </div>
                               </td>
+                              <td className="px-4 py-2.5">
+                                <input
+                                  className={`${inputClass} min-w-[110px]`}
+                                  value={editForm.utmTerm}
+                                  onChange={(e) =>
+                                    setEditForm((f) => ({ ...f, utmTerm: e.target.value }))
+                                  }
+                                  placeholder="None"
+                                />
+                              </td>
                               <td className="px-4 py-2.5 text-right space-x-2">
                                 <button
                                   onClick={() => handleSaveEdit(m.ids)}
@@ -958,6 +1000,18 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                                     </span>
                                   ))}
                                 </div>
+                              </td>
+                              <td className="px-4 py-2.5">
+                                {m.utmTerm ? (
+                                  <span
+                                    title={m.utmTerm}
+                                    className="bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-md text-[11px] font-medium border border-amber-200 dark:border-amber-800 max-w-[160px] truncate inline-block align-middle"
+                                  >
+                                    {m.utmTerm}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
                               </td>
                               <td className="px-4 py-2.5 text-right space-x-2">
                                 <button
