@@ -41,7 +41,7 @@ import { TrafficSummaryTable } from "@/features/traffic/components/TrafficSummar
 import { PathMappingsPanel } from "@/features/traffic/components/PathMappingsPanel";
 import { CompareView } from "@/features/traffic/components/CompareView";
 import { useTrafficData } from "@/features/traffic/hooks/useTrafficData";
-import { parseTrackingLink } from "@/features/traffic/trackingLink";
+import { parseTrackingLink } from "@/lib/page-mapping-match";
 import {
   fetchPageMappings,
   createPageMapping,
@@ -600,7 +600,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 flex-1">
                 Import a CSV to bulk-add page mapping configurations. Columns
                 match Download CSV: category, team, platform, pageName,
-                utmSource, utmMediums, utmCampaign, utmTerm, pageUrl.
+                utmSource, utmMediums, utmCampaign, utmTerm, pageUrl. Or add a
+                trackingLink column with the link and leave the utm columns
+                out; it is split into them on import.
               </p>
               <input
                 type="file"
