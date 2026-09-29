@@ -81,6 +81,16 @@ export function platformKeyFromLabel(
   return TRAFFIC_PLATFORMS.find((p) => p.mappingLabels.includes(lower))?.key;
 }
 
+/** A link's utm_source ("threads", "fb", "facebook") → its platform, if known. */
+export function platformKeyFromSource(
+  source: string,
+): TrafficPlatformKey | undefined {
+  const lower = (source || "").trim().toLowerCase();
+  return TRAFFIC_PLATFORMS.find(
+    (p) => p.mappingSources.includes(lower) || p.mappingLabels.includes(lower),
+  )?.key;
+}
+
 /**
  * Which platform tabs a page-mapping row applies to.
  *

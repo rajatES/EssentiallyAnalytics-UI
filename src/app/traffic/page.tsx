@@ -41,6 +41,7 @@ import { TrafficSummaryTable } from "@/features/traffic/components/TrafficSummar
 import { PathMappingsPanel } from "@/features/traffic/components/PathMappingsPanel";
 import { CompareView } from "@/features/traffic/components/CompareView";
 import { useTrafficData } from "@/features/traffic/hooks/useTrafficData";
+import { parseTrackingLink } from "@/features/traffic/trackingLink";
 import {
   fetchPageMappings,
   createPageMapping,
@@ -58,7 +59,9 @@ import {
   PLATFORM_LABEL_OPTIONS,
   TRAFFIC_PLATFORMS,
   platformKeyFromLabel,
+  platformKeyFromSource,
   platformKeysForMapping,
+  platformLabel,
   type TrafficPlatformKey,
 } from "@/lib/traffic-platforms";
 
@@ -105,7 +108,24 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
   const [newPlatform, setNewPlatform] = useState("Facebook");
   const [newPageName, setNewPageName] = useState("");
   const [newMediums, setNewMediums] = useState("");
+  const [newCampaign, setNewCampaign] = useState("");
   const [newTerm, setNewTerm] = useState("");
+  const [newLink, setNewLink] = useState("");
+  const newLinkInvalid = newLink.trim() !== "" && !parseTrackingLink(newLink);
+
+  // Fills Platform / Medium / Campaign / Term from a pasted link. Fields the
+  // link doesn't carry are cleared, so a normal-post link pasted after an
+  // autopost one doesn't keep the old campaign and create the wrong row.
+  const applyTrackingLink = (raw: string) => {
+    const parsed = parseTrackingLink(raw);
+    if (!parsed) return false;
+    setNewMediums(parsed.medium);
+    setNewCampaign(parsed.campaign ?? "");
+    setNewTerm(parsed.term ?? "");
+    const platformKey = parsed.source ? platformKeyFromSource(parsed.source) : undefined;
+    if (platformKey) setNewPlatform(platformLabel(platformKey));
+    return true;
+  };
 
   // Upload States
   const [isUploadingMapping, setIsUploadingMapping] = useState(false);
@@ -147,6 +167,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       // no utmSource field in this form.
       utmSource: platformKeyFromLabel(newPlatform) ?? DEFAULT_PLATFORM_KEY,
       utmMediums: mediumsArray,
+      utmCampaign: newCampaign.trim() || null,
       utmTerm: newTerm.trim() || null,
     };
 
@@ -155,7 +176,9 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
       setNewPageName("");
       setNewMediums("");
       setNewTeam("");
+      setNewCampaign("");
       setNewTerm("");
+      setNewLink("");
       loadMappings();
     } catch (err) {
       console.error("Failed to add mapping", err);
@@ -639,8 +662,38 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
             </h2>
             <form
               onSubmit={handleAdd}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 items-end"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
             >
+              <div className="space-y-1 sm:col-span-2 lg:col-span-4">
+                <label className="text-xs font-bold uppercase text-gray-500">
+                  Tracking Link
+                </label>
+                <input
+                  className={cn(
+                    "w-full p-2 text-xs rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white",
+                    newLinkInvalid
+                      ? "border-amber-400 dark:border-amber-500/60"
+                      : "border-gray-200 dark:border-gray-700",
+                  )}
+                  value={newLink}
+                  onChange={(e) => {
+                    setNewLink(e.target.value);
+                    applyTrackingLink(e.target.value);
+                  }}
+                  placeholder="?utm_source=threads&utm_medium=daytonaracingdigest&utm_campaign=threads&utm_term=autopost"
+                  spellCheck={false}
+                />
+                <p
+                  className={cn(
+                    "text-[11px]",
+                    newLinkInvalid ? "text-amber-600 dark:text-amber-400" : "text-gray-400 dark:text-gray-500",
+                  )}
+                >
+                  {newLinkInvalid
+                    ? "No utm_medium found. Paste the full link or its ?utm_… part."
+                    : "Paste a link or just its UTM part. Platform, Medium, Campaign and Term fill in below."}
+                </p>
+              </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-gray-500">
                   Category
@@ -677,7 +730,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   ))}
                 </select>
               </div>
-              <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+              <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-gray-500">
                   Page Name
                 </label>
@@ -695,11 +748,30 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                 <input
                   className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   value={newMediums}
-                  onChange={(e) => setNewMediums(e.target.value)}
+                  onChange={(e) => {
+                    // A link pasted here instead of the box above splits the same way.
+                    if (!/utm_/i.test(e.target.value) || !applyTrackingLink(e.target.value)) {
+                      setNewMediums(e.target.value);
+                    }
+                  }}
                   placeholder="uss_page_1, uss_page_2"
                 />
               </div>
-              <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+              <div className="space-y-1">
+                <label
+                  className="text-xs font-bold uppercase text-gray-500"
+                  title="Blank for normal posts. Autoposted links carry one (e.g. threads), and it is what keeps their traffic separate."
+                >
+                  UTM Campaign
+                </label>
+                <input
+                  className="w-full p-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                  value={newCampaign}
+                  onChange={(e) => setNewCampaign(e.target.value)}
+                  placeholder="blank = normal posts"
+                />
+              </div>
+              <div className="space-y-1">
                 <label
                   className="text-xs font-bold uppercase text-gray-500"
                   title="Blank for normal posts, autopost for automated posts"
@@ -713,7 +785,7 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                   placeholder="e.g. autopost"
                 />
               </div>
-              <div className="sm:col-span-2 lg:col-span-7 flex justify-end mt-2">
+              <div className="sm:col-span-2 lg:col-span-4 flex justify-end mt-2">
                 <button
                   type="submit"
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors"
