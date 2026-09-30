@@ -14,7 +14,7 @@ import {
 import { MappingEntry } from "@/data/page-mapping";
 import { Trash2, Plus, ArrowLeft, UploadCloud, Loader2, X, Users, Search, Download } from "lucide-react";
 import Link from "next/link";
-import { downloadRowsCsv } from "@/lib/tableCsv";
+import { downloadMappingsCsv } from "@/features/traffic/mappingCsv";
 import {
   DEFAULT_PLATFORM_KEY,
   PLATFORM_LABEL_OPTIONS,
@@ -234,26 +234,7 @@ export default function PageMappingsSettings() {
     }
   };
 
-  // Export in the same column order the importer expects, so a downloaded file
-  // round-trips cleanly back through "Upload Page Mappings".
-  const handleDownloadCsv = () => {
-    downloadRowsCsv(
-      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "utmCampaign", "utmTerm", "pageUrl"],
-      filteredMappings.map((m) => [
-        m.id ?? "",
-        m.category,
-        m.team ?? "",
-        m.platform,
-        m.pageName,
-        m.utmSource,
-        (m.utmMediums || []).join(", "),
-        m.utmCampaign || "",
-        m.utmTerm || "",
-        m.pageUrl ?? "",
-      ]),
-      "traffic-page-mappings",
-    );
-  };
+  const handleDownloadCsv = () => downloadMappingsCsv(filteredMappings);
 
   const handleMappingFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -309,7 +290,7 @@ export default function PageMappingsSettings() {
               <UploadCloud className="w-5 h-5 text-blue-500" /> Upload Page Mappings
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Import a CSV to bulk-add page mapping configurations. (category, team, platform, pageName, utmSource, utmMediums, utmCampaign, utmTerm, pageUrl)
+              Import a CSV to bulk-add page mappings, one tracking link per row. (category, team, platform, pageName, trackingLink, pageUrl)
             </p>
             <input
               type="file"

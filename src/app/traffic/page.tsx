@@ -42,6 +42,7 @@ import { PathMappingsPanel } from "@/features/traffic/components/PathMappingsPan
 import { CompareView } from "@/features/traffic/components/CompareView";
 import { useTrafficData } from "@/features/traffic/hooks/useTrafficData";
 import { parseTrackingLink } from "@/lib/page-mapping-match";
+import { downloadMappingsCsv } from "@/features/traffic/mappingCsv";
 import {
   fetchPageMappings,
   createPageMapping,
@@ -53,7 +54,6 @@ import {
   importLegacyDataCSV,
 } from "@/lib/api";
 import { MappingEntry } from "@/data/page-mapping";
-import { downloadRowsCsv } from "@/lib/tableCsv";
 import {
   DEFAULT_PLATFORM_KEY,
   PLATFORM_LABEL_OPTIONS,
@@ -391,29 +391,12 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
     [mappings],
   );
 
-  // Export the raw mapping rows (not the deduped view) in the importer's column
-  // order so a downloaded file round-trips back through "Upload Page Mappings".
-  // Respects the search box and the platform/category/team filters.
+  // Export the raw mapping rows (not the deduped view) so a downloaded file
+  // round-trips back through "Upload Page Mappings". Respects the search box
+  // and the platform/category/team filters.
   const exportRows = useMemo(() => mappings.filter(rowMatches), [mappings, rowMatches]);
 
-  const handleDownloadCsv = () => {
-    downloadRowsCsv(
-      ["id", "category", "team", "platform", "pageName", "utmSource", "utmMediums", "utmCampaign", "utmTerm", "pageUrl"],
-      exportRows.map((m) => [
-        m.id ?? "",
-        m.category,
-        m.team ?? "",
-        m.platform,
-        m.pageName,
-        m.utmSource,
-        (m.utmMediums || []).join(", "),
-        m.utmCampaign || "",
-        m.utmTerm || "",
-        m.pageUrl ?? "",
-      ]),
-      "traffic-page-mappings",
-    );
-  };
+  const handleDownloadCsv = () => downloadMappingsCsv(exportRows);
 
   // Irreversible and unfiltered — it always clears the whole table, never just
   // the filtered view, so the typed confirmation states the real total.
@@ -598,11 +581,10 @@ export function MappingsView({ onBack, onMappingsChanged }: { onBack: () => void
                 Mappings
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 flex-1">
-                Import a CSV to bulk-add page mapping configurations. Columns
-                match Download CSV: category, team, platform, pageName,
-                utmSource, utmMediums, utmCampaign, utmTerm, pageUrl. Or add a
-                trackingLink column with the link and leave the utm columns
-                out; it is split into them on import.
+                Import a CSV to bulk-add page mappings, one tracking link per
+                row. Columns match Download CSV: category, team, platform,
+                pageName, trackingLink, pageUrl. Platform can be left blank;
+                it is read from the link.
               </p>
               <input
                 type="file"
